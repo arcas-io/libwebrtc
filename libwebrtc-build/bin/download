@@ -1,0 +1,6 @@
+#! /bin/bash -ex
+
+bucket=libwebrtc-dev
+upload_name="libwebrtc-$(cat REVISION)-$(uname | tr '[:upper:]' '[:lower:]')-$(arch).tar.gz"
+
+gsutil cp -r gs://$bucket/libwebrtc/$upload_name $1/$upload_name 

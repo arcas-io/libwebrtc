@@ -1,0 +1,5 @@
+#! /bin/bash -ex
+
+./bin/fetch $(cat REVISION)
+./bin/build
+./bin/extract

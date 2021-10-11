@@ -1,0 +1,46 @@
+#! /bin/bash -ex
+
+
+. bin/setup.sh
+
+# Debug build flag must be a string like "true" or "false"
+IS_DEBUG=${IS_DEBUG:-"false"}
+
+# Additional GN arguments to add to the build
+WEBRTC_ARGS=${WEBRTC_ARGS:-""}
+OUTDIR=${OUTDIR:-"$PWD/libwebrtc/out"}
+
+echo "Building libwebrtc debug=$IS_DEBUG"
+
+BASE_WEBRTC_ARGS='rtc_build_examples=false rtc_build_tools=false rtc_use_x11=false rtc_enable_protobuf=false rtc_include_tests=false use_glib=false'
+BASE_WEBRTC_ARGS+=" is_debug=$IS_DEBUG"
+
+# little hack for David's mac
+if [[ $(uname -p) == 'arm' ]]; then
+#BASE_WEBRTC_ARGS+=' target_cpu="arm64" clang_use_chrome_plugins=false clang_base_path="/Users/daviddimaria/work/conduit/llvm-project/build" '
+  BASE_WEBRTC_ARGS+=' target_cpu="arm64"'
+fi
+
+OS=${OS:-`uname`}
+
+if [[ $OS == 'Darwin'* ]]; then
+    echo "OS target: Darwin"
+	BASE_WEBRTC_ARGS+=' target_os="mac" use_custom_libcxx=false'
+elif [[ $OS == 'Linux'* ]]; then
+    echo "OS target: Linux"
+	BASE_WEBRTC_ARGS+=' target_os="linux"'
+else
+ echo "Unknown operating system: ${OS}"
+ exit 1
+fi
+
+GN_ARGS="$BASE_WEBRTC_ARGS $WEBRTC_ARGS"
+
+pushd libwebrtc/src
+rm BUILD.gn
+cp ../../BUILD.gn .
+mkdir -p $OUTDIR
+gn gen -C $OUTDIR "--args=${GN_ARGS}" --export-compile-commands 
+popd
+# target is always webrtc which builds libwebrtc.a
+ninja -C $OUTDIR webrtc 

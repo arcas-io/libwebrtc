@@ -1,0 +1,18 @@
+#! /bin/bash -ex
+
+
+bucket=libwebrtc-dev
+os=$(uname | tr '[:upper:]' '[:lower:]')
+arch_str=$(arch)
+
+if [[ $os == "darwin" && $arch_str == "i386" ]];
+then
+  arch_str="x86_64"
+fi
+
+upload_name="libwebrtc-$(cat REVISION)-$os-$arch_str.tar.gz"
+
+rm -f $upload_name
+tar -czf $upload_name ./libwebrtc/dist/
+
+gsutil cp -r $upload_name gs://$bucket/libwebrtc/$upload_name

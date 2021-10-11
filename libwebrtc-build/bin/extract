@@ -1,0 +1,25 @@
+#! /bin/bash -ex
+
+. bin/setup.sh
+
+pushd libwebrtc
+
+os=$(uname | tr '[:upper:]' '[:lower:]')
+
+if [ os == "dawrwin" ];
+then
+    os="mac"
+fi
+
+rm -rf dist
+mkdir -p dist/include
+mkdir -p dist/include/third_party
+# We need all the headers to appropritately link against the shared library. We copy only those out.
+cp -r src/buildtools/ dist/include/ || echo "Copy failed in buildtools"
+mkdir -p dist/include/
+cp -rf src/build/ dist/include/
+cp -rf src/third_party/llvm-build dist/include/third_party
+rsync -avmq --include='*.h' -f 'hide,! */' ./src/ ./dist/include
+cp out/obj/libwebrtc.a ./dist
+
+popd

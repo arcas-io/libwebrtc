@@ -1,0 +1,15 @@
+[package]
+name = "libwebrtc-sys"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+cxx = "1.0.56"
+
+[build-dependencies]
+cxx-build = "1.0.56"
+reqwest = "0.11.5"
+run_script = "^0.9.0"
+

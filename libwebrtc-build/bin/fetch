@@ -1,0 +1,20 @@
+#! /bin/bash -ex
+
+. bin/setup.sh
+
+default_revision=$(cat REVISION)
+revision="${1:-$default_revision}"
+
+pushd libwebrtc
+if [ ! -d src ]; then
+    echo "Initializing webrtc checkout"
+    fetch --nohooks webrtc
+fi
+
+echo "Checkout out libwebrtc rev: $revision"
+
+pushd src
+git checkout $revision
+gclient sync
+popd
+popd
