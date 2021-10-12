@@ -168,13 +168,17 @@ fn main() {
     }
 
     println!("cargo:rerun-if-changed=src/lib.rs");
-    println!("cargo:rerun-if-changed=src/webrtc.cc");
-    println!("cargo:rerun-if-changed=include/webrtc.h");
+    println!("cargo:rerun-if-changed=src/peer_connection_factory.cc");
+    println!("cargo:rerun-if-changed=include/peer_connection_factory.h");
+    println!("cargo:rerun-if-changed=src/peer_connection.cc");
+    println!("cargo:rerun-if-changed=include/peer_connection.h");
+
     // copied from the lt approach link settings...
     let mut build_defines = builder
         .compiler(clang)
         .flag("-std=c++14")
-        .file("src/webrtc.cc")
+        .file("src/peer_connection_factory.cc")
+        .file("src/peer_connection.cc")
         .include(libwebrtc_header.to_owned())
         .define("UDEV", None)
         .define("USE_AURA", "1")

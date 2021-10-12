@@ -1,13 +1,47 @@
-#include "libwebrtc-sys/include/webrtc.h"
+#include "libwebrtc-sys/include/peer_connection_factory.h"
 #include "libwebrtc-sys/src/lib.rs.h"
 #include <string>
 #include <iostream>
 
-ArcasWebRTC::ArcasWebRTC() : inner() {}
-
-std::unique_ptr<ArcasWebRTC> createWebRTC()
+class ArcasPeerConnectionFactory::impl
 {
-    return std::make_unique<ArcasWebRTC>();
+    friend ArcasPeerConnectionFactory;
+
+    webrtc::PeerConnectionFactoryInterface *factory;
+    std::unique_ptr<rtc::Thread> signal_thread;
+    std::unique_ptr<rtc::Thread> worker_thread;
+    std::unique_ptr<rtc::Thread> network_thread;
+    rtc::scoped_refptr<webrtc::AudioDeviceModule> adm;
+
+public:
+    impl(
+        webrtc::PeerConnectionFactoryInterface *factory,
+        std::unique_ptr<rtc::Thread> signal_thread,
+        std::unique_ptr<rtc::Thread> worker_thread,
+        std::unique_ptr<rtc::Thread> network_thread,
+        rtc::scoped_refptr<webrtc::AudioDeviceModule> adm);
+    ~impl();
+};
+
+ArcasPeerConnectionFactory::impl::impl(
+    webrtc::PeerConnectionFactoryInterface *factory,
+    std::unique_ptr<rtc::Thread> signal_thread,
+    std::unique_ptr<rtc::Thread> worker_thread,
+    std::unique_ptr<rtc::Thread> network_thread,
+    rtc::scoped_refptr<webrtc::AudioDeviceModule> adm) : factory(factory),
+                                                         signal_thread(std::move(signal_thread)),
+                                                         worker_thread(std::move(worker_thread)),
+                                                         network_thread(std::move(network_thread)),
+                                                         adm(adm) {}
+
+ArcasPeerConnectionFactory::impl::~impl()
+{
+    // C++ side must free it's own resources.
+    factory->Release();
+    signal_thread->Stop();
+    worker_thread->Stop();
+    network_thread->Stop();
+    RTC_LOG(LS_VERBOSE) << "~FFI_PeerConnectionFactory";
 }
 
 ArcasPeerConnectionFactory::ArcasPeerConnectionFactory(
@@ -15,24 +49,16 @@ ArcasPeerConnectionFactory::ArcasPeerConnectionFactory(
     std::unique_ptr<rtc::Thread> signal_thread,
     std::unique_ptr<rtc::Thread> worker_thread,
     std::unique_ptr<rtc::Thread> network_thread,
-    rtc::scoped_refptr<webrtc::AudioDeviceModule> adm) : factory_(factory),
-                                                         signal_thread_(std::move(signal_thread)),
-                                                         worker_thread_(std::move(worker_thread)),
-                                                         network_thread_(std::move(network_thread)),
-                                                         adm_(adm)
+    rtc::scoped_refptr<webrtc::AudioDeviceModule> adm)
 {
+    this->api = std::make_shared<ArcasPeerConnectionFactory::impl>(factory,
+                                                                   std::move(signal_thread),
+                                                                   std::move(worker_thread),
+                                                                   std::move(network_thread),
+                                                                   adm);
 }
 
-ArcasPeerConnectionFactory::~ArcasPeerConnectionFactory()
-{
-    factory_->Release();
-    signal_thread_->Stop();
-    worker_thread_->Stop();
-    network_thread_->Stop();
-    RTC_LOG(LS_VERBOSE) << "~FFI_PeerConnectionFactory";
-}
-
-std::unique_ptr<ArcasPeerConnectionFactory> ArcasWebRTC::createFactory() const
+std::unique_ptr<ArcasPeerConnectionFactory> createFactory()
 {
     // Create threads
     auto worker_thread = rtc::Thread::Create();

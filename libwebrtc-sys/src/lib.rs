@@ -5,26 +5,13 @@ use cxx::UniquePtr;
 #[cxx::bridge]
 mod ffi {
 
-    struct FactoryConfig {
-        name: String,
-    }
-
     unsafe extern "C++" {
-        include!("libwebrtc-sys/include/webrtc.h");
+        include!("libwebrtc-sys/include/peer_connection_factory.h");
+        include!("libwebrtc-sys/include/peer_connection.h");
 
-        type ArcasWebRTC;
         type ArcasPeerConnectionFactory;
 
-        fn createFactory(self: &ArcasWebRTC) -> UniquePtr<ArcasPeerConnectionFactory>;
-
-        fn createWebRTC() -> UniquePtr<ArcasWebRTC>;
-    }
-}
-
-impl fmt::Debug for ffi::ArcasWebRTC {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        /// foo
-        f.debug_struct("ArcasWebRTC").finish()
+        fn createFactory() -> UniquePtr<ArcasPeerConnectionFactory>;
     }
 }
 
@@ -34,13 +21,7 @@ mod tests {
 
     #[test]
     fn test_ffi() {
-        let cfg = ffi::FactoryConfig {
-            name: "nutbar".to_owned(),
-        };
-
-        {
-            let webrtc = ffi::createWebRTC();
-            let fac = webrtc.createFactory();
-        }
+        let factory = ffi::createFactory();
+        let factory2 = ffi::createFactory();
     }
 }

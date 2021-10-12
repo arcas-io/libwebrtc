@@ -37,37 +37,25 @@
 #include "rtc_base/thread.h"
 #include "rtc_base/logging.h"
 
+// C++ style was largely copied from the example provided by cxx
+// https://github.com/dtolnay/cxx/blob/6ca43ce46fe52c5e9da010427caa55af99918a88/demo/src/blobstore.cc
+//
+// This seems to include use of the pImpl (https://en.cppreference.com/w/cpp/language/pimpl) pattern.
+// Using the pattern works around some issues around how const gets added in cxx so it was followed here.
+
 class ArcasPeerConnectionFactory
 {
 private:
-  webrtc::PeerConnectionFactoryInterface *factory_;
-  std::unique_ptr<rtc::Thread> signal_thread_, worker_thread_, network_thread_;
-  rtc::scoped_refptr<webrtc::AudioDeviceModule> adm_;
+    class impl;
+    std::shared_ptr<impl> api;
 
 public:
-  ArcasPeerConnectionFactory(
-      webrtc::PeerConnectionFactoryInterface *factory,
-      std::unique_ptr<rtc::Thread> signal_thread,
-      std::unique_ptr<rtc::Thread> worker_thread,
-      std::unique_ptr<rtc::Thread> network_thread,
-      rtc::scoped_refptr<webrtc::AudioDeviceModule> adm);
-
-  ~ArcasPeerConnectionFactory();
+    ArcasPeerConnectionFactory(
+        webrtc::PeerConnectionFactoryInterface *factory,
+        std::unique_ptr<rtc::Thread> signal_thread,
+        std::unique_ptr<rtc::Thread> worker_thread,
+        std::unique_ptr<rtc::Thread> network_thread,
+        rtc::scoped_refptr<webrtc::AudioDeviceModule> adm);
 };
 
-class ArcasWebRTCImpl
-{
-public:
-  std::unique_ptr<rtc::Thread> worker_thread;
-  ArcasWebRTCImpl();
-};
-
-class ArcasWebRTC
-{
-public:
-  ArcasWebRTC();
-  std::unique_ptr<ArcasPeerConnectionFactory> createFactory() const;
-  std::unique_ptr<ArcasWebRTCImpl> inner;
-};
-
-std::unique_ptr<ArcasWebRTC> createWebRTC();
+std::unique_ptr<ArcasPeerConnectionFactory> createFactory();
