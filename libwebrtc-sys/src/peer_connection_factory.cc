@@ -1,7 +1,8 @@
+#include "iostream"
+#include "rust/cxx.h"
 #include "libwebrtc-sys/include/peer_connection_factory.h"
 #include "libwebrtc-sys/src/lib.rs.h"
-#include <string>
-#include <iostream>
+#include "libwebrtc-sys/include/internal_observer.h"
 
 class ArcasPeerConnectionFactory::impl
 {
@@ -58,8 +59,12 @@ ArcasPeerConnectionFactory::ArcasPeerConnectionFactory(
                                                                    adm);
 }
 
-std::unique_ptr<ArcasPeerConnectionFactory> createFactory()
+std::unique_ptr<ArcasPeerConnectionFactory> create_factory()
 {
+    // TODO: Add configuration options for log levels.
+    rtc::LogMessage::LogToDebug(rtc::LS_VERBOSE);
+    rtc::LogMessage::SetLogToStderr(true);
+
     // Create threads
     auto worker_thread = rtc::Thread::Create();
     auto network_thread = rtc::Thread::CreateWithSocketServer();
@@ -99,6 +104,7 @@ std::unique_ptr<ArcasPeerConnectionFactory> createFactory()
 
     RTC_LOG(LS_INFO) << ">>>>>>>>>>>>>>>>>>> instantiated PEERCONNECTION_FACTORY";
 
+    rtc::LogMessage::SetLogToStderr(rtc::LS_VERBOSE);
     auto result = std::make_unique<ArcasPeerConnectionFactory>(
         std::move(factory),
         std::move(signal_thread),
@@ -106,4 +112,32 @@ std::unique_ptr<ArcasPeerConnectionFactory> createFactory()
         std::move(network_thread),
         adm);
     return result;
+}
+
+// Here since we need the internal observer.
+std::unique_ptr<ArcasPeerConnection> ArcasPeerConnectionFactory::create_peer_connection(ArcasRTCPeerConnectionConfig config, rust::Box<ArcasRustPeerConnectionObserver> observer) const
+{
+    ArcasInternalPeerConnectionObserver mgr(std::move(observer));
+    webrtc::PeerConnectionInterface::RTCConfiguration pc_config;
+    webrtc::PeerConnectionDependencies deps(&mgr);
+
+    // copy over configurations...
+    pc_config.sdp_semantics = config.sdp_semantics;
+
+    for (auto &ice_server : config.ice_servers)
+    {
+        webrtc::PeerConnectionInterface::IceServer server;
+        // XXX: Should be able to just use std::string() operator but must use c_str instead due to linking error.
+        server.password = std::string(ice_server.password.c_str());
+        std::vector<std::string> urls;
+
+        for (auto &url : ice_server.urls)
+        {
+            urls.push_back(std::string(url.c_str()));
+        }
+        server.urls = urls;
+    }
+
+    auto pc = api->factory->CreatePeerConnection(pc_config, std::move(deps));
+    return std::make_unique<ArcasPeerConnection>(std::move(pc));
 }

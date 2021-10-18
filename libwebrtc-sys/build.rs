@@ -35,6 +35,42 @@ fn get_mac_sysroot() -> String {
     format!("{}/{}", MAC_SDKS, &last).to_owned()
 }
 
+fn get_cc_files() -> Vec<String> {
+    let mut cc_files: Vec<String> = vec![];
+    let files = fs::read_dir("./src/").unwrap();
+    for entry in files {
+        let entry = entry.unwrap();
+        let filename = entry.file_name().to_str().unwrap().to_owned();
+        cc_files.push(filename);
+    }
+
+    cc_files = cc_files
+        .iter()
+        .filter(|value| return value.ends_with(".cc"))
+        .map(|original| format!("src/{}", original.to_owned()))
+        .collect();
+
+    cc_files
+}
+
+fn get_header_files() -> Vec<String> {
+    let mut header_files: Vec<String> = vec![];
+    let files = fs::read_dir("./include/").unwrap();
+    for entry in files {
+        let entry = entry.unwrap();
+        let filename = entry.file_name().to_str().unwrap().to_owned();
+        header_files.push(filename);
+    }
+
+    header_files = header_files
+        .iter()
+        .filter(|value| return value.ends_with(".h"))
+        .map(|original| format!("include/{}", original.to_owned()))
+        .collect();
+
+    header_files
+}
+
 fn get_url(os: String, arch: String) -> Result<String, fmt::Error> {
     let base_url = "https://storage.googleapis.com/libwebrtc-dev/libwebrtc/libwebrtc-";
     println!("current arch: {}", arch.as_str());
@@ -63,60 +99,10 @@ fn get_url(os: String, arch: String) -> Result<String, fmt::Error> {
     }
 }
 
-fn main() {
-    let outdir = Path::new("./webrtc/libwebrtc");
-    let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
-    let target_arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap();
-    let url = get_url(target_os.to_owned(), target_arch.to_owned()).unwrap();
-    let name = String::from(
-        Path::new(url.as_str())
-            .file_name()
-            .unwrap()
-            .to_str()
-            .unwrap(),
-    );
-    println!("url: {} {}", url, name);
-
-    if !outdir.exists() {
-        let mut options = ScriptOptions::new();
-        options.output_redirection = IoOptions::Inherit;
-        let args = vec![url, name];
-        println!("Downloading libwebrtc extension...");
-
-        run_script::run_script!(
-            r#"
-                set -ex
-                if [ ! -f $2 ]; then
-                    echo "Downloading libwebrtc tar"
-                    curl --output $2 $1
-                fi
-                ls -lah
-                mkdir -p webrtc/libwebrtc
-                cd webrtc/libwebrtc
-                tar -xzf ../../$2
-                mv libwebrtc/dist/* .
-            "#,
-            &args,
-            &options
-        )
-        .unwrap();
-    }
-
+fn build_entrypoint(output_dir: String, target_os: String) {
     let include_paths = vec!["third_party/abseil-cpp", "buildtools/third_party/libc++"];
 
-    let libwebrtc_header = path::PathBuf::from("./webrtc/libwebrtc/include")
-        .canonicalize()
-        .unwrap()
-        .to_str()
-        .unwrap()
-        .to_string();
-
-    let output_dir = path::PathBuf::from("./webrtc/libwebrtc")
-        .canonicalize()
-        .unwrap()
-        .to_str()
-        .unwrap()
-        .to_string();
+    let libwebrtc_header = format!("{}/include", output_dir);
 
     let clang = format!(
         "{}/third_party/llvm-build/Release+Asserts/bin/clang++",
@@ -160,25 +146,31 @@ fn main() {
 
     eprintln!("linking webrtc");
     println!("cargo:rustc-link-search=native={}", output_dir);
+    println!("cargo:rustc-link-lib=static=cxxbridge1");
     println!("cargo:rustc-link-lib=static=webrtc");
-    let mut builder = cxx_build::bridge("src/lib.rs"); // returns a cc::Build
+    let mut builder = cxx_build::bridges(&["src/lib.rs"]); // returns a cc::Build
 
     for include_path in include_path_list {
         builder.include(include_path);
     }
 
     println!("cargo:rerun-if-changed=src/lib.rs");
-    println!("cargo:rerun-if-changed=src/peer_connection_factory.cc");
-    println!("cargo:rerun-if-changed=include/peer_connection_factory.h");
-    println!("cargo:rerun-if-changed=src/peer_connection.cc");
-    println!("cargo:rerun-if-changed=include/peer_connection.h");
+
+    for header in get_header_files() {
+        println!("cargo:rerun-if-changed={}", header);
+    }
+
+    let cc_files = get_cc_files();
+
+    for file in &cc_files {
+        println!("cargo:rerun-if-changed={}", file);
+    }
 
     // copied from the lt approach link settings...
     let mut build_defines = builder
         .compiler(clang)
         .flag("-std=c++14")
-        .file("src/peer_connection_factory.cc")
-        .file("src/peer_connection.cc")
+        .files(cc_files)
         .include(libwebrtc_header.to_owned())
         .define("UDEV", None)
         .define("USE_AURA", "1")
@@ -258,6 +250,79 @@ fn main() {
     };
 
     build_defines.warnings(false).compile("libwebrtc-sys");
+}
+
+fn main() {
+    let outdir = Path::new("./webrtc/libwebrtc");
+    let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
+    let target_arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap();
+    let url = get_url(target_os.to_owned(), target_arch.to_owned()).unwrap();
+
+    let name = String::from(
+        Path::new(url.as_str())
+            .file_name()
+            .unwrap()
+            .to_str()
+            .unwrap(),
+    );
+    println!("url: {} {}", url, name);
+
+    if !outdir.exists() {
+        let mut options = ScriptOptions::new();
+        options.output_redirection = IoOptions::Inherit;
+        let args = vec![url, name];
+        println!("Downloading libwebrtc extension...");
+
+        run_script::run_script!(
+            r#"
+                set -ex
+                if [ ! -f $2 ]; then
+                    echo "Downloading libwebrtc tar"
+                    curl --output $2 $1
+                fi
+                ls -lah
+                mkdir -p webrtc/libwebrtc
+                cd webrtc/libwebrtc
+                tar -xzf ../../$2
+                mv libwebrtc/dist/* .
+            "#,
+            &args,
+            &options
+        )
+        .unwrap();
+    }
+
+    let mut output_dir = path::PathBuf::from("./webrtc/libwebrtc")
+        .canonicalize()
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .to_string();
+
+    match env::var("WEBRTC_BUILD") {
+        Ok(build_dir) => {
+            if build_dir.len() > 0 {
+                output_dir = build_dir;
+            }
+        }
+        Err(_) => {}
+    }
+
+    match env::var("WEBRTC_IN_TREE") {
+        Ok(in_tree) => {
+            if in_tree.len() > 0 {
+                output_dir = path::PathBuf::from("../../build/libwebrtc/libwebrtc/dist")
+                    .canonicalize()
+                    .unwrap()
+                    .to_str()
+                    .unwrap()
+                    .to_string();
+            }
+        }
+        Err(_) => {}
+    }
+
+    build_entrypoint(output_dir, target_os.to_owned());
 }
 
 fn macos_link_search_path() -> Option<String> {

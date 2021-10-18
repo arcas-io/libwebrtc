@@ -1,0 +1,10 @@
+#! /bin/bash -ex
+
+pushd ../../build/libwebrtc
+./bin/build
+./bin/extract
+popd
+
+export WEBRTC_IN_TREE=1 
+touch build.rs
+cargo test -- --nocapture
