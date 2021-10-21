@@ -1,127 +1,154 @@
 #include "iostream"
 #include "rust/cxx.h"
 #include "libwebrtc-sys/src/lib.rs.h"
-#include "libwebrtc-sys/include/internal_observer.h"
+#include "libwebrtc-sys/include/peer_connection_observer.h"
 
-ArcasInternalPeerConnectionObserver::ArcasInternalPeerConnectionObserver(rust::Box<ArcasRustPeerConnectionObserver> observer) : observer(std::move(observer))
+void ArcasPeerConnectionObserver::OnSignalingChange(webrtc::PeerConnectionInterface::SignalingState new_state)
 {
-    std::cout << "Init Arcas Connection manager\n";
-}
+    observer->on_signaling_state_change(new_state);
+};
 
-void ArcasInternalPeerConnectionObserver::OnSignalingChange(webrtc::PeerConnectionInterface::SignalingState new_state)
+void ArcasPeerConnectionObserver::OnAddStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream)
 {
-    std::cout << "Signal change\n";
-}
+    auto rust = std::make_unique<ArcasMediaStream>(stream);
+    observer->on_add_stream(std::move(rust));
+};
 
-void ArcasInternalPeerConnectionObserver::OnAddStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream)
+void ArcasPeerConnectionObserver::OnRemoveStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream)
 {
-    std::cout << "Add stream\n";
-}
 
-void ArcasInternalPeerConnectionObserver::OnRemoveStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream)
+    auto rust = std::make_unique<ArcasMediaStream>(stream);
+    observer->on_remove_stream(std::move(rust));
+};
+
+void ArcasPeerConnectionObserver::OnDataChannel(rtc::scoped_refptr<webrtc::DataChannelInterface> data_channel)
 {
-    std::cout << "Remove stream\n";
-}
 
-void ArcasInternalPeerConnectionObserver::OnDataChannel(rtc::scoped_refptr<webrtc::DataChannelInterface> data_channel)
+    auto rust = std::make_unique<ArcasDataChannel>(data_channel);
+    observer->on_datachannel(std::move(rust));
+};
+
+void ArcasPeerConnectionObserver::OnRenegotiationNeeded()
 {
-    std::cout << "On data channel\n";
-}
+    observer->on_renegotiation_needed();
+};
 
-void ArcasInternalPeerConnectionObserver::OnRenegotiationNeeded()
+void ArcasPeerConnectionObserver::OnNegotiationNeededEvent(uint32_t event_id)
 {
-    std::cout << "on renegotiation needed\n";
-}
+    observer->on_renegotiation_needed_event(event_id);
+};
 
-void ArcasInternalPeerConnectionObserver::OnNegotiationNeededEvent(uint32_t event_id)
-{
-    std::cout << "on renegotiation needed\n";
-}
+void ArcasPeerConnectionObserver::OnIceConnectionChange(
+    webrtc::PeerConnectionInterface::IceConnectionState new_state){
 
-void ArcasInternalPeerConnectionObserver::OnIceConnectionChange(
+    // XXX: Do we need this?
+    // observer->on_ice_connection_change(new_state);
+};
+
+void ArcasPeerConnectionObserver::OnStandardizedIceConnectionChange(
     webrtc::PeerConnectionInterface::IceConnectionState new_state)
 {
-    std::cout << "on ice state change " << new_state << " \n";
-}
 
-void ArcasInternalPeerConnectionObserver::OnStandardizedIceConnectionChange(
-    webrtc::PeerConnectionInterface::IceConnectionState new_state)
-{
-    std::cout << "on ice state change " << new_state << " \n";
-}
+    observer->on_ice_connection_change(new_state);
+};
 
-void ArcasInternalPeerConnectionObserver::OnConnectionChange(
+void ArcasPeerConnectionObserver::OnConnectionChange(
     webrtc::PeerConnectionInterface::PeerConnectionState new_state)
 {
-    std::cout << "connection change\n";
-}
+    observer->on_connection_change(new_state);
+};
 
-void ArcasInternalPeerConnectionObserver::OnIceGatheringChange(
+void ArcasPeerConnectionObserver::OnIceGatheringChange(
     webrtc::PeerConnectionInterface::IceGatheringState new_state)
 {
-    std::cout << "gathering change\n";
+
+    observer->on_ice_gathering_change(new_state);
 };
 
-void ArcasInternalPeerConnectionObserver::OnIceCandidate(const webrtc::IceCandidateInterface *candidate)
+void ArcasPeerConnectionObserver::OnIceCandidate(const webrtc::IceCandidateInterface *candidate)
 {
-    std::cout << "on ice candidate";
+    ArcasICECandidate rust;
+    rust.id = rust::String(candidate->candidate().id().c_str());
+    rust.sdp_mid = rust::String(candidate->sdp_mid().c_str());
+    rust.sdp_mline_index = candidate->sdp_mline_index();
+    std::string sdp;
+    candidate->ToString(&sdp);
+    rust.sdp = rust::String(sdp.c_str());
+    observer->on_ice_candidate(rust);
+}
+
+void ArcasPeerConnectionObserver::OnIceCandidateError(const std::string &host_candidate,
+                                                      const std::string &url,
+                                                      int error_code,
+                                                      const std::string &error_text)
+{
+    observer->on_ice_candidate_error(rust::String(host_candidate.c_str()), rust::String(url.c_str()), error_code, rust::String(error_text.c_str()));
 };
 
-void ArcasInternalPeerConnectionObserver::OnIceCandidateError(const std::string &host_candidate,
-                                                              const std::string &url,
-                                                              int error_code,
-                                                              const std::string &error_text)
+// See https://w2c.github.io/webrtc-pc/#event-icecandidateerror
+void ArcasPeerConnectionObserver::OnIceCandidateError(const std::string &address,
+                                                      int port,
+                                                      const std::string &url,
+                                                      int error_code,
+                                                      const std::string &error_text)
 {
-    std::cout << "on ice candidate error " << error_text;
-}
 
-// See https://w3c.github.io/webrtc-pc/#event-icecandidateerror
-void ArcasInternalPeerConnectionObserver::OnIceCandidateError(const std::string &address,
-                                                              int port,
-                                                              const std::string &url,
-                                                              int error_code,
-                                                              const std::string &error_text)
-{
-    std::cout << "on ice candidate error " << error_text;
-}
+    observer->on_ice_candidate_error_address_port(rust::String(address.c_str()), port, rust::String(url.c_str()), error_code, rust::String(error_text.c_str()));
+};
 
-void ArcasInternalPeerConnectionObserver::OnIceCandidatesRemoved(
+void ArcasPeerConnectionObserver::OnIceCandidatesRemoved(
     const std::vector<cricket::Candidate> &candidates)
 {
-    std::cout << "on ice candidate removed\n";
-}
+    rust::Vec<rust::String> list;
 
-void ArcasInternalPeerConnectionObserver::OnIceConnectionReceivingChange(bool receiving)
+    for (auto candidate : candidates)
+    {
+        list.push_back(candidate.id().c_str());
+    }
+
+    observer->on_ice_candidates_removed(list);
+};
+
+void ArcasPeerConnectionObserver::OnIceConnectionReceivingChange(bool receiving)
 {
-    std::cout << "on ice connection receiving change\n";
-}
+    observer->on_ice_connection_receiving_change(receiving);
+};
 
-void ArcasInternalPeerConnectionObserver::OnIceSelectedCandidatePairChanged(
+void ArcasPeerConnectionObserver::OnIceSelectedCandidatePairChanged(
     const cricket::CandidatePairChangeEvent &event)
 {
-    std::cout << "ice selected candidate pair changed\n";
-}
+    ArcasCandidatePairChangeEvent rust;
+    rust.selected_remote_id = rust::String(event.selected_candidate_pair.remote.id().c_str());
+    rust.selected_local_id = rust::String(event.selected_candidate_pair.local.id().c_str());
+    rust.last_data_received_ms = event.last_data_received_ms;
+    rust.reason = rust::String(event.reason.c_str());
+    rust.estimated_disconnected_time_ms = event.estimated_disconnected_time_ms;
+    observer->on_ice_selected_candidate_pair_change(rust);
+};
 
-void ArcasInternalPeerConnectionObserver::OnAddTrack(
+void ArcasPeerConnectionObserver::OnAddTrack(
     rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver,
     const std::vector<rtc::scoped_refptr<webrtc::MediaStreamInterface>> &streams)
 {
-    std::cout << "add track\n";
-}
+    auto rust = std::make_unique<ArcasRTPReceiver>(receiver);
+    observer->on_add_track(std::move(rust));
+};
 
-void ArcasInternalPeerConnectionObserver::OnTrack(
+void ArcasPeerConnectionObserver::OnTrack(
     rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver)
 {
-    std::cout << "on track\n";
-}
+    auto rust = std::make_unique<ArcasRTPTransceiver>(transceiver);
+    observer->on_track(std::move(rust));
+};
 
-void ArcasInternalPeerConnectionObserver::OnRemoveTrack(
+void ArcasPeerConnectionObserver::OnRemoveTrack(
     rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver)
 {
-    std::cout << "on remove track\n";
-}
+    auto rust = std::make_unique<ArcasRTPReceiver>(receiver);
+    observer->on_remove_track(std::move(rust));
+};
 
-void ArcasInternalPeerConnectionObserver::OnInterestingUsage(int usage_pattern)
+void ArcasPeerConnectionObserver::OnInterestingUsage(int usage_pattern)
 {
-    std::cout << "on interesting\n";
-}
+    observer->on_interesting_usage(usage_pattern);
+};

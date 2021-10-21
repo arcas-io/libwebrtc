@@ -1,8 +1,8 @@
 #include "iostream"
 #include "rust/cxx.h"
 #include "libwebrtc-sys/include/peer_connection_factory.h"
+#include "libwebrtc-sys/include/peer_connection_observer.h"
 #include "libwebrtc-sys/src/lib.rs.h"
-#include "libwebrtc-sys/include/internal_observer.h"
 
 class ArcasPeerConnectionFactory::impl
 {
@@ -84,9 +84,7 @@ std::unique_ptr<ArcasPeerConnectionFactory> create_factory()
     dependencies.task_queue_factory = webrtc::CreateDefaultTaskQueueFactory();
     dependencies.event_log_factory = std::make_unique<webrtc::RtcEventLogFactory>(dependencies.task_queue_factory.get());
 
-    auto adm = worker_thread->Invoke<rtc::scoped_refptr<webrtc::AudioDeviceModule>>(
-        RTC_FROM_HERE, [&dependencies]()
-        { return webrtc::FakeAudioDeviceModule::Create(webrtc::AudioDeviceModule::kDummyAudio, dependencies.task_queue_factory.get()); });
+    auto adm = rtc::make_ref_counted<ArcasAudioDeviceModule>();
 
     cricket::MediaEngineDependencies media_deps;
     media_deps.task_queue_factory = dependencies.task_queue_factory.get();
@@ -104,7 +102,6 @@ std::unique_ptr<ArcasPeerConnectionFactory> create_factory()
 
     RTC_LOG(LS_INFO) << ">>>>>>>>>>>>>>>>>>> instantiated PEERCONNECTION_FACTORY";
 
-    rtc::LogMessage::SetLogToStderr(rtc::LS_VERBOSE);
     auto result = std::make_unique<ArcasPeerConnectionFactory>(
         std::move(factory),
         std::move(signal_thread),
@@ -115,29 +112,38 @@ std::unique_ptr<ArcasPeerConnectionFactory> create_factory()
 }
 
 // Here since we need the internal observer.
-std::unique_ptr<ArcasPeerConnection> ArcasPeerConnectionFactory::create_peer_connection(ArcasRTCPeerConnectionConfig config, rust::Box<ArcasRustPeerConnectionObserver> observer) const
+std::unique_ptr<ArcasPeerConnection> ArcasPeerConnectionFactory::create_peer_connection(std::unique_ptr<webrtc::PeerConnectionInterface::RTCConfiguration> pc_config, rust::Box<ArcasRustPeerConnectionObserver> observer) const
 {
-    ArcasInternalPeerConnectionObserver mgr(std::move(observer));
-    webrtc::PeerConnectionInterface::RTCConfiguration pc_config;
-    webrtc::PeerConnectionDependencies deps(&mgr);
+    auto mgr = rtc::make_ref_counted<ArcasPeerConnectionObserver>(std::move(observer));
+    webrtc::PeerConnectionDependencies deps(mgr);
 
-    // copy over configurations...
-    pc_config.sdp_semantics = config.sdp_semantics;
+    auto pc = api->factory->CreatePeerConnection(*pc_config, std::move(deps));
+    return std::make_unique<ArcasPeerConnection>(std::move(pc), mgr);
+}
 
-    for (auto &ice_server : config.ice_servers)
+std::unique_ptr<webrtc::PeerConnectionInterface::RTCConfiguration> create_rtc_configuration(ArcasPeerConnectionConfig config)
+{
+    auto rtc = std::make_unique<webrtc::PeerConnectionInterface::RTCConfiguration>();
+    webrtc::PeerConnectionInterface::IceServers servers;
+
+    rtc->sdp_semantics = config.sdp_semantics;
+    rtc->servers = servers;
+
+    for (auto server_config : config.ice_servers)
     {
-        webrtc::PeerConnectionInterface::IceServer server;
-        // XXX: Should be able to just use std::string() operator but must use c_str instead due to linking error.
-        server.password = std::string(ice_server.password.c_str());
-        std::vector<std::string> urls;
+        webrtc::PeerConnectionInterface::IceServer rtc_ice_server;
+        std::vector<std::string> rtc_urls;
 
-        for (auto &url : ice_server.urls)
+        for (auto url : server_config.urls)
         {
-            urls.push_back(std::string(url.c_str()));
+            auto rtc_url = std::string(url.c_str());
+            rtc_urls.push_back(rtc_url);
         }
-        server.urls = urls;
+
+        rtc_ice_server.urls = rtc_urls;
+        rtc_ice_server.username = std::string(server_config.username.c_str());
+        rtc_ice_server.password = std::string(server_config.password.c_str());
     }
 
-    auto pc = api->factory->CreatePeerConnection(pc_config, std::move(deps));
-    return std::make_unique<ArcasPeerConnection>(std::move(pc));
+    return rtc;
 }

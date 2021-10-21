@@ -1,21 +1,33 @@
+
 #pragma once
 #include "rust/cxx.h"
-#include "libwebrtc-sys/include/internal_observer.h"
+// #include "libwebrtc-sys/src/lib.rs.h"
 #include "api/peer_connection_interface.h"
-#include "iostream"
+#include "libwebrtc-sys/include/rtp_receiver.h"
+#include "libwebrtc-sys/include/rtp_transceiver.h"
+#include "libwebrtc-sys/include/media_stream.h"
+#include "libwebrtc-sys/include/data_channel.h"
+#include "libwebrtc-sys/include/rust_shared.h"
 
-// Opaque rust object.
-struct ArcasRustPeerConnectionObserver;
-
-class ArcasInternalPeerConnectionObserver : public webrtc::PeerConnectionObserver
+class ArcasPeerConnectionObserver : public webrtc::PeerConnectionObserver, public rtc::RefCountInterface
 {
+
 private:
     rust::Box<ArcasRustPeerConnectionObserver> observer;
 
 public:
-    ArcasInternalPeerConnectionObserver(rust::Box<ArcasRustPeerConnectionObserver> observer);
+    ArcasPeerConnectionObserver(rust::Box<ArcasRustPeerConnectionObserver> observer) : observer(std::move(observer))
+    {
+    }
+
+    void AddRef() const {}
+    rtc::RefCountReleaseStatus Release()
+    {
+        return rtc::RefCountReleaseStatus::kDroppedLastRef;
+    }
 
     void OnSignalingChange(webrtc::PeerConnectionInterface::SignalingState new_state);
+
     void OnAddStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream);
 
     void OnRemoveStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream);
@@ -34,6 +46,7 @@ public:
 
     void OnConnectionChange(
         webrtc::PeerConnectionInterface::PeerConnectionState new_state);
+
     void OnIceGatheringChange(
         webrtc::PeerConnectionInterface::IceGatheringState new_state);
 
@@ -44,12 +57,13 @@ public:
                              int error_code,
                              const std::string &error_text);
 
-    // See https://w3c.github.io/webrtc-pc/#event-icecandidateerror
+    // See https://w2c.github.io/webrtc-pc/#event-icecandidateerror
     void OnIceCandidateError(const std::string &address,
                              int port,
                              const std::string &url,
                              int error_code,
                              const std::string &error_text);
+
     void OnIceCandidatesRemoved(
         const std::vector<cricket::Candidate> &candidates);
 
@@ -64,9 +78,7 @@ public:
 
     void OnTrack(
         rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver);
-
     void OnRemoveTrack(
         rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver);
-
     void OnInterestingUsage(int usage_pattern);
 };

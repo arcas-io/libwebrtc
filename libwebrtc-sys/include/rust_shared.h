@@ -4,3 +4,5 @@
 struct ArcasRustPeerConnectionObserver;
 struct ArcasRTCPeerConnectionConfig;
 struct ArcasRustCreateSessionDescriptionObserver;
+struct ArcasRustSetSessionDescriptionObserver;
+struct ArcasPeerConnectionConfig;

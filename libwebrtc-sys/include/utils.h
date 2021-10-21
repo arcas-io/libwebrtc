@@ -1,4 +1,5 @@
 #pragma once
+#include "rust/cxx.h"
 #include "libwebrtc-sys/include/webrtc_api.h"
 #include "libwebrtc-sys/include/peer_connection_factory.h"
 
