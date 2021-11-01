@@ -1,7 +1,6 @@
 use std::env;
 use std::fmt;
 use std::fs;
-use std::os;
 use std::path;
 use std::path::Path;
 use std::path::PathBuf;
@@ -16,124 +15,6 @@ const LIBWEBRTC_REVISION: &str = "27edde3182ccc9c6afcd65b7e6d8b6558cb49d64";
 const MAC_SDKS: &str =
     "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs";
 
-struct LibWebRTCDefines {
-    defines: Vec<(String, String)>,
-    flags: Vec<String>,
-}
-
-impl LibWebRTCDefines {
-    pub fn new(target_os: String, libwebrtc_header: String) -> LibWebRTCDefines {
-        let mut flags = vec!["-std=c++14".to_owned()];
-        // Base defines that every libwebrtc build contains.
-        let mut defines = vec![
-            ("UDEV".to_owned(), "".to_owned()),
-            ("USE_AURA".to_owned(), "1".to_owned()),
-            ("USE_OZONE".to_owned(), "1".to_owned()),
-            ("USE_NSS_CERTS".to_owned(), "1".to_owned()),
-            ("DYNAMIC_ANNOTATIONS_ENABLED".to_owned(), "0".to_owned()),
-            ("WEBRTC_ENABLE_PROTOBUF".to_owned(), "0".to_owned()),
-            (
-                "WEBRTC_INCLUDE_INTERNAL_AUDIO_DEVICE".to_owned(),
-                "".to_owned(),
-            ),
-            ("RTC_ENABLE_VP9".to_owned(), "".to_owned()),
-            ("WEBRTC_HAVE_SCTP".to_owned(), "".to_owned()),
-            ("WEBRTC_LIBRARY_IMPL".to_owned(), "".to_owned()),
-            ("WEBRTC_ENABLE_AVX2".to_owned(), "".to_owned()),
-            (
-                "WEBRTC_NON_STATIC_TRACE_EVENT_HANDLERS".to_owned(),
-                "0".to_owned(),
-            ),
-            ("ABSL_ALLOCATOR_NOTHROW".to_owned(), "1".to_owned()),
-            ("NDEBUG".to_owned(), "".to_owned()),
-            ("NVALGRIND".to_owned(), "".to_owned()),
-            ("HAVE_WEBRTC_VIDEO".to_owned(), "".to_owned()),
-        ];
-
-        match target_os.as_str() {
-            "macos" => {
-                let mut macos_defines = vec![
-                    ("WEBRTC_ENABLE_OBJC_SYMBOL_EXPORT".to_owned(), "".to_owned()),
-                    ("WEBRTC_POSIX".to_owned(), "".to_owned()),
-                    ("WEBRTC_MAC".to_owned(), "".to_owned()),
-                ];
-                let sysroot = format!("-isysroot{}", get_mac_sysroot());
-                flags.push(sysroot);
-                flags.push("-stdlib=libc++".to_owned());
-                defines.append(&mut macos_defines);
-            }
-            "linux" => {
-                let mut linux_defines = vec![
-                    ("USE_X11".to_owned(), "1".to_owned()),
-                    ("WEBRTC_POSIX".to_owned(), "".to_owned()),
-                    ("WEBRTC_LINUX".to_owned(), "".to_owned()),
-                    ("_GNU_SOURCE".to_owned(), "".to_owned()),
-                    ("_FORTIFY_SOURCE".to_owned(), "2".to_owned()),
-                    ("_FILE_OFFSET_BITS".to_owned(), "64".to_owned()),
-                    ("_LARGEFILE_SOURCE".to_owned(), "".to_owned()),
-                    ("_LARGEFILE64_SOURCE".to_owned(), "".to_owned()),
-                    ("__STDC_CONSTANT_MACROS".to_owned(), "".to_owned()),
-                    ("__STDC_FORMAT_MACROS".to_owned(), "".to_owned()),
-                    ("_LIBCPP_ABI_UNSTABLE".to_owned(), "".to_owned()),
-                    (
-                        "_LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS".to_owned(),
-                        "".to_owned(),
-                    ),
-                    (
-                        "_LIBCXXABI_DISABLE_VISIBILITY_ANNOTATIONS".to_owned(),
-                        "".to_owned(),
-                    ),
-                    ("_LIBCPP_ENABLE_NODISCARD".to_owned(), "".to_owned()),
-                    ("_LIBCPP_DEBUG".to_owned(), "0".to_owned()),
-                ];
-                defines.append(&mut linux_defines);
-
-                let mut linux_flags = vec![
-                    "-nostdinc++".to_owned(),
-                    format!(
-                        "-isystem{}/buildtools/third_party/libc++/trunk/include",
-                        libwebrtc_header.to_owned(),
-                    ),
-                    format!(
-                        "-isystem{}/buildtools/third_party/libc++abi/trunk/include",
-                        libwebrtc_header.to_owned()
-                    ),
-                    format!(
-                        "-isystem{}/build/linux/debian_sid_amd64-sysroot",
-                        libwebrtc_header.to_owned()
-                    ),
-                ];
-
-                flags.append(&mut linux_flags);
-            }
-            _ => {
-                eprintln!("unsupported platform");
-                exit(1);
-            }
-        }
-
-        LibWebRTCDefines { defines, flags }
-    }
-
-    pub fn clang_flags(&self) -> Vec<String> {
-        let define_flags: Vec<String> = self
-            .defines
-            .iter()
-            .map(|(define, value)| {
-                let format = if value.len() > 0 {
-                    format!("-D{}={}", define, value)
-                } else {
-                    format!("-D{}", define)
-                };
-                format
-            })
-            .collect();
-
-        let mut flags = self.flags.clone();
-        flags.append(&mut define_flags.into());
-        flags
-    }
-}
 fn get_mac_sysroot() -> String {
     let mut sdks: Vec<String> = vec![];
     let files = fs::read_dir(MAC_SDKS).unwrap();
@@ -228,8 +109,6 @@ fn build_entrypoint(output_dir: String, target_os: String) {
         libwebrtc_header
     );
 
-    let flag_builder = LibWebRTCDefines::new(target_os.clone(), libwebrtc_header.to_owned());
-
     let mut include_path_list: Vec<PathBuf> = include_paths
         .iter()
         .map(|path| {
@@ -321,6 +200,7 @@ fn build_entrypoint(output_dir: String, target_os: String) {
     let mut build_defines = builder
         .compiler(clang)
         .flag("-std=c++14")
+        .flag("-fno-rtti")
         .files(cc_files)
         .include(libwebrtc_header.to_owned())
         .define("UDEV", None)

@@ -9,7 +9,7 @@
 #include "libwebrtc-sys/include/data_channel.h"
 #include "libwebrtc-sys/include/rust_shared.h"
 
-class ArcasPeerConnectionObserver : public webrtc::PeerConnectionObserver, public rtc::RefCountInterface
+class ArcasPeerConnectionObserver : public webrtc::PeerConnectionObserver, public rtc::RefCountedBase
 {
 
 private:
@@ -20,10 +20,9 @@ public:
     {
     }
 
-    void AddRef() const {}
-    rtc::RefCountReleaseStatus Release()
+    ~ArcasPeerConnectionObserver()
     {
-        return rtc::RefCountReleaseStatus::kDroppedLastRef;
+        RTC_LOG(LS_VERBOSE) << "~ArcasPeerConnectionObserver";
     }
 
     void OnSignalingChange(webrtc::PeerConnectionInterface::SignalingState new_state);

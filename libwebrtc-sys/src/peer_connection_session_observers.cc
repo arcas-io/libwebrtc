@@ -15,9 +15,7 @@ void ArcasCreateSessionDescriptionObserver::OnSuccess(webrtc::SessionDescription
 }
 void ArcasCreateSessionDescriptionObserver::OnFailure(webrtc::RTCError error)
 {
-    std::unique_ptr<webrtc::RTCError> rtc_error;
-    *rtc_error = error;
-    observer->on_failure(std::move(rtc_error));
+    observer->on_failure(std::move(std::make_unique<ArcasRTCError>(error)));
 }
 
 void ArcasSetDescriptionObserver::OnSetLocalDescriptionComplete(webrtc::RTCError error)
@@ -28,9 +26,7 @@ void ArcasSetDescriptionObserver::OnSetLocalDescriptionComplete(webrtc::RTCError
     }
     else
     {
-        std::unique_ptr<webrtc::RTCError> rtc_error;
-        *rtc_error = error;
-        observer->on_failure(std::move(rtc_error));
+        observer->on_failure(std::move(std::make_unique<ArcasRTCError>(error)));
     }
 }
 void ArcasSetDescriptionObserver::OnSetRemoteDescriptionComplete(webrtc::RTCError error)
@@ -41,9 +37,7 @@ void ArcasSetDescriptionObserver::OnSetRemoteDescriptionComplete(webrtc::RTCErro
     }
     else
     {
-        std::unique_ptr<webrtc::RTCError> rtc_error;
-        *rtc_error = error;
-        observer->on_failure(std::move(rtc_error));
+        observer->on_failure(std::move(std::make_unique<ArcasRTCError>(error)));
     }
 }
 

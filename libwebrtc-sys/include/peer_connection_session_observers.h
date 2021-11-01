@@ -4,37 +4,52 @@
 #include "api/peer_connection_interface.h"
 #include "libwebrtc-sys/include/rust_shared.h"
 
-class ArcasCreateSessionDescriptionObserver : public webrtc::CreateSessionDescriptionObserver
+class ArcasCreateSessionDescriptionObserver : public webrtc::CreateSessionDescriptionObserver, public rtc::RefCountedBase
 {
 private:
     rust::Box<ArcasRustCreateSessionDescriptionObserver> observer;
 
 public:
     ArcasCreateSessionDescriptionObserver(rust::Box<ArcasRustCreateSessionDescriptionObserver> observer);
-    // XXX: This implementation requires this be held by a single ref
-    void AddRef() const {}
-    rtc::RefCountReleaseStatus Release() const
+
+    ~ArcasCreateSessionDescriptionObserver()
     {
-        return rtc::RefCountReleaseStatus::kDroppedLastRef;
+        RTC_LOG(LS_VERBOSE) << "~ArcasCreateSessionDescriptionObserver";
     }
 
-    void OnSuccess(webrtc::SessionDescriptionInterface *desc);
-    void OnFailure(webrtc::RTCError error);
+    void AddRef() const override
+    {
+        rtc::RefCountedBase::AddRef();
+    }
+    rtc::RefCountReleaseStatus Release() const override
+    {
+        return rtc::RefCountedBase::Release();
+    }
+
+    void OnSuccess(webrtc::SessionDescriptionInterface *desc) override;
+    void OnFailure(webrtc::RTCError error) override;
 };
 
-class ArcasSetDescriptionObserver : public webrtc::SetLocalDescriptionObserverInterface, public webrtc::SetRemoteDescriptionObserverInterface
+class ArcasSetDescriptionObserver : public webrtc::SetLocalDescriptionObserverInterface, public webrtc::SetRemoteDescriptionObserverInterface, public rtc::RefCountedBase
 {
 private:
     rust::Box<ArcasRustSetSessionDescriptionObserver> observer;
 
 public:
     ArcasSetDescriptionObserver(rust::Box<ArcasRustSetSessionDescriptionObserver> observer);
-    void OnSetLocalDescriptionComplete(webrtc::RTCError error);
-    void OnSetRemoteDescriptionComplete(webrtc::RTCError error);
-    // XXX: This implementation requires this be held by a single ref
-    void AddRef() const {}
-    rtc::RefCountReleaseStatus Release() const
+    ~ArcasSetDescriptionObserver()
     {
-        return rtc::RefCountReleaseStatus::kDroppedLastRef;
+        RTC_LOG(LS_VERBOSE) << "~ArcasSetDescriptionObserver";
+    }
+    void OnSetLocalDescriptionComplete(webrtc::RTCError error) override;
+    void OnSetRemoteDescriptionComplete(webrtc::RTCError error) override;
+    // XXX: This implementation requires this be held by a single ref
+    void AddRef() const override
+    {
+        rtc::RefCountedBase::AddRef();
+    }
+    rtc::RefCountReleaseStatus Release() const override
+    {
+        return rtc::RefCountedBase::Release();
     }
 };

@@ -8,6 +8,7 @@ authors = ["Little Bear Labs, Inc"]
 
 [dependencies]
 cxx = "1.0.56"
+lazy_static = "1.4.0"
 parking_lot = "0.11.2"
 
 [build-dependencies]

@@ -5,10 +5,9 @@
 #include <iostream>
 
 ArcasPeerConnection::ArcasPeerConnection(
-    rtc::scoped_refptr<webrtc::PeerConnectionInterface> api,
-    rtc::scoped_refptr<ArcasPeerConnectionObserver> observer) : api(std::move(api)),
-                                                                observer(observer)
+    rtc::scoped_refptr<webrtc::PeerConnectionInterface> api) : api(std::move(api))
 {
+    RTC_LOG(LS_VERBOSE) << "ArcasPeerConnection";
 }
 
 void ArcasPeerConnection::create_offer(rust::Box<ArcasRustCreateSessionDescriptionObserver> observer) const
@@ -38,13 +37,26 @@ void ArcasPeerConnection::set_remote_description(rust::Box<ArcasRustSetSessionDe
     api->SetRemoteDescription(std::move(sdp->clone_sdp()), ref_counted);
 }
 
-std::unique_ptr<ArcasRTPTransceiver> ArcasPeerConnection::add_simple_media_transceiver(cricket::MediaType media) const
+std::unique_ptr<ArcasRTPVideoTransceiver> ArcasPeerConnection::add_video_transceiver() const
 {
-    auto result = api->AddTransceiver(media);
+    auto result = api->AddTransceiver(cricket::MEDIA_TYPE_VIDEO);
 
     if (result.ok())
     {
-        return std::make_unique<ArcasRTPTransceiver>(result.MoveValue());
+        return std::make_unique<ArcasRTPVideoTransceiver>(result.MoveValue());
+    }
+
+    // TODO: Handle error cases.
+    return nullptr;
+}
+
+std::unique_ptr<ArcasRTPAudioTransceiver> ArcasPeerConnection::add_audio_transceiver() const
+{
+    auto result = api->AddTransceiver(cricket::MEDIA_TYPE_AUDIO);
+
+    if (result.ok())
+    {
+        return std::make_unique<ArcasRTPAudioTransceiver>(result.MoveValue());
     }
 
     // TODO: Handle error cases.

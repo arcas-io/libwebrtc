@@ -9,5 +9,3 @@ private:
 public:
     ArcasDataChannel(rtc::scoped_refptr<webrtc::DataChannelInterface> api);
 };
-
-std::unique_ptr<ArcasDataChannel> nutbar();

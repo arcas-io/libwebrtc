@@ -1,3 +1,4 @@
+#pragma once
 #include "api/audio_codecs/audio_decoder_factory_template.h"
 #include "api/audio_codecs/audio_encoder_factory_template.h"
 #include "api/audio_codecs/opus/audio_decoder_opus.h"
@@ -14,6 +15,7 @@
 #include "modules/audio_processing/include/audio_processing.h"
 #include "api/create_peerconnection_factory.h"
 #include "api/scoped_refptr.h"
+#include "pc/video_rtp_track_source.h"
 #include "api/peer_connection_interface.h"
 #include "api/call/call_factory_interface.h"
 #include "api/task_queue/default_task_queue_factory.h"
@@ -31,3 +33,5 @@
 #include "rtc_base/ref_count.h"
 #include "rtc_base/thread.h"
 #include "rtc_base/logging.h"
+#include "api/video_codecs/video_encoder_factory.h"
+#include "api/array_view.h"

@@ -1,5 +1,10 @@
 #include "libwebrtc-sys/include/webrtc_api.h"
+#include "libwebrtc-sys/include/sdp_video_format.h"
 #include "libwebrtc-sys/include/utils.h"
+#include "libwebrtc-sys/include/video_codec.h"
+#include "libwebrtc-sys/include/encoded_image_factory.h"
+#include "libwebrtc-sys/include/video_encoder.h"
+#include "libwebrtc-sys/include/video_encoder_factory.h"
 #include "libwebrtc-sys/include/media_stream.h"
 #include "libwebrtc-sys/include/data_channel.h"
 #include "libwebrtc-sys/include/session_description.h"
@@ -9,3 +14,13 @@
 #include "libwebrtc-sys/include/data_channel.h"
 #include "libwebrtc-sys/include/rtp_receiver.h"
 #include "libwebrtc-sys/include/peer_connection_factory.h"
+#include "libwebrtc-sys/include/rtp_parameters.h"
+#include "libwebrtc-sys/include/video_track_source.h"
+
+// The below header statements will cause Cxx to generate UniquePtrTarget types
+// for anything returned by these functions. This is required for some reason and is
+// not done automatically just by using these types.
+
+std::unique_ptr<ArcasDataChannel> gen_unique_ptr1();
+std::unique_ptr<ArcasMediaStream> gen_unique_ptr2();
+std::unique_ptr<ArcasVideoCodecSettings> gen_unique_ptr3();
