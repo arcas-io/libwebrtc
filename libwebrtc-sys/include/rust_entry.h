@@ -9,6 +9,7 @@
 #include "libwebrtc-sys/include/data_channel.h"
 #include "libwebrtc-sys/include/session_description.h"
 #include "libwebrtc-sys/include/peer_connection_session_observers.h"
+#include "libwebrtc-sys/include/peer_connection_stats_callback.h"
 #include "libwebrtc-sys/include/peer_connection.h"
 #include "libwebrtc-sys/include/peer_connection.h"
 #include "libwebrtc-sys/include/data_channel.h"

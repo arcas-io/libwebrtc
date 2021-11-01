@@ -43,6 +43,7 @@ lazy_static::lazy_static! {
 
 #[cxx::bridge]
 pub mod ffi {
+
     #[derive(Debug)]
     struct ArcasRustDict {
         key: String,
@@ -316,6 +317,70 @@ pub mod ffi {
         sdp_semantics: ArcasSDPSemantics,
     }
 
+    // stats types
+    #[derive(Debug)]
+    struct ArcasVideoReceiverStats {
+        pub ssrc: u32,
+        pub packets_received: u32,
+        pub packets_lost: i32,
+        pub packets_repaired: u32,
+        pub bytes_received: u64,
+        pub frames_decoded: u32,
+        pub keyframes_decoded: u32,
+        pub frames_dropped: u32,
+        pub total_decode_time: f64,
+        pub frame_width: u32,
+        pub frame_height: u32,
+    }
+
+    #[derive(Debug)]
+    struct ArcasVideoSenderStats {
+        pub ssrc: u32,
+        pub packets_sent: u32,
+        pub bytes_sent: u64,
+        pub frames_encoded: u32,
+        pub key_frames_encoded: u32,
+        pub total_encode_time: f64,
+        pub frame_width: u32,
+        pub frame_height: u32,
+        pub retransmitted_packets_sent: u64,
+        pub retransmitted_bytes_sent: u64,
+        pub total_packet_send_delay: f64,
+        pub nack_count: u32,
+        pub fir_count: u32,
+        pub pli_count: u32,
+        pub quality_limitation_reason: u32, // 0 - kNone, 1 - kCpu, 2 - kBandwidth, 3 - kOther
+        pub quality_limitation_resolution_changes: u32,
+        pub remote_packets_lost: i32,
+        pub remote_jitter: f64,
+        pub remote_round_trip_time: f64,
+    }
+
+    #[derive(Debug)]
+    struct ArcasAudioReceiverStats {
+        pub ssrc: u32,
+        pub packets_received: u32,
+        pub packets_lost: i32,
+        pub bytes_received: u64,
+        pub jitter: f64,
+        pub frames_decoded: u32,
+        pub total_decode_time: f64,
+        pub audio_level: f64,
+        pub total_audio_energy: f64,
+    }
+
+    #[derive(Debug)]
+    struct ArcasAudioSenderStats {
+        pub ssrc: u32,
+        pub packets_sent: u32,
+        pub bytes_sent: u64,
+        pub remote_packets_lost: i32,
+        pub remote_jitter: f64,
+        pub remote_round_trip_time: f64,
+        pub audio_level: f64,
+        pub total_audio_energy: f64,
+    }
+
     unsafe extern "C++" {
         include!("libwebrtc-sys/include/alias.h");
         include!("libwebrtc-sys/include/rust_entry.h");
@@ -406,6 +471,7 @@ pub mod ffi {
         type ArcasEncodedImageFactory;
         type ArcasPeerConnectionObserver;
         type ArcasCodecSpecificInfo;
+        type ArcasRTCStatsCollectorCallback;
 
         // wrapper functions around constructors.
         fn create_factory<'a>() -> UniquePtr<ArcasPeerConnectionFactory<'a>>;
@@ -475,6 +541,8 @@ pub mod ffi {
             track: UniquePtr<ArcasVideoTrack>,
             stream_ids: Vec<String>,
         );
+
+        fn get_stats(self: &ArcasPeerConnection, callback: Box<ArcasRustRTCStatsCollectorCallback>);
 
         // session description
         fn to_string(self: &ArcasSessionDescription) -> String;
@@ -715,6 +783,16 @@ pub mod ffi {
         type ArcasRustVideoEncoder;
         #[rust_name = "VideoEncoderSelectorProxy"]
         type ArcasRustVideoEncoderSelector;
+        type ArcasRustRTCStatsCollectorCallback;
+
+        // Stats callbacks
+        fn on_stats_delivered(
+            self: &ArcasRustRTCStatsCollectorCallback,
+            video_rx: Vec<ArcasVideoReceiverStats>,
+            audio_rx: Vec<ArcasAudioReceiverStats>,
+            video_tx: Vec<ArcasVideoSenderStats>,
+            audio_tx: Vec<ArcasAudioSenderStats>,
+        );
 
         // ArcasRustCreateSessionDescriptionObserver
         fn on_success(
@@ -921,5 +999,33 @@ impl ArcasRustSetSessionDescriptionObserver {
     }
     fn on_failure(&self, err: UniquePtr<crate::ffi::ArcasRTCError>) {
         (self.failure)(err);
+    }
+}
+
+type StatsCallbackFn = Fn(
+    Vec<crate::ffi::ArcasVideoReceiverStats>,
+    Vec<crate::ffi::ArcasAudioReceiverStats>,
+    Vec<crate::ffi::ArcasVideoSenderStats>,
+    Vec<crate::ffi::ArcasAudioSenderStats>,
+) -> ();
+
+pub struct ArcasRustRTCStatsCollectorCallback {
+    cb: Box<StatsCallbackFn>,
+}
+
+impl ArcasRustRTCStatsCollectorCallback {
+    pub fn new(cb: Box<StatsCallbackFn>) -> Self {
+        Self { cb }
+    }
+
+    fn on_stats_delivered(
+        self: &ArcasRustRTCStatsCollectorCallback,
+        video_rx: Vec<crate::ffi::ArcasVideoReceiverStats>,
+        audio_rx: Vec<crate::ffi::ArcasAudioReceiverStats>,
+        video_tx: Vec<crate::ffi::ArcasVideoSenderStats>,
+        audio_tx: Vec<crate::ffi::ArcasAudioSenderStats>,
+    ) {
+        println!("RUST: stats delivered");
+        (self.cb)(video_rx, audio_rx, video_tx, audio_tx)
     }
 }

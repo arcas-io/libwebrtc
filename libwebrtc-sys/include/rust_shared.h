@@ -17,3 +17,4 @@ struct ArcasVideoEncoderFactoryCodecSupport;
 struct ArcasSdpVideoFormatInit;
 struct ArcasSdpVideoFormatVecInit;
 struct ArcasVideoEncodingErrCode;
+struct ArcasRustRTCStatsCollectorCallback;

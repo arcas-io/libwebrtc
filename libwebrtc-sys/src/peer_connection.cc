@@ -2,6 +2,7 @@
 #include "rust/cxx.h"
 #include "libwebrtc-sys/include/peer_connection_observer.h"
 #include "libwebrtc-sys/include/peer_connection.h"
+#include "libwebrtc-sys/include/peer_connection_stats_callback.h"
 #include <iostream>
 
 ArcasPeerConnection::ArcasPeerConnection(
@@ -61,4 +62,9 @@ std::unique_ptr<ArcasRTPAudioTransceiver> ArcasPeerConnection::add_audio_transce
 
     // TODO: Handle error cases.
     return nullptr;
+}
+
+void ArcasPeerConnection::get_stats(rust::Box<ArcasRustRTCStatsCollectorCallback> cb) const {
+    auto cb_ = rtc::make_ref_counted<ArcasRTCStatsCollectorCallback>(std::move(cb));
+    api->GetStats(cb_);
 }

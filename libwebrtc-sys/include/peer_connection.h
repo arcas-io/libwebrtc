@@ -46,4 +46,6 @@ public:
 
         api->AddTrack(track->ref(), stream_ids);
     }
+
+    void get_stats(rust::Box<ArcasRustRTCStatsCollectorCallback> cb) const;
 };

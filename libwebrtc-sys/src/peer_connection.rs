@@ -162,13 +162,12 @@ mod tests {
 
     use cxx::{CxxString, SharedPtr};
 
+    use super::*;
     use crate::{
         ffi::{self, ArcasPeerConnectionObserver},
-        ArcasRustCreateSessionDescriptionObserver, ArcasRustSetSessionDescriptionObserver,
-        PeerConnectionObserverProxy,
+        ArcasRustCreateSessionDescriptionObserver, ArcasRustRTCStatsCollectorCallback,
+        ArcasRustSetSessionDescriptionObserver, PeerConnectionObserverProxy,
     };
-
-    use super::*;
 
     fn create_test_observer() -> SharedPtr<ffi::ArcasPeerConnectionObserver> {
         ffi::create_peer_connection_observer(Box::new(PeerConnectionObserverProxy::new(Box::new(
@@ -268,7 +267,7 @@ mod tests {
     }
 
     #[test]
-    fn test_basic_peer_connection_add_track() {
+    fn test_basic_get_stats() {
         let ice = ffi::ArcasICEServer {
             urls: vec!["stun:stun.l.google.com:19302".to_owned()],
             username: "".to_owned(),
@@ -311,9 +310,7 @@ mod tests {
             }
         }
 
-        let _transceiver = pc.add_video_transceiver();
         let (tx, rx) = mpsc::channel();
-
         pc.create_offer(Box::new(ArcasRustCreateSessionDescriptionObserver::new(
             Box::new(move |session_description| {
                 tx.send(session_description)
@@ -382,5 +379,18 @@ mod tests {
         );
         pc.set_remote_description(Box::new(observer), answer_for_remote);
         set_remote_rx2.recv().expect("Can finish connection loop");
+
+        let (tx, rx) = mpsc::channel::<()>();
+        let stats_cb =
+            ArcasRustRTCStatsCollectorCallback::new(Box::new(move |v_rx, a_rx, v_tx, a_tx| {
+                // println!("{:?} {:?} {:?} {:?}", v_rx, a_rx, v_tx, a_tx);
+                assert!(v_rx.len() == 0);
+                assert!(a_rx.len() == 0);
+                assert!(v_tx.len() == 1);
+                assert!(a_tx.len() == 0);
+                tx.send(()).expect("get_stats send failed")
+            }));
+        pc.get_stats(Box::new(stats_cb));
+        rx.recv().expect("awaiting message");
     }
 }
