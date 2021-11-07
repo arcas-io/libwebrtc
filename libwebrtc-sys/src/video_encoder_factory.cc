@@ -4,11 +4,6 @@
 std::vector<webrtc::SdpVideoFormat> ArcasVideoEncoderFactory::GetSupportedFormats() const
 {
     auto result = api->get_supported_formats();
-    RTC_LOG(LS_ERROR) << "STUFF : " << result->size();
-    if (result->size() == 1)
-    {
-        RTC_LOG(LS_ERROR) << "STUFF : " << result.get()->at(0).ToString();
-    }
     return *result;
 };
 

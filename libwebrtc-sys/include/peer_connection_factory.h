@@ -21,10 +21,9 @@ public:
         RTC_LOG(LS_VERBOSE) << "~ArcasPeerConnectionFactory";
     }
 
-    std::unique_ptr<ArcasPeerConnection> create_peer_connection(std::unique_ptr<webrtc::PeerConnectionInterface::RTCConfiguration> config, std::shared_ptr<ArcasPeerConnectionObserver> observer) const
+    std::unique_ptr<ArcasPeerConnection> create_peer_connection(std::unique_ptr<webrtc::PeerConnectionInterface::RTCConfiguration> config, ArcasPeerConnectionObserver *observer) const
     {
-        *observer;
-        webrtc::PeerConnectionDependencies deps(observer.get());
+        webrtc::PeerConnectionDependencies deps(observer);
         RTC_LOG(LS_VERBOSE) << "BEFOEW BEFORE DEREF ";
         RTC_LOG(LS_VERBOSE) << "BEFORE DEREF ";
         auto result = api->CreatePeerConnectionOrError(*config, std::move(deps));
@@ -49,4 +48,4 @@ public:
 };
 
 std::unique_ptr<webrtc::PeerConnectionInterface::RTCConfiguration> create_rtc_configuration(ArcasPeerConnectionConfig config);
-std::shared_ptr<ArcasPeerConnectionObserver> create_peer_connection_observer(rust::Box<ArcasRustPeerConnectionObserver>);
+std::unique_ptr<ArcasPeerConnectionObserver> create_peer_connection_observer(rust::Box<ArcasRustPeerConnectionObserver>);

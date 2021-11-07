@@ -6,10 +6,10 @@
 
 /**
  * @brief Naming Conventions
- * 
+ *
  * This file exposes types within webrtc::* namespace (and it's sub namespaces) to the
  * top level with a prefix. This is helpful for binding ffi.
- * 
+ *
  * ArcasCxx<> = A existing C++ wrapper we're exposing to Rust
  * Arcas<> = A new C++ wrapper we're exposing to Rust
  * Arcas<> = Also applies to shared types
@@ -40,6 +40,12 @@ using ArcasCxxEncodedImage = webrtc::EncodedImage;
 using ArcasCxxRefCountedEncodedImageBuffer = rtc::scoped_refptr<webrtc::EncodedImageBuffer>;
 using ArcasCxxVideoCodecType = webrtc::VideoCodecType;
 using ArcasCxxRtpTransceiverDirection = webrtc::RtpTransceiverDirection;
+using ArcasCxxVideoCodecMode = webrtc::VideoCodecMode;
+using ArcasCxxCodecSpecificInfo = webrtc::CodecSpecificInfo;
+using ArcasCxxVideoCodec = webrtc::VideoCodec;
+using ArcasCxxVideoFrameType = webrtc::VideoFrameType;
+using ArcasCxxVideoCodecComplexity = webrtc::VideoCodecComplexity;
+using ArcasCxxInterLayerPredMode = webrtc::InterLayerPredMode;
 
 // using ArcasIceGatheringState = webrtc::PeerConnectionInterface::IceGatheringState;
 // using ArcasIceGatheringState = webrtc::PeerConnectionInterface::IceGatheringState;

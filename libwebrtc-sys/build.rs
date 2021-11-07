@@ -26,13 +26,13 @@ fn get_mac_sysroot() -> String {
 
     sdks = sdks
         .iter()
-        .filter(|value| return value.contains("MacOSX1"))
+        .filter(|value| value.contains("MacOSX1"))
         .map(|original| original.to_owned())
         .collect();
 
     let last = sdks.last().unwrap();
 
-    format!("{}/{}", MAC_SDKS, &last).to_owned()
+    format!("{}/{}", MAC_SDKS, &last)
 }
 
 fn get_cc_files() -> Vec<String> {
@@ -46,7 +46,7 @@ fn get_cc_files() -> Vec<String> {
 
     cc_files = cc_files
         .iter()
-        .filter(|value| return value.ends_with(".cc"))
+        .filter(|value| value.ends_with(".cc"))
         .map(|original| format!("src/{}", original.to_owned()))
         .collect();
 
@@ -64,7 +64,7 @@ fn get_header_files() -> Vec<String> {
 
     header_files = header_files
         .iter()
-        .filter(|value| return value.ends_with(".h"))
+        .filter(|value| value.ends_with(".h"))
         .map(|original| format!("include/{}", original.to_owned()))
         .collect();
 
@@ -159,7 +159,7 @@ fn build_entrypoint(output_dir: String, target_os: String) {
     //         .unwrap()
     // )));
     include_path_list.push(
-        std::path::PathBuf::from(format!("{}/include", output_dir.clone()))
+        std::path::PathBuf::from(format!("{}/include", output_dir))
             .canonicalize()
             .unwrap(),
     );
@@ -255,21 +255,21 @@ fn build_entrypoint(output_dir: String, target_os: String) {
                 .flag(
                     format!(
                         "-isystem{}/buildtools/third_party/libc++/trunk/include",
-                        libwebrtc_header.to_owned(),
+                        libwebrtc_header,
                     )
                     .as_str(),
                 )
                 .flag(
                     format!(
                         "-isystem{}/buildtools/third_party/libc++abi/trunk/include",
-                        libwebrtc_header.to_owned()
+                        libwebrtc_header
                     )
                     .as_str(),
                 )
                 .flag(
                     format!(
                         "-isystem{}/build/linux/debian_sid_amd64-sysroot",
-                        libwebrtc_header.to_owned()
+                        libwebrtc_header
                     )
                     .as_str(),
                 )
@@ -287,7 +287,7 @@ fn main() {
     let outdir = Path::new("./webrtc/libwebrtc");
     let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
     let target_arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap();
-    let url = get_url(target_os.to_owned(), target_arch.to_owned()).unwrap();
+    let url = get_url(target_os.to_owned(), target_arch).unwrap();
 
     let name = String::from(
         Path::new(url.as_str())
@@ -332,7 +332,7 @@ fn main() {
 
     match env::var("WEBRTC_BUILD") {
         Ok(build_dir) => {
-            if build_dir.len() > 0 {
+            if !build_dir.is_empty() {
                 output_dir = build_dir;
             }
         }
@@ -341,7 +341,7 @@ fn main() {
 
     match env::var("WEBRTC_IN_TREE") {
         Ok(in_tree) => {
-            if in_tree.len() > 0 {
+            if !in_tree.is_empty() {
                 output_dir = path::PathBuf::from("../../build/libwebrtc/libwebrtc/dist")
                     .canonicalize()
                     .unwrap()
@@ -353,7 +353,7 @@ fn main() {
         Err(_) => {}
     }
 
-    build_entrypoint(output_dir, target_os.to_owned());
+    build_entrypoint(output_dir, target_os);
 }
 
 fn macos_link_search_path() -> Option<String> {

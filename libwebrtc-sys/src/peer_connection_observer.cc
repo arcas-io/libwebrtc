@@ -133,8 +133,17 @@ void ArcasPeerConnectionObserver::OnAddTrack(
 void ArcasPeerConnectionObserver::OnTrack(
     rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver)
 {
-    auto rust = std::make_unique<ArcasRTPTransceiver>(transceiver);
-    observer->on_track(std::move(rust));
+
+    if (transceiver->media_type() == cricket::MediaType::MEDIA_TYPE_AUDIO)
+    {
+        auto rust = std::make_unique<ArcasRTPAudioTransceiver>(transceiver);
+        observer->on_audio_track(std::move(rust));
+    }
+    else
+    {
+        auto rust = std::make_unique<ArcasRTPVideoTransceiver>(transceiver);
+        observer->on_video_track(std::move(rust));
+    }
 };
 
 void ArcasPeerConnectionObserver::OnRemoveTrack(

@@ -21,3 +21,7 @@ struct ArcasRustRTCStatsCollectorCallback;
 struct ArcasCreateSessionDescriptionResult;
 struct ArcasCreateICECandidateResult;
 struct ArcasTransceiverInit;
+struct ArcasRustEncodedImageCallbackHandler;
+struct ArcasVideoEncoderLossNotification;
+struct ArcasVideoEncoderInfo;
+struct ArcasVideoEncoderInfoFPSAllocation;
