@@ -18,3 +18,6 @@ struct ArcasSdpVideoFormatInit;
 struct ArcasSdpVideoFormatVecInit;
 struct ArcasVideoEncodingErrCode;
 struct ArcasRustRTCStatsCollectorCallback;
+struct ArcasCreateSessionDescriptionResult;
+struct ArcasCreateICECandidateResult;
+struct ArcasTransceiverInit;

@@ -17,9 +17,9 @@ class ArcasRTPVideoSender : public ArcasRTPSender
 public:
     ArcasRTPVideoSender(rtc::scoped_refptr<webrtc::RtpSenderInterface> api) : ArcasRTPSender(api){};
 
-    bool set_track(std::unique_ptr<ArcasVideoTrack> track)
+    bool set_track(const ArcasVideoTrack &track) const
     {
-        return api->SetTrack(track->ref());
+        return api->SetTrack(track.ref());
     }
 };
 

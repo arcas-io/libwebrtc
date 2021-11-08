@@ -39,6 +39,7 @@ using ArcasCxxVideoEncoderOptionalSelectorPointer = std::unique_ptr<webrtc::Vide
 using ArcasCxxEncodedImage = webrtc::EncodedImage;
 using ArcasCxxRefCountedEncodedImageBuffer = rtc::scoped_refptr<webrtc::EncodedImageBuffer>;
 using ArcasCxxVideoCodecType = webrtc::VideoCodecType;
+using ArcasCxxRtpTransceiverDirection = webrtc::RtpTransceiverDirection;
 
 // using ArcasIceGatheringState = webrtc::PeerConnectionInterface::IceGatheringState;
 // using ArcasIceGatheringState = webrtc::PeerConnectionInterface::IceGatheringState;

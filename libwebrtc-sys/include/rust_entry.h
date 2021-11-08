@@ -1,4 +1,5 @@
 #include "libwebrtc-sys/include/webrtc_api.h"
+#include "libwebrtc-sys/include/ice_candidate.h"
 #include "libwebrtc-sys/include/sdp_video_format.h"
 #include "libwebrtc-sys/include/utils.h"
 #include "libwebrtc-sys/include/video_codec.h"
@@ -11,12 +12,12 @@
 #include "libwebrtc-sys/include/peer_connection_session_observers.h"
 #include "libwebrtc-sys/include/peer_connection_stats_callback.h"
 #include "libwebrtc-sys/include/peer_connection.h"
-#include "libwebrtc-sys/include/peer_connection.h"
 #include "libwebrtc-sys/include/data_channel.h"
 #include "libwebrtc-sys/include/rtp_receiver.h"
 #include "libwebrtc-sys/include/peer_connection_factory.h"
 #include "libwebrtc-sys/include/rtp_parameters.h"
 #include "libwebrtc-sys/include/video_track_source.h"
+#include "libwebrtc-sys/include/api.h"
 
 // The below header statements will cause Cxx to generate UniquePtrTarget types
 // for anything returned by these functions. This is required for some reason and is
@@ -25,3 +26,4 @@
 std::unique_ptr<ArcasDataChannel> gen_unique_ptr1();
 std::unique_ptr<ArcasMediaStream> gen_unique_ptr2();
 std::unique_ptr<ArcasVideoCodecSettings> gen_unique_ptr3();
+std::unique_ptr<ArcasPeerConnectionConfig> gen_unique_ptr4();

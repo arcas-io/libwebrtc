@@ -1,5 +1,6 @@
 #pragma once
 #include "libwebrtc-sys/include/webrtc_api.h"
+#include "rust/cxx.h"
 
 class ArcasVideoTrack
 {
@@ -17,8 +18,13 @@ public:
         return api->content_hint();
     }
 
-    rtc::scoped_refptr<webrtc::VideoTrackInterface> ref()
+    rtc::scoped_refptr<webrtc::VideoTrackInterface> ref() const
     {
         return api;
+    }
+
+    rust::String id() const
+    {
+        return rust::String(api->id().c_str());
     }
 };

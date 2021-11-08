@@ -1,10 +1,15 @@
 use cxx::UniquePtr;
 
 use crate::ffi::{
-    ArcasCandidatePairChangeEvent, ArcasDataChannel, ArcasICECandidate, ArcasIceConnectionState,
-    ArcasIceGatheringState, ArcasMediaStream, ArcasPeerConnectionState, ArcasRTCSignalingState,
-    ArcasRTPReceiver, ArcasRTPTransceiver,
+    self, ArcasCandidatePairChangeEvent, ArcasDataChannel, ArcasICECandidate,
+    ArcasIceConnectionState, ArcasIceGatheringState, ArcasMediaStream, ArcasPeerConnectionState,
+    ArcasRTCSignalingState, ArcasRTPReceiver, ArcasRTPTransceiver,
 };
+
+unsafe impl<'a> Sync for ffi::ArcasPeerConnection<'a> {}
+unsafe impl<'a> Send for ffi::ArcasPeerConnection<'a> {}
+unsafe impl<'a> Sync for ffi::ArcasPeerConnectionFactory<'a> {}
+unsafe impl<'a> Send for ffi::ArcasPeerConnectionFactory<'a> {}
 
 pub trait PeerConnectionObserverImpl {
     fn on_signaling_state_change(&self, state: ArcasRTCSignalingState) {}
@@ -16,7 +21,7 @@ pub trait PeerConnectionObserverImpl {
     fn on_ice_connection_change(&self, state: ArcasIceConnectionState) {}
     fn on_connection_change(&self, state: ArcasPeerConnectionState) {}
     fn on_ice_gathering_change(&self, state: ArcasIceGatheringState) {}
-    fn on_ice_candidate(&self, candidate: ArcasICECandidate) {}
+    fn on_ice_candidate(&self, candidate: UniquePtr<ArcasICECandidate>) {}
     fn on_ice_candidate_error(
         &self,
         host_candidate: String,
@@ -91,7 +96,7 @@ impl PeerConnectionObserverProxy {
         self.api.on_ice_gathering_change(state);
     }
 
-    pub fn on_ice_candidate(&self, candidate: ArcasICECandidate) {
+    pub fn on_ice_candidate(&self, candidate: UniquePtr<ArcasICECandidate>) {
         self.api.on_ice_candidate(candidate);
     }
 
@@ -158,7 +163,11 @@ impl PeerConnectionObserverImpl for DummyPeerConnectionObserver {}
 
 #[cfg(test)]
 mod tests {
-    use std::{sync::mpsc, thread::sleep_ms};
+    use std::{
+        pin::{self, Pin},
+        sync::mpsc,
+        thread::sleep_ms,
+    };
 
     use cxx::{CxxString, SharedPtr};
 
@@ -191,9 +200,11 @@ mod tests {
             sdp_semantics: ffi::ArcasSDPSemantics::kUnifiedPlan,
         });
 
-        let factory = ffi::create_factory();
+        let api = ffi::create_arcas_api();
+
+        let factory = api.create_factory();
         let observer = create_test_observer();
-        let pc = unsafe { factory.create_peer_connection(config, observer.clone()) };
+        let pc = factory.create_peer_connection(config, observer.clone());
         let _transceiver = pc.add_video_transceiver();
         let (tx, rx) = mpsc::channel();
 
@@ -220,7 +231,7 @@ mod tests {
         set_rx.recv().expect("Can set description");
 
         let observer2 = create_test_observer();
-        let pc2 = unsafe { factory.create_peer_connection(config2, observer2.clone()) };
+        let pc2 = factory.create_peer_connection(config2, observer2.clone());
         let (set_remote_tx, set_remote_rx) = mpsc::channel();
         let observer = ArcasRustSetSessionDescriptionObserver::new(
             Box::new(move || {
@@ -249,7 +260,7 @@ mod tests {
         let observer = ArcasRustSetSessionDescriptionObserver::new(
             Box::new(move || {
                 set_local_tx2.send(1).expect("Can send set desc message");
-            }),
+        }),
             Box::new(move |_err| assert!(false, "Failed to set description")),
         );
         pc2.set_local_description(Box::new(observer), answer);
@@ -282,15 +293,16 @@ mod tests {
             sdp_semantics: ffi::ArcasSDPSemantics::kUnifiedPlan,
         });
 
-        let source = crate::ffi::create_arcas_video_track_source();
-        let mut factory1 = ffi::create_factory();
+        let api = ffi::create_arcas_api();
+        let mut source = crate::ffi::create_arcas_video_track_source();
+        let mut factory1 = api.create_factory();
         let observer = create_test_observer();
-        let pc = unsafe { factory1.create_peer_connection(config, observer.clone()) };
+        let pc = factory1.create_peer_connection(config, observer.clone());
         let track = unsafe {
             factory1
                 .as_mut()
                 .unwrap()
-                .create_video_track("test".into(), source.clone())
+                .create_video_track("test".into(), source.pin_mut())
         };
         pc.add_video_track(track, ["test".into()].to_vec());
 
@@ -298,15 +310,7 @@ mod tests {
         for _i in 0..100 {
             let zeroed = &mut [1u8, 2, 3];
             unsafe {
-                crate::ffi::push_i420_to_video_track_source(
-                    source.clone(),
-                    100,
-                    100,
-                    0,
-                    0,
-                    0,
-                    zeroed.as_mut_ptr(),
-                );
+                source.push_i420_data(100, 100, 0, 0, 0, zeroed.as_ptr());
             }
         }
 
@@ -333,7 +337,7 @@ mod tests {
         pc.set_local_description(cc_observer, sdp.clone());
         set_rx.recv().expect("Can set description");
 
-        let factory2 = ffi::create_factory();
+        let factory2 = api.create_factory();
         let observer2 = create_test_observer();
         let pc2 = unsafe { factory2.create_peer_connection(config2, observer2.clone()) };
         let (set_remote_tx, set_remote_rx) = mpsc::channel();

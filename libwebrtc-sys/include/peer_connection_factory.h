@@ -11,22 +11,42 @@
 class ArcasPeerConnectionFactory
 {
 private:
-    class impl;
-    std::shared_ptr<impl> api;
+    rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> api;
 
 public:
-    ArcasPeerConnectionFactory(
-        webrtc::PeerConnectionFactoryInterface *factory,
-        std::unique_ptr<rtc::Thread> signal_thread,
-        std::unique_ptr<rtc::Thread> worker_thread,
-        std::unique_ptr<rtc::Thread> network_thread,
-        rtc::scoped_refptr<webrtc::AudioDeviceModule> adm);
+    ArcasPeerConnectionFactory(rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> api) : api(api){};
 
-    std::unique_ptr<ArcasPeerConnection> create_peer_connection(std::unique_ptr<webrtc::PeerConnectionInterface::RTCConfiguration> config, std::shared_ptr<ArcasPeerConnectionObserver> observer) const;
-    std::unique_ptr<ArcasVideoTrack> create_video_track(rust::String id, std::shared_ptr<ArcasVideoTrackSource>);
+    ~ArcasPeerConnectionFactory()
+    {
+        RTC_LOG(LS_VERBOSE) << "~ArcasPeerConnectionFactory";
+    }
+
+    std::unique_ptr<ArcasPeerConnection> create_peer_connection(std::unique_ptr<webrtc::PeerConnectionInterface::RTCConfiguration> config, std::shared_ptr<ArcasPeerConnectionObserver> observer) const
+    {
+        *observer;
+        webrtc::PeerConnectionDependencies deps(observer.get());
+        RTC_LOG(LS_VERBOSE) << "BEFOEW BEFORE DEREF ";
+        RTC_LOG(LS_VERBOSE) << "BEFORE DEREF ";
+        auto result = api->CreatePeerConnectionOrError(*config, std::move(deps));
+
+        if (!result.ok())
+        {
+            return nullptr;
+        }
+        else
+        {
+            RTC_LOG(LS_ERROR) << result.error().message();
+        }
+        RTC_LOG(LS_VERBOSE) << "AFTER DEREF";
+        auto out = std::make_unique<ArcasPeerConnection>(std::move(result.MoveValue()));
+        return out;
+    }
+    std::unique_ptr<ArcasVideoTrack> create_video_track(rust::String id, ArcasVideoTrackSource &video_source) const
+    {
+        auto track = api->CreateVideoTrack(std::string(id.c_str()), video_source.ref());
+        return std::make_unique<ArcasVideoTrack>(track);
+    }
 };
 
-std::unique_ptr<ArcasPeerConnectionFactory> create_factory();
-std::unique_ptr<ArcasPeerConnectionFactory> create_factory_with_arcas_video_encoder_factory(std::unique_ptr<ArcasVideoEncoderFactory> video_encoder_factory);
 std::unique_ptr<webrtc::PeerConnectionInterface::RTCConfiguration> create_rtc_configuration(ArcasPeerConnectionConfig config);
 std::shared_ptr<ArcasPeerConnectionObserver> create_peer_connection_observer(rust::Box<ArcasRustPeerConnectionObserver>);

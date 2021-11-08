@@ -7,6 +7,11 @@ use cxx::CxxString;
 use cxx::CxxVector;
 use cxx::SharedPtr;
 use cxx::UniquePtr;
+use ffi::ArcasAPI;
+use ffi::ArcasICECandidate;
+use ffi::ArcasPeerConnectionConfig;
+use ffi::ArcasPeerConnectionObserver;
+use ffi::ArcasRTCConfiguration;
 use parking_lot::lock_api::RawMutex;
 use parking_lot::Mutex;
 use std::os::raw::c_char;
@@ -18,6 +23,7 @@ pub mod peer_connection;
 pub mod video_encoder;
 pub mod video_encoder_factory;
 
+use crate::ffi::ArcasVideoTrackSource;
 pub use crate::peer_connection::PeerConnectionObserverProxy;
 pub use crate::video_encoder::VideoEncoderProxy;
 pub use crate::video_encoder_factory::{VideoEncoderFactoryProxy, VideoEncoderSelectorProxy};
@@ -39,6 +45,10 @@ lazy_static::lazy_static! {
  *
  *  -  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ unsupported type
  *      - probably using the alias of the type instead of the concrete name in a method or fn impl.
+ *
+ *  - : undefined reference to `rust::cxxbridge1::String::String(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&)'
+ *      - CXX for whatever reason fails to convert from std::string to rust::String but it does so without a type error.
+ *      - the fix is to use something like this: `rust::String(value.c_str())`
  */
 
 #[cxx::bridge]
@@ -48,6 +58,33 @@ pub mod ffi {
     struct ArcasRustDict {
         key: String,
         value: String,
+    }
+
+    struct ArcasSessionDescriptionError {
+        line: String,
+        description: String,
+    }
+
+    struct ArcasCreateSessionDescriptionResult {
+        ok: bool,
+        session: UniquePtr<ArcasSessionDescription>,
+        error: ArcasSessionDescriptionError,
+    }
+
+    struct ArcasICECandidateError {
+        line: String,
+        description: String,
+    }
+
+    struct ArcasCreateICECandidateResult {
+        ok: bool,
+        candidate: UniquePtr<ArcasICECandidate>,
+        error: ArcasICECandidateError,
+    }
+
+    struct ArcasTransceiverInit {
+        stream_ids: Vec<String>,
+        direction: ArcasCxxRtpTransceiverDirection,
     }
 
     #[repr(u8)]
@@ -257,6 +294,16 @@ pub mod ffi {
     }
 
     #[derive(Debug)]
+    #[repr(u32)]
+    enum ArcasCxxRtpTransceiverDirection {
+        kSendRecv,
+        kSendOnly,
+        kRecvOnly,
+        kInactive,
+        kStopped,
+    }
+
+    #[derive(Debug)]
     struct ArcasVideoEncodingErrCode {
         VIDEO_CODEC_OK_REQUEST_KEYFRAME: i32,
         VIDEO_CODEC_NO_OUTPUT: i32,
@@ -287,13 +334,13 @@ pub mod ffi {
         drop_next_frame: bool,
     }
 
-    #[derive(Debug)]
-    struct ArcasICECandidate {
-        id: String,
-        sdp_mid: String,
-        sdp_mline_index: i32,
-        sdp: String,
-    }
+    // #[derive(Debug)]
+    // struct ArcasICECandidate {
+    //     id: String,
+    //     sdp_mid: String,
+    //     sdp_mline_index: i32,
+    //     sdp: String,
+    // }
 
     #[derive(Debug)]
     struct ArcasCandidatePairChangeEvent {
@@ -451,7 +498,8 @@ pub mod ffi {
         type ArcasPeerConnectionFactory<'a>;
         type ArcasSessionDescription;
         type ArcasPeerConnection<'a>;
-        type ArcasRTCConfiguration;
+        type ArcasRTCConfiguration<'a>;
+        type ArcasICECandidate;
         type ArcasCreateSessionDescriptionObserver;
         type ArcasSetDescriptionObserver;
         type ArcasCxxEncodedImageCallbackResultError;
@@ -462,7 +510,7 @@ pub mod ffi {
         type ArcasVideoEncoderFactory;
         type ArcasVideoEncoderRateControlParameters;
         type ArcasVideoTrack<'a>;
-        type ArcasVideoTrackSource<'a>;
+        type ArcasVideoTrackSource;
         type ArcasCxxEncodedImage;
         type ArcasCxxVideoCodecType;
         type ArcasCxxRefCountedEncodedImageBuffer;
@@ -472,41 +520,52 @@ pub mod ffi {
         type ArcasPeerConnectionObserver;
         type ArcasCodecSpecificInfo;
         type ArcasRTCStatsCollectorCallback;
+        type ArcasCxxRtpTransceiverDirection;
+        type ArcasAPI<'a>;
 
         // wrapper functions around constructors.
-        fn create_factory<'a>() -> UniquePtr<ArcasPeerConnectionFactory<'a>>;
-        fn create_factory_with_arcas_video_encoder_factory<'a>(
-            video_encoder_factory: UniquePtr<ArcasVideoEncoderFactory>,
-        ) -> UniquePtr<ArcasPeerConnectionFactory<'a>>;
-        fn create_arcas_video_track_source() -> SharedPtr<ArcasVideoTrackSource<'static>>;
+        fn create_arcas_api<'a>() -> UniquePtr<ArcasAPI<'a>>;
+
+        fn create_arcas_video_track_source() -> UniquePtr<ArcasVideoTrackSource>;
         fn create_arcas_encoded_image_factory() -> UniquePtr<ArcasEncodedImageFactory>;
         fn create_arcas_codec_specific_info() -> UniquePtr<ArcasCodecSpecificInfo>;
-        unsafe fn push_i420_to_video_track_source<'a>(
-            source: SharedPtr<ArcasVideoTrackSource<'a>>,
-            width: i32,
-            height: i32,
-            stride_y: i32,
-            stride_u: i32,
-            stride_v: i32,
-            data: *mut u8,
-        );
+        fn create_arcas_session_description(
+            sdp_type: ArcasSDPType,
+            sdp: String,
+        ) -> ArcasCreateSessionDescriptionResult;
+        fn create_arcas_ice_candidate(
+            sdp_mid: String,
+            sdp_mline_index: u32,
+            sdp: String,
+        ) -> ArcasCreateICECandidateResult;
+
         fn get_arcas_video_encoding_err_codes() -> ArcasVideoEncodingErrCode;
 
         fn create_peer_connection_observer(
             observer: Box<PeerConnectionObserverProxy>,
         ) -> SharedPtr<ArcasPeerConnectionObserver>;
 
+        // ArcasVideoTrackSource
+        fn clone(self: &ArcasVideoTrackSource) -> UniquePtr<ArcasVideoTrackSource>;
+
+        // ArcasAPI
+        fn create_factory<'a>(self: &ArcasAPI) -> UniquePtr<ArcasPeerConnectionFactory<'a>>;
+        fn create_factory_with_arcas_video_encoder_factory<'a>(
+            self: &ArcasAPI,
+            video_encoder_factory: UniquePtr<ArcasVideoEncoderFactory>,
+        ) -> UniquePtr<ArcasPeerConnectionFactory<'a>>;
+
         // ArcasPeerConnectionFactory
-        unsafe fn create_peer_connection<'a>(
+        fn create_peer_connection<'a>(
             self: &ArcasPeerConnectionFactory<'a>,
-            config: UniquePtr<ArcasRTCConfiguration>,
+            config: UniquePtr<ArcasRTCConfiguration<'a>>,
             observer: SharedPtr<ArcasPeerConnectionObserver>,
         ) -> UniquePtr<ArcasPeerConnection<'a>>;
 
-        unsafe fn create_video_track<'a>(
-            self: Pin<&mut ArcasPeerConnectionFactory<'a>>,
+        fn create_video_track<'a>(
+            self: &ArcasPeerConnectionFactory<'a>,
             id: String,
-            source: SharedPtr<ArcasVideoTrackSource<'a>>,
+            source: Pin<&mut ArcasVideoTrackSource>,
         ) -> UniquePtr<ArcasVideoTrack<'a>>;
 
         // ArcasPeerConnection
@@ -533,6 +592,12 @@ pub mod ffi {
         fn add_video_transceiver(self: &ArcasPeerConnection)
             -> UniquePtr<ArcasRTPVideoTransceiver>;
 
+        fn add_video_transceiver_with_track(
+            self: &ArcasPeerConnection,
+            track: UniquePtr<ArcasVideoTrack>,
+            init: ArcasTransceiverInit,
+        ) -> UniquePtr<ArcasRTPVideoTransceiver>;
+
         fn add_audio_transceiver(self: &ArcasPeerConnection)
             -> UniquePtr<ArcasRTPAudioTransceiver>;
 
@@ -543,6 +608,7 @@ pub mod ffi {
         );
 
         fn get_stats(self: &ArcasPeerConnection, callback: Box<ArcasRustRTCStatsCollectorCallback>);
+        fn add_ice_candidate(self: &ArcasPeerConnection, candidate: UniquePtr<ArcasICECandidate>);
 
         // session description
         fn to_string(self: &ArcasSessionDescription) -> String;
@@ -551,7 +617,10 @@ pub mod ffi {
 
         fn create_rtc_configuration(
             config: ArcasPeerConnectionConfig,
-        ) -> UniquePtr<ArcasRTCConfiguration>;
+        ) -> UniquePtr<ArcasRTCConfiguration<'static>>;
+
+        // ArcasRTPVideoSender
+        fn set_track(self: &ArcasRTPVideoSender, track: &ArcasVideoTrack) -> bool;
 
         // ArcasRTPVideoTransceiver
         fn mid(self: &ArcasRTPVideoTransceiver) -> String;
@@ -714,6 +783,12 @@ pub mod ffi {
         fn get_framerate_fps(self: &ArcasVideoEncoderRateControlParameters) -> f64;
         fn get_bytes_per_second(self: &ArcasVideoEncoderRateControlParameters) -> i64;
 
+        // ArcasICECandidate
+        fn id(self: &ArcasICECandidate) -> String;
+        fn to_string(self: &ArcasICECandidate) -> String;
+        fn sdp_mid(self: &ArcasICECandidate) -> String;
+        fn sdp_mline_index(self: &ArcasICECandidate) -> u32;
+
         // ArcasEncodedImageFactory
         unsafe fn create_encoded_image_buffer(
             self: &ArcasEncodedImageFactory,
@@ -757,19 +832,20 @@ pub mod ffi {
         fn get_codec_type(self: &ArcasCodecSpecificInfo) -> ArcasCxxVideoCodecType;
 
         unsafe fn push_i420_data(
-            self: Pin<&mut ArcasVideoTrackSource>,
+            self: &ArcasVideoTrackSource,
             width: i32,
             height: i32,
             stride_y: i32,
             stride_u: i32,
             stride_v: i32,
-            data: *mut u8,
+            data: *const u8,
         );
 
         // XXX: Hacks to ensure CXX generates the unique ptr bindings for these return types.
         fn gen_unique_ptr1() -> UniquePtr<ArcasDataChannel>;
         fn gen_unique_ptr2() -> UniquePtr<ArcasMediaStream>;
         fn gen_unique_ptr3() -> UniquePtr<ArcasVideoCodecSettings>;
+        fn gen_unique_ptr4() -> UniquePtr<ArcasPeerConnectionConfig>;
     }
 
     extern "Rust" {
@@ -837,7 +913,10 @@ pub mod ffi {
             self: &PeerConnectionObserverProxy,
             state: ArcasIceGatheringState,
         );
-        fn on_ice_candidate(self: &PeerConnectionObserverProxy, candidate: ArcasICECandidate);
+        fn on_ice_candidate(
+            self: &PeerConnectionObserverProxy,
+            candidate: UniquePtr<ArcasICECandidate>,
+        );
         fn on_ice_candidate_error(
             self: &PeerConnectionObserverProxy,
             host_candidate: String,
@@ -1025,7 +1104,17 @@ impl ArcasRustRTCStatsCollectorCallback {
         video_tx: Vec<crate::ffi::ArcasVideoSenderStats>,
         audio_tx: Vec<crate::ffi::ArcasAudioSenderStats>,
     ) {
-        println!("RUST: stats delivered");
         (self.cb)(video_rx, audio_rx, video_tx, audio_tx)
     }
 }
+
+unsafe impl Sync for ArcasAPI<'_> {}
+unsafe impl Send for ArcasAPI<'_> {}
+unsafe impl Sync for ArcasVideoTrackSource {}
+unsafe impl Send for ArcasVideoTrackSource {}
+unsafe impl Sync for ArcasICECandidate {}
+unsafe impl Send for ArcasICECandidate {}
+unsafe impl Sync for ArcasRTCConfiguration<'_> {}
+unsafe impl Send for ArcasRTCConfiguration<'_> {}
+unsafe impl Sync for ArcasPeerConnectionObserver {}
+unsafe impl Send for ArcasPeerConnectionObserver {}

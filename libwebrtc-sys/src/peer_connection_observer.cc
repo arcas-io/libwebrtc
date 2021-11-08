@@ -1,6 +1,7 @@
 #include "iostream"
 #include "rust/cxx.h"
 #include "libwebrtc-sys/src/lib.rs.h"
+#include "libwebrtc-sys/include/ice_candidate.h"
 #include "libwebrtc-sys/include/peer_connection_observer.h"
 
 void ArcasPeerConnectionObserver::OnSignalingChange(webrtc::PeerConnectionInterface::SignalingState new_state)
@@ -67,14 +68,9 @@ void ArcasPeerConnectionObserver::OnIceGatheringChange(
 
 void ArcasPeerConnectionObserver::OnIceCandidate(const webrtc::IceCandidateInterface *candidate)
 {
-    ArcasICECandidate rust;
-    rust.id = rust::String(candidate->candidate().id().c_str());
-    rust.sdp_mid = rust::String(candidate->sdp_mid().c_str());
-    rust.sdp_mline_index = candidate->sdp_mline_index();
-    std::string sdp;
-    candidate->ToString(&sdp);
-    rust.sdp = rust::String(sdp.c_str());
-    observer->on_ice_candidate(rust);
+    auto new_candidate = webrtc::CreateIceCandidate(candidate->sdp_mid(), candidate->sdp_mline_index(), candidate->candidate());
+    auto rust = std::make_unique<ArcasICECandidate>(std::move(new_candidate));
+    observer->on_ice_candidate(std::move(rust));
 }
 
 void ArcasPeerConnectionObserver::OnIceCandidateError(const std::string &host_candidate,

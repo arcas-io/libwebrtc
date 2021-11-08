@@ -11,7 +11,7 @@ rust::String sdp_video_format_to_string(const webrtc::SdpVideoFormat &format);
 // Helper utilities to return C++ types back into rust with shared structs.
 
 // This is a generic helper method but was specific created to support:
-// 
+//
 // VideoEncoderFactory::GetSupportedFormats
 //
 std::unique_ptr<std::vector<webrtc::SdpVideoFormat>> create_sdp_video_format_list(ArcasSdpVideoFormatVecInit list);
