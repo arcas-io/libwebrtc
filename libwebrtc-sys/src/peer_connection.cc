@@ -94,6 +94,19 @@ void ArcasPeerConnection::get_stats(rust::Box<ArcasRustRTCStatsCollectorCallback
 
 void ArcasPeerConnection::add_ice_candidate(std::unique_ptr<ArcasICECandidate> candidate) const
 {
-    auto value = candidate->take();
-    api->AddIceCandidate(value.get());
+
+    std::string sdp_out;
+    webrtc::SdpParseError error;
+    // XXX: Do *not* make further calls into candidate after this.
+    auto jsep = candidate->take();
+    jsep->ToString(&sdp_out);
+    auto add_candidate = std::unique_ptr<webrtc::IceCandidateInterface>(webrtc::CreateIceCandidate(jsep->sdp_mid(), jsep->sdp_mline_index(), sdp_out, &error));
+
+    api->AddIceCandidate(std::move(add_candidate), [](webrtc::RTCError err)
+                         {
+                             if (!err.ok())
+                             {
+                                 RTC_LOG(LS_ERROR) << "ArcasPeerConnection::add_ice_candidate error: " << err.message();
+                             }
+                         });
 }

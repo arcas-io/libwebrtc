@@ -1,8 +1,40 @@
 use cxx::{CxxVector, UniquePtr};
 
-use crate::ffi::{
-    ArcasEncodedImageCallback, ArcasVideoCodec, ArcasVideoCodecSettings, ArcasVideoFrameType,
-};
+use crate::ffi::{ArcasCxxVideoFrameType, ArcasEncodedImageCallback};
+
+type EncodedImageCallback = dyn Fn(
+    UniquePtr<crate::ffi::ArcasCxxEncodedImage>,
+    UniquePtr<crate::ffi::ArcasCodecSpecificInfo>,
+);
+
+pub struct EncodedImageCallbackHandler {
+    on_dropped: Box<dyn Fn(crate::ffi::ArcasVideoEncoderDropReason)>,
+    on_encoded_image: Box<EncodedImageCallback>,
+}
+
+impl EncodedImageCallbackHandler {
+    pub fn new(
+        on_dropped: Box<dyn Fn(crate::ffi::ArcasVideoEncoderDropReason)>,
+        on_encoded_image: Box<EncodedImageCallback>,
+    ) -> Self {
+        Self {
+            on_dropped,
+            on_encoded_image,
+        }
+    }
+
+    pub fn trigger_encoded_image(
+        &self,
+        image: UniquePtr<crate::ffi::ArcasCxxEncodedImage>,
+        codec_info: UniquePtr<crate::ffi::ArcasCodecSpecificInfo>,
+    ) {
+        (self.on_encoded_image)(image, codec_info);
+    }
+
+    pub fn trigger_dropped(&self, reason: crate::ffi::ArcasVideoEncoderDropReason) {
+        (self.on_dropped)(reason);
+    }
+}
 
 pub trait VideoEncoderImpl {
     /// Initialize the encoder with the information from the codecSettings
@@ -21,9 +53,9 @@ pub trait VideoEncoderImpl {
     ///                                  WEBRTC_VIDEO_CODEC_ERR_SIZE
     ///                                  WEBRTC_VIDEO_CODEC_MEMORY
     ///                                  WEBRTC_VIDEO_CODEC_ERROR
-    fn init_encode(
+    unsafe fn init_encode(
         &self,
-        codec_settings: UniquePtr<ArcasVideoCodec>,
+        codec_settings: *const crate::ffi::ArcasCxxVideoCodec,
         number_of_cores: i32,
         max_payload_size: usize,
     ) -> i32;
@@ -57,8 +89,8 @@ pub trait VideoEncoderImpl {
     ///                                  WEBRTC_VIDEO_CODEC_ERROR
     fn encode(
         &self,
-        frame: &crate::ffi::CxxVideoFrame,
-        frame_types: *const CxxVector<ArcasVideoFrameType>,
+        frame: &crate::ffi::ArcasCxxVideoFrame,
+        frame_types: *const CxxVector<ArcasCxxVideoFrameType>,
     ) -> i32;
 
     /// Sets rate control parameters: bitrate, framerate, etc. These settings are
@@ -100,9 +132,9 @@ impl VideoEncoderProxy {
         Self { api }
     }
 
-    pub fn init_encode(
+    pub unsafe fn init_encode(
         &self,
-        codec_settings: UniquePtr<ArcasVideoCodec>,
+        codec_settings: *const crate::ffi::ArcasCxxVideoCodec,
         number_of_cores: i32,
         max_payload_size: usize,
     ) -> i32 {
@@ -123,8 +155,8 @@ impl VideoEncoderProxy {
 
     pub fn encode(
         &self,
-        frame: &crate::ffi::CxxVideoFrame,
-        frame_types: *const CxxVector<ArcasVideoFrameType>,
+        frame: &crate::ffi::ArcasCxxVideoFrame,
+        frame_types: *const CxxVector<ArcasCxxVideoFrameType>,
     ) -> i32 {
         self.api.encode(frame, frame_types)
     }

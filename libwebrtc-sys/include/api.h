@@ -23,8 +23,8 @@ public:
     std::unique_ptr<ArcasPeerConnectionFactory> create_factory() const
     {
         // TODO: Add configuration options for log levels.
-        rtc::LogMessage::LogToDebug(rtc::LS_VERBOSE);
-        rtc::LogMessage::SetLogToStderr(true);
+        // rtc::LogMessage::LogToDebug(rtc::LS_VERBOSE);
+        // rtc::LogMessage::SetLogToStderr(true);
 
         webrtc::PeerConnectionFactoryDependencies dependencies;
         dependencies.network_thread = network_thread.get();
@@ -58,8 +58,8 @@ public:
     std::unique_ptr<ArcasPeerConnectionFactory> create_factory_with_arcas_video_encoder_factory(std::unique_ptr<ArcasVideoEncoderFactory> video_encoder_factory) const
     {
         // TODO: Add configuration options for log levels.
-        rtc::LogMessage::LogToDebug(rtc::LS_VERBOSE);
-        rtc::LogMessage::SetLogToStderr(true);
+        // rtc::LogMessage::LogToDebug(rtc::LS_VERBOSE);
+        // rtc::LogMessage::SetLogToStderr(true);
 
         webrtc::PeerConnectionFactoryDependencies dependencies;
         dependencies.network_thread = network_thread.get();

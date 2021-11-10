@@ -4,22 +4,29 @@
 // Opaque to rust not to C++
 class ArcasOpaqueEncodedImageBuffer
 {
+private:
+    rtc::scoped_refptr<webrtc::EncodedImageBuffer> api_;
+
 public:
     ArcasOpaqueEncodedImageBuffer(
-        rtc::scoped_refptr<webrtc::EncodedImageBuffer> api) : api(api)
+        rtc::scoped_refptr<webrtc::EncodedImageBuffer> api) : api_(api)
     {
     }
-    rtc::scoped_refptr<webrtc::EncodedImageBuffer> api;
 
-    rtc::scoped_refptr<webrtc::EncodedImageBuffer> ref()
+    rtc::scoped_refptr<webrtc::EncodedImageBuffer> ref() const
     {
-        return api;
+        return api_;
+    }
+
+    const rtc::scoped_refptr<webrtc::EncodedImageBuffer> &current_ref() const
+    {
+        return api_;
     }
 };
 
 /**
  * @brief Helper class to work with encoded images.
- * 
+ *
  * This is needed primarily as a convience wrapper for the rust <> C++ ffi.
  */
 class ArcasEncodedImageFactory
@@ -37,10 +44,17 @@ public:
     }
 
     std::unique_ptr<webrtc::EncodedImage> set_encoded_image_buffer(
+        const webrtc::VideoFrame &video_frame,
         std::unique_ptr<webrtc::EncodedImage> image,
-        std::shared_ptr<ArcasOpaqueEncodedImageBuffer> buffer) const
+        const ArcasOpaqueEncodedImageBuffer &buffer) const
     {
-        image->SetEncodedData(buffer->ref());
+        const webrtc::ColorSpace kColorSpace(
+            webrtc::ColorSpace::PrimaryID::kBT709, webrtc::ColorSpace::TransferID::kBT709,
+            webrtc::ColorSpace::MatrixID::kBT709, webrtc::ColorSpace::RangeID::kFull);
+        image->_frameType = webrtc::VideoFrameType::kVideoFrameKey;
+        image->SetColorSpace(kColorSpace);
+        image->SetTimestamp(video_frame.timestamp());
+        image->SetEncodedData(buffer.ref());
         return image;
     }
 

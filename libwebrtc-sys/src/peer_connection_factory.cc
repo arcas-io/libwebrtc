@@ -33,7 +33,7 @@ std::unique_ptr<webrtc::PeerConnectionInterface::RTCConfiguration> create_rtc_co
     return rtc;
 }
 
-std::shared_ptr<ArcasPeerConnectionObserver> create_peer_connection_observer(rust::Box<ArcasRustPeerConnectionObserver> rust_box)
+std::unique_ptr<ArcasPeerConnectionObserver> create_peer_connection_observer(rust::Box<ArcasRustPeerConnectionObserver> rust_box)
 {
-    return std::make_shared<ArcasPeerConnectionObserver>(std::move(rust_box));
+    return std::make_unique<ArcasPeerConnectionObserver>(std::move(rust_box));
 }

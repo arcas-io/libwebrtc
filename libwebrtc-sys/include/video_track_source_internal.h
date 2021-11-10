@@ -1,7 +1,9 @@
 #pragma once
 #include "libwebrtc-sys/include/webrtc_api.h"
+#include "libwebrtc-sys/include/video_frame_internal.h"
 #include "pc/video_track_source.h"
 #include "api/video/i420_buffer.h"
+#include <chrono>
 
 class ArcasVideoTrackSourceInternal : public rtc::RefCountedBase, public webrtc::VideoTrackSource
 {
@@ -16,7 +18,7 @@ protected:
 
 public:
     /* remote=true this was picked at random */
-    ArcasVideoTrackSourceInternal() : webrtc::VideoTrackSource(true)
+    ArcasVideoTrackSourceInternal() : webrtc::VideoTrackSource(false)
     {
         SetState(webrtc::MediaSourceInterface::kLive);
     };
@@ -25,8 +27,14 @@ public:
         RTC_LOG(LS_VERBOSE) << "~ArcasVideoTrackSourceInternal";
     };
 
+    webrtc::MediaSourceInterface::SourceState state() const override
+    {
+        return webrtc::MediaSourceInterface::kLive;
+    }
+
     void AddRef() const override
     {
+
         rtc::RefCountedBase::AddRef();
     }
 
@@ -50,32 +58,8 @@ public:
         broadcaster.AddOrUpdateSink(sink, wants);
     }
 
-    void push_i420_data(int32_t width,
-                        int32_t height,
-                        int32_t stride_y,
-                        int32_t stride_u,
-                        int32_t stride_v,
-                        const uint8_t *data)
+    void push_frame(const webrtc::VideoFrame &frame)
     {
-        // RTC_DCHECK(track_source);
-        // RTC_LOG(LS_INFO) << "creating video_frame_buffer";
-        int y_offset = 0, u_offset = stride_y * height;
-        int v_offset = u_offset + stride_u * (height / 2);
-        auto frame_buffer = webrtc::I420Buffer::Copy(
-            width,
-            height,
-            data + y_offset,
-            stride_y,
-            data + u_offset,
-            stride_u,
-            data + v_offset,
-            stride_v);
-
-        auto builder = webrtc::VideoFrame::Builder();
-        builder.set_video_frame_buffer(frame_buffer);
-        auto frame = builder.build();
-
-        // RTC_LOG(LS_VERBOSE) << "copied video_frame_buffer";
         broadcaster.OnFrame(frame);
     }
 };

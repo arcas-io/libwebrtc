@@ -5,8 +5,7 @@ int32_t ArcasVideoEncoder::InitEncode(const webrtc::VideoCodec *codec_settings,
                                       int number_of_cores,
                                       size_t max_payload_size)
 {
-    auto rust_video_codec = std::make_unique<ArcasVideoCodec>(codec_settings);
-    return api->init_encode(std::move(rust_video_codec), number_of_cores, max_payload_size);
+    return api->init_encode(codec_settings, number_of_cores, max_payload_size);
 };
 // Register an encode complete callback object.
 //
@@ -43,6 +42,7 @@ int32_t ArcasVideoEncoder::Release()
 int32_t ArcasVideoEncoder::Encode(const webrtc::VideoFrame &frame,
                                   const std::vector<webrtc::VideoFrameType> *frame_types)
 {
+    RTC_LOG(LS_INFO) << "Encode!!!";
     return api->encode(frame, frame_types);
 };
 
@@ -125,16 +125,26 @@ webrtc::VideoEncoder::EncoderInfo ArcasVideoEncoder::GetEncoderInfo() const
     info.is_hardware_accelerated = rust_info.is_hardware_accelerated;
     info.has_internal_source = rust_info.has_internal_source;
 
-    if (info.fps_allocation->size() > webrtc::kMaxSpatialLayers)
+    if (info.fps_allocation->size() > webrtc::kMaxTemporalStreams)
     {
         RTC_LOG(LS_ERROR) << "FPS allocation vector is too big";
     }
     else
     {
 
-        for (int i = 0; i < rust_info.fps_allocation.size(); i++)
+        for (auto i = 0; i < rust_info.fps_allocation.size(); i++)
         {
-            info.fps_allocation[i].push_back(rust_info.fps_allocation[i]);
+            auto allocation_size = rust_info.fps_allocation[i].allocation.size();
+            if (allocation_size > webrtc::kMaxSpatialLayers)
+            {
+                RTC_LOG(LS_ERROR) << "FPS allocation vector is too big";
+                continue;
+            }
+            for (auto j = 0; j < allocation_size; j++)
+            {
+                auto cxx_fps_allocation = &info.fps_allocation[i];
+                cxx_fps_allocation[j].push_back(rust_info.fps_allocation[i].allocation[j]);
+            };
         }
     }
 
@@ -171,10 +181,21 @@ webrtc::VideoEncoder::EncoderInfo ArcasVideoEncoder::GetEncoderInfo() const
 
 ArcasEncodedImageCallbackResult ArcasEncodedImageCallback::on_encoded_image(const webrtc::EncodedImage &image, const ArcasCodecSpecificInfo *codec_specific_info)
 {
-    auto result = api->OnEncodedImage(image, codec_specific_info->ref());
+    auto result = api->OnEncodedImage(image, codec_specific_info->as_ptr());
     return ArcasEncodedImageCallbackResult{
         .error = result.error,
         .frame_id = result.frame_id,
         .drop_next_frame = result.drop_next_frame,
     };
+}
+
+std::shared_ptr<ArcasVideoEncoderRateControlParameters> create_arcas_video_encoder_rate_control_parameters(
+    const ArcasCxxVideoBitrateAllocation &bitrate, double framerate_fps)
+{
+    return std::make_shared<ArcasVideoEncoderRateControlParameters>(bitrate, framerate_fps);
+}
+
+std::unique_ptr<ArcasCxxVideoBitrateAllocation> create_video_bitrate_allocation()
+{
+    return std::make_unique<ArcasCxxVideoBitrateAllocation>();
 }

@@ -1,0 +1,18 @@
+[package]
+name = "libwebrtc"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio = "1.13.0"
+libwebrtc-sys = { path = "../libwebrtc-sys" }
+media_pipeline = { path = "../media_pipeline"}
+bytes = "1.1.0"
+cxx = "1.0.56"
+thiserror = "1.0.30"
+log = "0.4.14"
+lazy_static = "1.4.0"
+parking_lot = "0.11.2"
+crossbeam-channel = "0.5.1"

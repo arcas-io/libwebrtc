@@ -1,5 +1,7 @@
 #pragma once
 #include "video_track_source_internal.h"
+#include "libwebrtc-sys/include/video_codec.h"
+#include "libwebrtc-sys/include/video_frame_buffer_encoded.h"
 
 class ArcasVideoTrackSource
 {
@@ -18,14 +20,9 @@ public:
         return api;
     }
 
-    void push_i420_data(int32_t width,
-                        int32_t height,
-                        int32_t stride_y,
-                        int32_t stride_u,
-                        int32_t stride_v,
-                        const uint8_t *data) const
+    void push_frame(const webrtc::VideoFrame &frame) const
     {
-        api->push_i420_data(width, height, stride_y, stride_u, stride_v, data);
+        api->push_frame(frame);
     }
 
     std::unique_ptr<ArcasVideoTrackSource> clone() const
@@ -35,3 +32,4 @@ public:
 };
 
 std::unique_ptr<ArcasVideoTrackSource> create_arcas_video_track_source();
+std::unique_ptr<ArcasVideoFrameEncodedImageData> extract_arcas_video_frame_to_raw_frame_buffer(const webrtc::VideoFrame &frame);
