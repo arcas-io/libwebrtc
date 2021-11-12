@@ -1,7 +1,10 @@
 use cxx::SharedPtr;
 use libwebrtc_sys::ffi::{ArcasCxxVideoCodecType, ArcasSpatialLayer, ArcasVideoCodec};
 
-use crate::error::{Result, WebRTCError};
+use crate::{
+    encoded_video_frame_producer::{DEFAULT_FPS, DEFAULT_HEIGHT, DEFAULT_WIDTH},
+    error::{Result, WebRTCError},
+};
 
 const MAX_FRAMERATE: u32 = 60;
 const DEFAULT_MAX_BITRATE_KBS: u32 = 20000;
@@ -79,6 +82,9 @@ pub struct VideoCodec {
 }
 
 impl VideoCodec {
+    pub fn vp9_default() -> Self {
+        Self::vp9(DEFAULT_WIDTH, DEFAULT_HEIGHT, DEFAULT_FPS)
+    }
     pub fn vp9(width: i32, height: i32, fps: u32) -> Self {
         VideoCodec {
             codec_type: libwebrtc_sys::ffi::ArcasCxxVideoCodecType::kVideoCodecVP9,

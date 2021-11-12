@@ -17,7 +17,7 @@ public:
         return error_.ok();
     }
 
-    webrtc::RTCErrorType type() const
+    webrtc::RTCErrorType kind() const
     {
         return error_.type();
     }

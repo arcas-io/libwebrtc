@@ -14,6 +14,12 @@ use parking_lot::Mutex;
 
 pub struct PassThroughVideoEncoderFactory {}
 
+impl PassThroughVideoEncoderFactory {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
 impl VideoEncoderFactoryImpl for PassThroughVideoEncoderFactory {
     fn get_supported_formats(&self) -> UniquePtr<cxx::CxxVector<ffi::ArcasCxxSdpVideoFormat>> {
         create_sdp_video_format_list(ffi::ArcasSdpVideoFormatVecInit {
@@ -185,7 +191,7 @@ impl VideoEncoderImpl for PassThroughVideoEncoder {
 
 #[cfg(test)]
 mod tests {
-    use std::{os::unix::thread, time::Instant};
+    use std::time::Instant;
 
     use crossbeam_channel::{select, unbounded, Receiver, Sender};
 
@@ -283,11 +289,11 @@ mod tests {
         let pc = unsafe {
             factory1.create_peer_connection(config, observer.pin_mut().get_unchecked_mut())
         };
-        let mut source = ffi::create_arcas_video_track_source();
+        let source = ffi::create_arcas_video_track_source();
         let track = factory1
             .as_mut()
             .unwrap()
-            .create_video_track("test".into(), source.pin_mut());
+            .create_video_track("test".into(), source.as_ref().unwrap());
         pc.add_video_track(track, ["test".into()].to_vec());
 
         let (tx, rx) = unbounded();
@@ -301,7 +307,7 @@ mod tests {
         )));
 
         let sdp = rx.recv().expect("Can get offer");
-        assert!(!sdp.to_string().is_empty(), "has sdp string");
+        assert!(!sdp.cxx_to_string().is_empty(), "has sdp string");
 
         let (set_tx, set_rx) = unbounded();
         let set_session_observer = ArcasRustSetSessionDescriptionObserver::new(
@@ -311,8 +317,8 @@ mod tests {
             Box::new(move |_err| panic!("Failed to set description")),
         );
         let cc_observer = Box::new(set_session_observer);
-        println!("SET OFFER\n: {}", sdp.to_string());
-        pc.set_local_description(cc_observer, sdp.clone());
+        println!("SET OFFER\n: {}", sdp.cxx_to_string());
+        pc.set_local_description(cc_observer, sdp.clone_cxx());
         set_rx.recv().expect("Can set description");
 
         let factory2 = api2.create_factory();
@@ -328,13 +334,13 @@ mod tests {
             }),
             Box::new(move |_err| panic!("Failed to set description")),
         );
-        pc2.set_remote_description(Box::new(set_session_observer), sdp.clone());
+        pc2.set_remote_description(Box::new(set_session_observer), sdp.clone_cxx());
         set_remote_rx.recv().expect("Can set description");
         let (tx_answer, rx_answer) = unbounded();
         pc2.create_answer(Box::new(ArcasRustCreateSessionDescriptionObserver::new(
             Box::new(move |session_description| {
                 assert_eq!(session_description.get_type(), ffi::ArcasSDPType::kAnswer);
-                println!("got sdp: {}", session_description.to_string(),);
+                println!("got sdp: {}", session_description.cxx_to_string(),);
                 tx_answer.send(session_description).expect("Can send");
             }),
             Box::new(move |_err| {
@@ -343,7 +349,7 @@ mod tests {
             }),
         )));
         let answer = rx_answer.recv().expect("Creates answer");
-        let answer_for_remote = answer.clone();
+        let answer_for_remote = answer.clone_cxx();
 
         let (set_local_tx2, set_local_rx2) = unbounded();
         let observer = ArcasRustSetSessionDescriptionObserver::new(
@@ -384,7 +390,6 @@ mod tests {
         std::thread::spawn(move || loop {
             select! {
                 recv(cancel_push_rx) -> _ => {
-                    println!("cancel rx\n");
                     return;
                 },
                 recv(raw_frames_rx) -> frame_result => {
@@ -392,7 +397,6 @@ mod tests {
                     encoder.raw_frame_tx.send(frame).unwrap();
                     let frame = encoder.encoded_rx.recv().unwrap();
                     source.push_frame(frame.as_cxx_video_frame_ref().unwrap());
-                    println!("do the encode done");
                     std::thread::sleep(std::time::Duration::from_millis(10));
                 }
             }
@@ -409,7 +413,6 @@ mod tests {
             )));
             pc2.get_stats(observer);
             let stats = stat_rx.recv().unwrap();
-            println!("GOT A STAT?: {:?}", stats);
             for stat in stats {
                 if stat.frames_decoded > 1 {
                     if cancel_push_tx.send(()).is_ok() {}
@@ -417,8 +420,6 @@ mod tests {
                     // Very important otherwise we crash.
                     pc2.close();
                     break;
-                } else {
-                    println!("{:?}", stat);
                 }
             }
             std::thread::sleep(std::time::Duration::from_millis(1000));

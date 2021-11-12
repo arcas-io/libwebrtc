@@ -1,4 +1,6 @@
 use crossbeam_channel::{RecvError, SendError};
+use cxx::UniquePtr;
+use libwebrtc_sys::ffi::ArcasRTCError;
 use media_pipeline::error::MediaPipelineError;
 use thiserror::Error;
 
@@ -58,11 +60,38 @@ pub enum WebRTCError {
 
     #[error("Unknown receive error: {0}")]
     ReceiveError(String),
+
+    #[error("Async send error from tokio: {0}")]
+    AsyncSendError(String),
+
+    #[error("Value has already been taken: {0}")]
+    TakeError(String),
+
+    #[error("Failed to parse SDP: message: {0} @ line: {1}")]
+    SdpParseError(String, String),
+
+    #[error("Failed to seet sdp")]
+    FailedToGenerateSDP(String),
+
+    #[error("Encountered error during recv: {0}")]
+    RecvError(String),
+
+    #[error("Received RTC error: {0}")]
+    RTCError(String),
+
+    #[error("Failed to set SDP: {0}")]
+    FailedToSetSDP(String),
 }
 
 impl<T> From<SendError<T>> for WebRTCError {
     fn from(err: SendError<T>) -> Self {
         WebRTCError::SendError(format!("{}", err))
+    }
+}
+
+impl<T> From<tokio::sync::mpsc::error::SendError<T>> for WebRTCError {
+    fn from(err: tokio::sync::mpsc::error::SendError<T>) -> Self {
+        Self::AsyncSendError(format!("{}", err))
     }
 }
 
@@ -76,4 +105,24 @@ impl From<MediaPipelineError> for WebRTCError {
     fn from(value: MediaPipelineError) -> Self {
         WebRTCError::UnexpectedMediaError(value.to_string())
     }
+}
+
+impl From<UniquePtr<ArcasRTCError>> for WebRTCError {
+    fn from(value: UniquePtr<ArcasRTCError>) -> Self {
+        WebRTCError::RTCError(format!(
+            "kind={:?} ok={:?} message={}",
+            value.kind(),
+            value.ok(),
+            value.message()
+        ))
+    }
+}
+
+pub(crate) fn aracs_rtc_error_to_err(err: UniquePtr<ArcasRTCError>) -> WebRTCError {
+    WebRTCError::RTCError(format!(
+        "kind={:?} ok={:?} message={}",
+        err.kind(),
+        err.ok(),
+        err.message()
+    ))
 }

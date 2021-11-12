@@ -6,16 +6,20 @@ use ffi::ArcasCxxEncodedImage;
 use ffi::ArcasCxxVideoFrame;
 use ffi::ArcasICECandidate;
 
-use ffi::ArcasPeerConnection;
 use ffi::ArcasPeerConnectionObserver;
 use ffi::ArcasRTCConfiguration;
+use ffi::ArcasRTPVideoTransceiver;
+use ffi::ArcasSessionDescription;
 use ffi::ArcasVideoCodec;
+use ffi::{ArcasPeerConnection, ArcasPeerConnectionFactory};
 
 use ffi::ArcasVideoEncoderRateControlParameters;
 use ffi::ArcasVideoEncoderSettings;
 
 use ffi::ArcasVideoFrameEncodedImageData;
 use ffi::ArcasVideoFrameRawImageData;
+use ffi::ArcasVideoTrack;
+use ffi::ArcasVideoTrackSource;
 #[macro_use]
 extern crate lazy_static;
 
@@ -24,7 +28,6 @@ pub mod video_encoder;
 pub mod video_encoder_factory;
 
 use crate::ffi::ArcasEncodedImageFactory;
-use crate::ffi::ArcasVideoTrackSource;
 pub use crate::peer_connection::PeerConnectionObserverProxy;
 pub use crate::video_encoder::{EncodedImageCallbackHandler, VideoEncoderProxy};
 pub use crate::video_encoder_factory::{VideoEncoderFactoryProxy, VideoEncoderSelectorProxy};
@@ -66,7 +69,7 @@ lazy_static::lazy_static! {
         WEBRTC_VIDEO_ENCODING_ERR.VIDEO_CODEC_ENCODER_FAILURE;
 }
 
-/**
+/*
  * Misc notes found while building bindings.
  *
  * - You may encounter the bug: `multiple definition of ...`.
@@ -83,6 +86,9 @@ lazy_static::lazy_static! {
  *  - : undefined reference to `rust::cxxbridge1::String::String(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&)'
  *      - CXX for whatever reason fails to convert from std::string to rust::String but it does so without a type error.
  *      - the fix is to use something like this: `rust::String(value.c_str())`
+ *
+ *  - UniquePtr represent objects which are generally safe to send across threads (generally but not always).
+ *  - SharedPtr are good for immutable objects (const functions) which are safe to send & sync across threads.
  */
 
 #[cxx::bridge]
@@ -205,6 +211,62 @@ pub mod ffi {
         INFO = 1,
         WARNING = 2,
         LERROR = 3,
+    }
+
+    #[derive(Debug)]
+    #[repr(u32)]
+    enum ArcasRTCErrorType {
+        /// No error.
+        NONE,
+
+        /// An operation is valid, but currently unsupported.
+        /// Maps to OperationError DOMException.
+        UNSUPPORTED_OPERATION,
+
+        /// A supplied parameter is valid, but currently unsupported.
+        /// Maps to OperationError DOMException.
+        UNSUPPORTED_PARAMETER,
+
+        /// General error indicating that a supplied parameter is invalid.
+        /// Maps to InvalidAccessError or TypeError DOMException depending on context.
+        INVALID_PARAMETER,
+
+        /// Slightly more specific than INVALID_PARAMETER; a parameter's value was
+        /// outside the allowed range.
+        /// Maps to RangeError DOMException.
+        INVALID_RANGE,
+
+        /// Slightly more specific than INVALID_PARAMETER; an error occurred while
+        /// parsing string input.
+        /// Maps to SyntaxError DOMException.
+        SYNTAX_ERROR,
+
+        /// The object does not support this operation in its current state.
+        /// Maps to InvalidStateError DOMException.
+        INVALID_STATE,
+
+        /// An attempt was made to modify the object in an invalid way.
+        /// Maps to InvalidModificationError DOMException.
+        INVALID_MODIFICATION,
+
+        /// An error occurred within an underlying network protocol.
+        /// Maps to NetworkError DOMException.
+        NETWORK_ERROR,
+
+        /// Some resource has been exhausted; file handles, hardware resources, ports,
+        /// etc.
+        /// Maps to OperationError DOMException.
+        RESOURCE_EXHAUSTED,
+
+        /// The operation failed due to an internal error.
+        /// Maps to OperationError DOMException.
+        INTERNAL_ERROR,
+
+        /// An error occured that has additional data.
+        /// The additional data is specified in
+        /// https://w3c.github.io/webrtc-pc/#rtcerror-interface
+        /// Maps to RTCError DOMException.
+        OPERATION_ERROR_WITH_DATA,
     }
 
     #[derive(Debug)]
@@ -424,14 +486,6 @@ pub mod ffi {
         kOnKeyPic = 2, // Inter-layer prediction is enabled but limited to key frames.
     }
 
-    // #[derive(Debug)]
-    // struct ArcasICECandidate {
-    //     id: String,
-    //     sdp_mid: String,
-    //     sdp_mline_index: i32,
-    //     sdp: String,
-    // }
-
     #[derive(Debug)]
     struct ArcasCandidatePairChangeEvent {
         selected_remote_id: String,
@@ -587,10 +641,10 @@ pub mod ffi {
         type ArcasCodecSpecificInfo;
         type ArcasMediaStream;
         type ArcasDataChannel;
-        type ArcasPeerConnectionFactory<'a>;
+        type ArcasPeerConnectionFactory;
         type ArcasSessionDescription;
-        type ArcasPeerConnection<'a>;
-        type ArcasRTCConfiguration<'a>;
+        type ArcasPeerConnection;
+        type ArcasRTCConfiguration;
         type ArcasColorSpace;
         type ArcasICECandidate;
         type ArcasCreateSessionDescriptionObserver;
@@ -604,12 +658,13 @@ pub mod ffi {
         // Information about the video encoder factory.
         type ArcasVideoEncoderFactory;
         type ArcasVideoEncoderRateControlParameters;
-        type ArcasVideoTrack<'a>;
+        type ArcasVideoTrack;
         type ArcasVideoTrackSource;
         type ArcasCxxEncodedImage;
         type ArcasCxxVideoCodecType;
         type ArcasSpatialLayer;
         type ArcasVideoCodec;
+        type ArcasRTCErrorType;
         type ArcasCxxRefCountedEncodedImageBuffer;
         type ArcasOpaqueEncodedImageBuffer;
         type ArcasEncodedImageFactory;
@@ -629,11 +684,11 @@ pub mod ffi {
         type ArcasVideoEncoderWrapper;
         type ArcasVideoEncoderSettings;
         type ArcasVideoFrameFactory;
-        type ArcasAPI<'a>;
+        type ArcasAPI;
         type ArcasCxxVideoFrameType;
 
         // wrapper functions around constructors.
-        fn create_arcas_api<'a>() -> UniquePtr<ArcasAPI<'a>>;
+        fn create_arcas_api() -> UniquePtr<ArcasAPI>;
 
         fn create_arcas_video_track_source() -> UniquePtr<ArcasVideoTrackSource>;
         fn create_arcas_encoded_image_factory() -> UniquePtr<ArcasEncodedImageFactory>;
@@ -697,27 +752,34 @@ pub mod ffi {
 
         // ArcasVideoTrackSource
         fn push_frame(self: &ArcasVideoTrackSource, video_frame: &ArcasCxxVideoFrame);
-        fn clone(self: &ArcasVideoTrackSource) -> UniquePtr<ArcasVideoTrackSource>;
+        fn cxx_clone(self: &ArcasVideoTrackSource) -> UniquePtr<ArcasVideoTrackSource>;
 
         // ArcasAPI
-        fn create_factory<'a>(self: &ArcasAPI) -> UniquePtr<ArcasPeerConnectionFactory<'a>>;
-        fn create_factory_with_arcas_video_encoder_factory<'a>(
+        fn create_factory(self: &ArcasAPI) -> UniquePtr<ArcasPeerConnectionFactory>;
+        fn create_factory_with_arcas_video_encoder_factory(
             self: &ArcasAPI,
             video_encoder_factory: UniquePtr<ArcasVideoEncoderFactory>,
-        ) -> UniquePtr<ArcasPeerConnectionFactory<'a>>;
+        ) -> UniquePtr<ArcasPeerConnectionFactory>;
 
         // ArcasPeerConnectionFactory
-        unsafe fn create_peer_connection<'a>(
-            self: &ArcasPeerConnectionFactory<'a>,
-            config: UniquePtr<ArcasRTCConfiguration<'a>>,
+        /// PeerConnection objects are threadsafe and can be shared between threads.
+        /// the actual work happens on the worker thread.
+        ///
+        /// # Safety
+        ///
+        /// The observer must be kept alive as long as the peer connection object.
+        ///
+        unsafe fn create_peer_connection(
+            self: &ArcasPeerConnectionFactory,
+            config: UniquePtr<ArcasRTCConfiguration>,
             observer: *mut ArcasPeerConnectionObserver,
-        ) -> UniquePtr<ArcasPeerConnection<'a>>;
+        ) -> SharedPtr<ArcasPeerConnection>;
 
-        fn create_video_track<'a>(
-            self: &ArcasPeerConnectionFactory<'a>,
+        fn create_video_track(
+            self: &ArcasPeerConnectionFactory,
             id: String,
-            source: Pin<&mut ArcasVideoTrackSource>,
-        ) -> UniquePtr<ArcasVideoTrack<'a>>;
+            source: &ArcasVideoTrackSource,
+        ) -> UniquePtr<ArcasVideoTrack>;
 
         // ArcasPeerConnection
         fn create_offer(
@@ -763,13 +825,15 @@ pub mod ffi {
         fn close(self: &ArcasPeerConnection);
 
         // session description
-        fn to_string(self: &ArcasSessionDescription) -> String;
+        #[cxx_name = "to_string"]
+        fn cxx_to_string(self: &ArcasSessionDescription) -> String;
         fn get_type(self: &ArcasSessionDescription) -> ArcasSDPType;
-        fn clone(self: &ArcasSessionDescription) -> UniquePtr<ArcasSessionDescription>;
+        #[cxx_name = "clone"]
+        fn clone_cxx(self: &ArcasSessionDescription) -> UniquePtr<ArcasSessionDescription>;
 
         fn create_rtc_configuration(
             config: ArcasPeerConnectionConfig,
-        ) -> UniquePtr<ArcasRTCConfiguration<'static>>;
+        ) -> UniquePtr<ArcasRTCConfiguration>;
 
         // ArcasRTPVideoSender
         fn set_track(self: &ArcasRTPVideoSender, track: &ArcasVideoTrack) -> bool;
@@ -837,6 +901,11 @@ pub mod ffi {
             self: &ArcasRTPAudioTransceiver,
             extensions: UniquePtr<CxxVector<ArcasRTPHeaderExtensionCapability>>,
         ) -> UniquePtr<ArcasRTCError>;
+
+        // ArcasRTCError
+        fn ok(self: &ArcasRTCError) -> bool;
+        fn kind(self: &ArcasRTCError) -> ArcasRTCErrorType;
+        fn message(self: &ArcasRTCError) -> String;
 
         // ArcasCxxVideoBitrateAllocation
         #[cxx_name = "SetBitrate"]
@@ -1430,12 +1499,14 @@ impl ArcasRustRTCStatsCollectorCallback {
     }
 }
 
-unsafe impl Sync for ArcasAPI<'_> {}
-unsafe impl Send for ArcasAPI<'_> {}
-unsafe impl Sync for ArcasVideoTrackSource {}
+unsafe impl Send for ArcasAPI {}
+unsafe impl Sync for ArcasAPI {}
 unsafe impl Send for ArcasVideoTrackSource {}
+// This is actually unsafe and we rely on the wrappers in libwebrtc crate to ensure concurrent
+// writes are not happening.
+unsafe impl Sync for ArcasVideoTrackSource {}
 unsafe impl Send for ArcasICECandidate {}
-unsafe impl Send for ArcasRTCConfiguration<'_> {}
+unsafe impl Send for ArcasRTCConfiguration {}
 unsafe impl Sync for ArcasPeerConnectionObserver {}
 unsafe impl Send for ArcasPeerConnectionObserver {}
 unsafe impl Send for ArcasEncodedImageFactory {}
@@ -1448,3 +1519,18 @@ unsafe impl Send for ArcasVideoEncoderSettings {}
 unsafe impl Send for ArcasVideoEncoderRateControlParameters {}
 unsafe impl Send for ArcasVideoFrameRawImageData {}
 unsafe impl Send for ArcasColorSpace {}
+unsafe impl Send for ArcasVideoTrack {}
+/// There are special afforances for video tracks returend by CreateVideoTrack.
+/// See peer_connection_factory.cc for details.
+unsafe impl Sync for ArcasVideoTrack {}
+unsafe impl Send for ArcasRTPVideoTransceiver {}
+unsafe impl Sync for ArcasRTPVideoTransceiver {}
+unsafe impl Sync for ArcasPeerConnectionFactory {}
+unsafe impl Send for ArcasPeerConnectionFactory {}
+unsafe impl Sync for ArcasPeerConnection {}
+/// There are special affordances for the peer connection object that make it threadsafe.
+/// libwebrtc will wrap the underlying peer connection interface in a wrapper which will forward
+/// calls to the appropriate thread.
+unsafe impl Send for ArcasPeerConnection {}
+unsafe impl Send for ArcasSessionDescription {}
+unsafe impl Sync for ArcasSessionDescription {}
