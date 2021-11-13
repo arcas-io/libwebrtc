@@ -6,12 +6,6 @@
 #include "libwebrtc-sys/src/lib.rs.h"
 #include <iostream>
 
-ArcasPeerConnection::ArcasPeerConnection(
-    rtc::scoped_refptr<webrtc::PeerConnectionInterface> api) : api(std::move(api))
-{
-    RTC_LOG(LS_VERBOSE) << "ArcasPeerConnection";
-}
-
 void ArcasPeerConnection::create_offer(rust::Box<ArcasRustCreateSessionDescriptionObserver> observer) const
 {
     webrtc::PeerConnectionInterface::RTCOfferAnswerOptions options;

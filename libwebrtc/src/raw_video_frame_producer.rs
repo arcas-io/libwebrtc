@@ -14,6 +14,7 @@ pub trait RawFrameProducer {
     fn height(&self) -> i32;
     fn fps(&self) -> u32;
     fn start(&mut self) -> Result<Receiver<RawVideoFrame>>;
+    fn cancel(&self);
 }
 
 /// Abstraction over the media_pipeline crate specific to producing values from
@@ -64,6 +65,10 @@ impl RawFrameProducer for GStreamerRawFrameProducer {
 
     fn fps(&self) -> u32 {
         self.fps
+    }
+
+    fn cancel(&self) {
+        ok_or_return!(self.cancel_tx.send(()));
     }
 
     fn start(&mut self) -> Result<Receiver<RawVideoFrame>> {

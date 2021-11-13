@@ -13,7 +13,7 @@ public:
     {
         RTC_LOG(LS_VERBOSE) << "~ArcasVideoTrack";
     }
-    webrtc::VideoTrackInterface::ContentHint content_hint()
+    webrtc::VideoTrackInterface::ContentHint content_hint() const
     {
         return api->content_hint();
     }

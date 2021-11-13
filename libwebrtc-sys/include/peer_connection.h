@@ -17,9 +17,13 @@ class ArcasPeerConnection
 {
 private:
     rtc::scoped_refptr<webrtc::PeerConnectionInterface> api;
+    // Hold reference for refcounting purposes helps rust ensure we don't need exact ordering in drops.
+    rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> factory;
 
 public:
-    ArcasPeerConnection(rtc::scoped_refptr<webrtc::PeerConnectionInterface> api);
+    ArcasPeerConnection(
+        rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> factory,
+        rtc::scoped_refptr<webrtc::PeerConnectionInterface> api) : api(api), factory(factory){};
     ~ArcasPeerConnection()
     {
         RTC_LOG(LS_VERBOSE) << "~ArcasPeerConnection";
@@ -36,7 +40,8 @@ public:
     std::unique_ptr<ArcasRTPVideoTransceiver> add_video_transceiver() const;
     std::unique_ptr<ArcasRTPAudioTransceiver> add_audio_transceiver() const;
     std::unique_ptr<ArcasRTPVideoTransceiver> add_video_transceiver_with_track(std::unique_ptr<ArcasVideoTrack> track, ArcasTransceiverInit init) const;
-    void close() const {
+    void close() const
+    {
         api->Close();
     }
 

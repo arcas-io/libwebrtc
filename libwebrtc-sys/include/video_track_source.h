@@ -25,7 +25,7 @@ public:
         api->push_frame(frame);
     }
 
-    std::unique_ptr<ArcasVideoTrackSource> clone() const
+    std::unique_ptr<ArcasVideoTrackSource> cxx_clone() const
     {
         return std::make_unique<ArcasVideoTrackSource>(ref());
     }

@@ -1,8 +1,16 @@
 #include "iostream"
 #include "rust/cxx.h"
 #include "libwebrtc-sys/include/peer_connection_factory.h"
+#include "libwebrtc-sys/include/api_internal.h"
 #include "libwebrtc-sys/include/peer_connection_observer.h"
 #include "libwebrtc-sys/src/lib.rs.h"
+
+ArcasPeerConnectionFactory::ArcasPeerConnectionFactory(
+    rtc::scoped_refptr<ArcasAPIInternal> internal_api,
+    rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> api) : internal_api(internal_api), api(api)
+{
+    internal_api->AddRef();
+};
 
 std::unique_ptr<webrtc::PeerConnectionInterface::RTCConfiguration> create_rtc_configuration(ArcasPeerConnectionConfig config)
 {
