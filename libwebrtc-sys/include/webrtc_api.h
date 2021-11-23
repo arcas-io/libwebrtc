@@ -34,4 +34,5 @@
 #include "rtc_base/thread.h"
 #include "rtc_base/logging.h"
 #include "api/video_codecs/video_encoder_factory.h"
+#include "system_wrappers/include/field_trial.h"
 #include "api/array_view.h"

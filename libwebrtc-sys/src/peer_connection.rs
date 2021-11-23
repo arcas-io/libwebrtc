@@ -1,8 +1,3 @@
-#[cfg(test)]
-use crate::ffi::ArcasPeerConnectionObserver;
-#[cfg(test)]
-use std::sync::mpsc::{channel, Receiver, Sender};
-
 use cxx::UniquePtr;
 
 use crate::ffi::{

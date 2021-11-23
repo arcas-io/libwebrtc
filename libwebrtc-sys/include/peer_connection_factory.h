@@ -29,11 +29,8 @@ public:
 
         if (!result.ok())
         {
+            RTC_LOG(LS_ERROR) << "Error creating peer connection: " << result.error().message();
             return nullptr;
-        }
-        else
-        {
-            RTC_LOG(LS_ERROR) << result.error().message();
         }
         auto out = std::make_shared<ArcasPeerConnection>(api, std::move(result.MoveValue()));
         return out;

@@ -11,6 +11,24 @@ impl ICECandidate {
     }
 
     pub fn take_cxx(self) -> UniquePtr<ArcasICECandidate> {
-        return self.cxx_ptr;
+        self.cxx_ptr
+    }
+
+    pub fn sdp(&self) -> String {
+        self.cxx_ptr.to_string()
+    }
+
+    pub fn sdp_mid(&self) -> String {
+        self.cxx_ptr.sdp_mid()
+    }
+
+    pub fn sdp_mline_index(&self) -> u32 {
+        self.cxx_ptr.sdp_mline_index()
+    }
+}
+
+impl ToString for ICECandidate {
+    fn to_string(&self) -> String {
+        self.cxx_ptr.to_string()
     }
 }

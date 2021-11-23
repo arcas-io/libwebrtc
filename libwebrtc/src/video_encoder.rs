@@ -15,7 +15,6 @@ use libwebrtc_sys::{
     VIDEO_CODEC_MEMORY, VIDEO_CODEC_NO_OUTPUT, VIDEO_CODEC_OK, VIDEO_CODEC_OK_REQUEST_KEYFRAME,
     VIDEO_CODEC_TARGET_BITRATE_OVERSHOOT, VIDEO_CODEC_UNINITIALIZED,
 };
-use log::error;
 
 use crate::{
     error::{self, Result, WebRTCError},
@@ -37,6 +36,7 @@ pub enum EncodeResult {
     NoOutput,
 }
 
+#[derive(Debug)]
 pub enum FrameTypes {
     KeyFrame,
     EmptyFrame,
@@ -80,7 +80,7 @@ impl Default for VideoEncoderSettings {
 }
 
 pub struct VideoEncoderFactory {
-    factory: UniquePtr<ArcasVideoEncoderFactoryWrapper>,
+    pub(crate) factory: UniquePtr<ArcasVideoEncoderFactoryWrapper>,
 }
 
 impl VideoEncoderFactory {
@@ -119,6 +119,22 @@ impl VideoEncoderFactory {
         let encoder = VideoEncoder::new(codec, settings, cxx_encoder, drop_rx, image_rx)?;
         Ok(encoder)
     }
+
+    pub fn create_encoder_without_init(&self, format: &SDPVideoFormat) -> Result<VideoEncoder> {
+        let (drop_tx, drop_rx) = unbounded();
+        let (image_tx, image_rx) = unbounded();
+        let wrapper = Box::new(libwebrtc_sys::EncodedImageCallbackHandler::new(
+            Box::new(move |drop_reason| {
+                ok_or_return!(drop_tx.send(drop_reason));
+            }),
+            Box::new(move |encoded_image, codec_info| {
+                ok_or_return!(image_tx.send((encoded_image, codec_info)));
+            }),
+        ));
+        let cxx_encoder = self.factory.create_encoder(format.as_ref()?, wrapper);
+        let encoder = VideoEncoder::new_without_init(cxx_encoder, drop_rx, image_rx)?;
+        Ok(encoder)
+    }
 }
 
 impl Default for VideoEncoderFactory {
@@ -128,24 +144,42 @@ impl Default for VideoEncoderFactory {
 }
 
 pub struct VideoEncoder {
-    pub video_codec: VideoCodec,
-    encoder: UniquePtr<ArcasVideoEncoderWrapper>,
+    // Hold C++ refrence to codec
+    #[allow(dead_code)]
+    video_codec: Option<VideoCodec>,
+    pub(crate) encoder: UniquePtr<ArcasVideoEncoderWrapper>,
     drop_rx: Option<Receiver<ArcasVideoEncoderDropReason>>,
 
     // Hold reference to C++ object
     #[allow(dead_code)]
-    arcas_video_codec: SharedPtr<ArcasVideoCodec>,
+    arcas_video_codec: Option<SharedPtr<ArcasVideoCodec>>,
     // Hold reference to C++ object
     #[allow(dead_code)]
-    arcas_video_encoder_settings: SharedPtr<ArcasVideoEncoderSettings>,
+    arcas_video_encoder_settings: Option<SharedPtr<ArcasVideoEncoderSettings>>,
     // Hold reference to C++ object
     #[allow(dead_code)]
-    arcas_rate_control_params: SharedPtr<ArcasVideoEncoderRateControlParameters>,
+    arcas_rate_control_params: Option<SharedPtr<ArcasVideoEncoderRateControlParameters>>,
 
     encoded_image_rx: Option<Receiver<EncodedImageOutput>>,
 }
 
 impl VideoEncoder {
+    pub(crate) fn new_without_init(
+        encoder: UniquePtr<ArcasVideoEncoderWrapper>,
+        drop_rx: Receiver<ArcasVideoEncoderDropReason>,
+        encoded_image_rx: Receiver<EncodedImageOutput>,
+    ) -> Result<Self> {
+        Ok(Self {
+            video_codec: None,
+            encoder,
+            arcas_video_codec: None,
+            drop_rx: Some(drop_rx),
+            encoded_image_rx: Some(encoded_image_rx),
+            arcas_video_encoder_settings: None,
+            arcas_rate_control_params: None,
+        })
+    }
+
     pub fn new(
         video_codec: VideoCodec,
         settings: VideoEncoderSettings,
@@ -198,13 +232,13 @@ impl VideoEncoder {
         encoder.set_rates(arcas_rate_params_ref);
 
         Ok(Self {
-            video_codec,
+            video_codec: Some(video_codec),
             encoder,
-            arcas_video_codec,
+            arcas_video_codec: Some(arcas_video_codec),
             drop_rx: Some(drop_rx),
             encoded_image_rx: Some(encoded_image_rx),
-            arcas_video_encoder_settings,
-            arcas_rate_control_params: arcas_rate_params,
+            arcas_video_encoder_settings: Some(arcas_video_encoder_settings),
+            arcas_rate_control_params: Some(arcas_rate_params),
         })
     }
 
@@ -304,6 +338,8 @@ mod tests {
 
     use bytes::{Bytes, BytesMut};
 
+    use crate::reactive_video_encoder::DEFAULT_ENCODING;
+
     use super::*;
 
     #[test]
@@ -325,26 +361,21 @@ mod tests {
         std::thread::spawn(move || {
             let encoder_factory = VideoEncoderFactory::new();
             let formats = encoder_factory.get_supported_formats();
-            let vp9 = formats.iter().find(|f| f.get_name() == "VP9").unwrap();
-            let vp9_codec = VideoCodec::vp9(width, height, fps);
+            let vp8 = formats
+                .iter()
+                .find(|f| f.get_name() == DEFAULT_ENCODING)
+                .unwrap();
+            let vp8_codec = VideoCodec::vp8(width, height, fps);
             let settings = VideoEncoderSettings::default();
-            let mut vp9_encoder = encoder_factory
-                .create_encoder(vp9, vp9_codec, settings)
+            let mut vp8_encoder = encoder_factory
+                .create_encoder(vp8, vp8_codec, settings)
                 .unwrap();
 
-            let info = vp9_encoder.get_encoder_info();
-            println!("encoder info:: {:?}", info);
-
-            let encode_rx = vp9_encoder.take_encoded_image_rx().unwrap();
+            let encode_rx = vp8_encoder.take_encoded_image_rx().unwrap();
             std::thread::spawn(move || {
                 let mut frames = 0;
-                for (encoded_image, codec_specific_info) in encode_rx {
-                    let len = encoded_image.size();
-                    println!(
-                        "encoded image size: {:?} {:?}",
-                        len,
-                        codec_specific_info.get_codec_type()
-                    );
+                for (encoded_image, _codec_specific_info) in encode_rx {
+                    let _len = encoded_image.size();
                     frames += 1;
                     if frames == 10 {
                         complete_tx.send(1).unwrap();
@@ -363,7 +394,7 @@ mod tests {
                     crate::video_frame::RawVideoFrame::create(width, height, in_ms, buf_bytes)
                         .unwrap();
 
-                let _ = vp9_encoder
+                let _ = vp8_encoder
                     .encode(
                         video_frame,
                         vec![FrameTypes::KeyFrame, FrameTypes::DeltaFrame],

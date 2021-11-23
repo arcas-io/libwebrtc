@@ -6,6 +6,7 @@ pub struct RTCError {
 }
 
 impl RTCError {
+    #[allow(dead_code)]
     pub(crate) fn new(cxx_rtc_error: UniquePtr<ArcasRTCError>) -> Self {
         Self { cxx_rtc_error }
     }

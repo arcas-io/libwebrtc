@@ -1,7 +1,6 @@
 use cxx::UniquePtr;
 use libwebrtc_sys::ffi::{
-    ArcasCxxRtpTransceiverDirection, ArcasRTPTransceiverDirection, ArcasRTPVideoTransceiver,
-    ArcasTransceiverInit,
+    ArcasCxxRtpTransceiverDirection, ArcasRTPVideoTransceiver, ArcasTransceiverInit,
 };
 
 #[derive(Debug, Clone)]

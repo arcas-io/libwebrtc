@@ -1,4 +1,4 @@
-use cxx::SharedPtr;
+use cxx::{SharedPtr, UniquePtr};
 use libwebrtc_sys::ffi::{ArcasCxxVideoCodecType, ArcasSpatialLayer, ArcasVideoCodec};
 
 use crate::{
@@ -74,6 +74,79 @@ impl Default for VideoCodecConfig {
     }
 }
 
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+pub struct VideoCodecDescriptionSpatialLayer {
+    width: i32,
+    height: i32,
+    max_frame_rate: u32,
+    number_of_temporal_layers: u8,
+    max_bitrate: u32,
+    target_bitrate: u32,
+    min_bitrate: u32,
+    qp_max: u32,
+    active: bool,
+}
+
+impl From<&ArcasSpatialLayer> for VideoCodecDescriptionSpatialLayer {
+    fn from(layer: &ArcasSpatialLayer) -> Self {
+        Self {
+            width: layer.get_width(),
+            height: layer.get_height(),
+            max_frame_rate: layer.get_max_framerate() as u32,
+            number_of_temporal_layers: layer.get_number_of_temporal_layers(),
+            max_bitrate: layer.get_max_bitrate(),
+            target_bitrate: layer.get_target_bitrate(),
+            min_bitrate: layer.get_min_bitrate(),
+            qp_max: layer.get_qp_max(),
+            active: layer.get_active(),
+        }
+    }
+}
+
+/// Use this for when a codec description needs to be hashable.  Built initially
+/// for passthrough/reactive encoding where we need to create one encoder per
+/// configuration type.
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+pub struct VideoCodecDescription {
+    scalability_mode: String,
+    width: i32,
+    height: i32,
+    max_bitrate: u32,
+    min_bitrate: u32,
+    start_bitrate: u32,
+    max_framerate: u32,
+    active: bool,
+    qp_max: u32,
+    spatial_layers: Vec<VideoCodecDescriptionSpatialLayer>,
+    simulcast_streams: Vec<VideoCodecDescriptionSpatialLayer>,
+}
+
+impl VideoCodecDescription {
+    pub fn create_from_codec(codec: &UniquePtr<ArcasVideoCodec>) -> Self {
+        Self {
+            scalability_mode: codec.get_scalability_mode(),
+            width: codec.get_width(),
+            height: codec.get_height(),
+            max_bitrate: codec.get_max_bitrate(),
+            min_bitrate: codec.get_min_bitrate(),
+            start_bitrate: codec.get_start_bitrate(),
+            max_framerate: codec.get_max_framerate(),
+            active: codec.get_active(),
+            qp_max: codec.get_qp_max(),
+            spatial_layers: codec
+                .spatial_layers()
+                .into_iter()
+                .map(|layer| layer.into())
+                .collect(),
+            simulcast_streams: codec
+                .simulcast_streams()
+                .into_iter()
+                .map(|layer| layer.into())
+                .collect(),
+        }
+    }
+}
+
 pub struct VideoCodec {
     pub codec_type: libwebrtc_sys::ffi::ArcasCxxVideoCodecType,
     pub primary: VideoCodecConfig,
@@ -85,9 +158,36 @@ impl VideoCodec {
     pub fn vp9_default() -> Self {
         Self::vp9(DEFAULT_WIDTH, DEFAULT_HEIGHT, DEFAULT_FPS)
     }
+    pub fn vp8_default() -> Self {
+        Self::vp8(DEFAULT_WIDTH, DEFAULT_HEIGHT, DEFAULT_FPS)
+    }
     pub fn vp9(width: i32, height: i32, fps: u32) -> Self {
         VideoCodec {
             codec_type: libwebrtc_sys::ffi::ArcasCxxVideoCodecType::kVideoCodecVP9,
+            primary: VideoCodecConfig {
+                width,
+                height,
+                max_frame_rate: fps,
+                ..VideoCodecConfig::default()
+            },
+            spatial_layers: vec![VideoCodecConfig {
+                width,
+                height,
+                max_frame_rate: fps,
+                ..VideoCodecConfig::default()
+            }],
+            simulcast_streams: vec![VideoCodecConfig {
+                width,
+                height,
+                max_frame_rate: fps,
+                ..VideoCodecConfig::default()
+            }],
+        }
+    }
+
+    pub fn vp8(width: i32, height: i32, fps: u32) -> Self {
+        VideoCodec {
+            codec_type: libwebrtc_sys::ffi::ArcasCxxVideoCodecType::kVideoCodecVP8,
             primary: VideoCodecConfig {
                 width,
                 height,
@@ -192,7 +292,7 @@ impl Default for VideoCodec {
             primary: VideoCodecConfig::default(),
             spatial_layers: vec![VideoCodecConfig::default()],
             simulcast_streams: vec![],
-            codec_type: ArcasCxxVideoCodecType::kVideoCodecVP9,
+            codec_type: ArcasCxxVideoCodecType::kVideoCodecVP8,
         }
     }
 }

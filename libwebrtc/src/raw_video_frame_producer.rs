@@ -1,4 +1,4 @@
-use crossbeam_channel::{select, unbounded, Receiver, Sender};
+use crossbeam_channel::{select, Receiver, Sender};
 use log::debug;
 
 use crate::{
@@ -75,7 +75,7 @@ impl RawFrameProducer for GStreamerRawFrameProducer {
         let rx: crossbeam_channel::Receiver<bytes::BytesMut> =
             media_pipeline::create_and_start_appsink_pipeline(self.pipeline.as_str())?;
 
-        let (result_tx, result_rx) = unbounded::<RawVideoFrame>();
+        let (result_tx, result_rx) = crossbeam_channel::bounded::<RawVideoFrame>(100);
 
         let cancel_rx = self
             .cancel_rx

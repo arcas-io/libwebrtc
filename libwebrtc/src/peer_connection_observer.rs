@@ -8,13 +8,10 @@ use libwebrtc_sys::{
     peer_connection::PeerConnectionObserverImpl,
     PeerConnectionObserverProxy,
 };
-use tokio::sync::{
-    broadcast,
-    mpsc::{channel, Receiver, Sender},
-};
+use tokio::sync::mpsc::{channel, Receiver, Sender};
 
 use crate::{
-    cxx_get_mut, cxx_ref,
+    cxx_get_mut,
     error::{Result, WebRTCError},
     ice_candidate::ICECandidate,
     ok_or_return, take_or_err,

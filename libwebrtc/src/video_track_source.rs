@@ -6,7 +6,7 @@ use parking_lot::Mutex;
 
 use crate::{
     error::{Result, WebRTCError},
-    video_frame::{AsCxxVideoFrame, EncodedVideoFrame, RawVideoFrame},
+    video_frame::{AsCxxVideoFrame, EmptyVideoFrame, EncodedVideoFrame, RawVideoFrame},
 };
 
 /// This represents the writable handle of the video track source. It's *extremely* unsafe to
@@ -18,6 +18,13 @@ pub struct VideoTrackSourceWriter {
 
 impl VideoTrackSourceWriter {
     pub fn push_raw_frame(&self, frame: RawVideoFrame) -> Result<()> {
+        self.cxx_track_source
+            .lock()
+            .push_frame(frame.as_cxx_video_frame_ref()?);
+        Ok(())
+    }
+
+    pub fn push_empty_frame(&self, frame: EmptyVideoFrame) -> Result<()> {
         self.cxx_track_source
             .lock()
             .push_frame(frame.as_cxx_video_frame_ref()?);

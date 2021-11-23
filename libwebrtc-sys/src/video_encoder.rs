@@ -54,7 +54,7 @@ pub trait VideoEncoderImpl {
     ///                                  WEBRTC_VIDEO_CODEC_MEMORY
     ///                                  WEBRTC_VIDEO_CODEC_ERROR
     unsafe fn init_encode(
-        &self,
+        &mut self,
         codec_settings: *const crate::ffi::ArcasCxxVideoCodec,
         number_of_cores: i32,
         max_payload_size: usize,
@@ -67,13 +67,13 @@ pub trait VideoEncoderImpl {
     ///
     /// Return value                : WEBRTC_VIDEO_CODEC_OK if OK, < 0 otherwise.
     fn register_encode_complete_callback(
-        &self,
+        &mut self,
         callback: UniquePtr<ArcasEncodedImageCallback>,
     ) -> i32;
 
     /// Free encoder memory.
     /// Return value                : WEBRTC_VIDEO_CODEC_OK if OK, < 0 otherwise.
-    fn release(&self) -> i32;
+    fn release(&mut self) -> i32;
 
     /// Encode an image (as a part of a video stream). The encoded image
     /// will be returned to the user through the encode complete callback.
@@ -87,8 +87,8 @@ pub trait VideoEncoderImpl {
     ///                                  WEBRTC_VIDEO_CODEC_ERR_PARAMETER
     ///                                  WEBRTC_VIDEO_CODEC_MEMORY
     ///                                  WEBRTC_VIDEO_CODEC_ERROR
-    fn encode(
-        &self,
+    unsafe fn encode(
+        &mut self,
         frame: &crate::ffi::ArcasCxxVideoFrame,
         frame_types: *const CxxVector<ArcasCxxVideoFrameType>,
     ) -> i32;
@@ -96,21 +96,24 @@ pub trait VideoEncoderImpl {
     /// Sets rate control parameters: bitrate, framerate, etc. These settings are
     /// instantaneous (i.e. not moving averages) and should apply from now until
     /// the next call to SetRates().
-    fn set_rates(&self, parameters: UniquePtr<crate::ffi::ArcasVideoEncoderRateControlParameters>);
+    fn set_rates(
+        &mut self,
+        parameters: UniquePtr<crate::ffi::ArcasVideoEncoderRateControlParameters>,
+    );
 
     /// Inform the encoder when the packet loss rate changes.
     ///
     /// Input:   - packet_loss_rate  : The packet loss rate (0.0 to 1.0).
-    fn on_packet_loss_rate_update(&self, packet_loss_rate: f32);
+    fn on_packet_loss_rate_update(&mut self, packet_loss_rate: f32);
 
     /// Inform the encoder when the round trip time changes.
     ///
     /// Input:   - rtt_ms            : The new RTT, in milliseconds.
-    fn on_rtt_update(&self, rtt: i64);
+    fn on_rtt_update(&mut self, rtt: i64);
 
     /// Called when a loss notification is received.
     fn on_loss_notification(
-        &self,
+        &mut self,
         loss_notification: crate::ffi::ArcasVideoEncoderLossNotification,
     );
 
@@ -133,7 +136,7 @@ impl VideoEncoderProxy {
     }
 
     pub unsafe fn init_encode(
-        &self,
+        &mut self,
         codec_settings: *const crate::ffi::ArcasCxxVideoCodec,
         number_of_cores: i32,
         max_payload_size: usize,
@@ -143,18 +146,18 @@ impl VideoEncoderProxy {
     }
 
     pub fn register_encode_complete_callback(
-        &self,
+        &mut self,
         callback: UniquePtr<ArcasEncodedImageCallback>,
     ) -> i32 {
         self.api.register_encode_complete_callback(callback)
     }
 
-    pub fn release(&self) -> i32 {
+    pub fn release(&mut self) -> i32 {
         self.api.release()
     }
 
-    pub fn encode(
-        &self,
+    pub unsafe fn encode(
+        &mut self,
         frame: &crate::ffi::ArcasCxxVideoFrame,
         frame_types: *const CxxVector<ArcasCxxVideoFrameType>,
     ) -> i32 {
@@ -166,22 +169,22 @@ impl VideoEncoderProxy {
     }
 
     pub fn set_rates(
-        &self,
+        &mut self,
         parameters: UniquePtr<crate::ffi::ArcasVideoEncoderRateControlParameters>,
     ) {
         self.api.set_rates(parameters)
     }
 
-    pub fn on_packet_loss_rate_update(&self, packet_loss_rate: f32) {
+    pub fn on_packet_loss_rate_update(&mut self, packet_loss_rate: f32) {
         self.api.on_packet_loss_rate_update(packet_loss_rate)
     }
 
-    pub fn on_rtt_update(&self, rtt: i64) {
+    pub fn on_rtt_update(&mut self, rtt: i64) {
         self.api.on_rtt_update(rtt)
     }
 
     pub fn on_loss_notification(
-        &self,
+        &mut self,
         loss_notification: crate::ffi::ArcasVideoEncoderLossNotification,
     ) {
         self.api.on_loss_notification(loss_notification)

@@ -46,7 +46,6 @@ impl PeerConnectionStats {
 
 use crate::{
     error::{aracs_rtc_error_to_err, Result, WebRTCError},
-    factory::Factory,
     ice_candidate::ICECandidate,
     ok_or_return,
     peer_connection_observer::{ConnectionState, PeerConnectionObserver},
@@ -342,10 +341,7 @@ impl Drop for PeerConnection {
 mod tests {
     use std::time::Duration;
 
-    use tokio::{
-        test,
-        time::{sleep, sleep_until, Sleep},
-    };
+    use tokio::{test, time::sleep};
 
     use super::*;
     use crate::{
@@ -384,7 +380,7 @@ mod tests {
             let _ = Factory::new();
         }
 
-        let pc_factory1 = factory1.create_peer_connection_factory().unwrap();
+        let _pc_factory1 = factory1.create_peer_connection_factory().unwrap();
         // shouldn't panic because pc1 has a reference in C++.
         drop(factory1);
     }
@@ -406,7 +402,7 @@ mod tests {
             .create_peer_connection(PeerConnectionConfig::default())
             .unwrap();
 
-        let (source, mut source_write) = VideoTrackSource::create();
+        let (source, source_write) = VideoTrackSource::create();
         let track = pc_factory1
             .create_video_track("test".into(), &source)
             .unwrap();

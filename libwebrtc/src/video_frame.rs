@@ -1,5 +1,5 @@
 use bytes::Bytes;
-use cxx::{UniquePtr};
+use cxx::UniquePtr;
 use libwebrtc_sys::ffi::{
     create_arcas_color_space, create_arcas_video_frame_buffer_from_I420,
     create_arcas_video_frame_buffer_from_encoded_image, create_arcas_video_frame_factory,
@@ -11,6 +11,46 @@ use crate::error::{self, Result, WebRTCError};
 
 pub trait AsCxxVideoFrame {
     fn as_cxx_video_frame_ref(&self) -> Result<&ArcasCxxVideoFrame>;
+}
+
+// We use empty video frame for a number of tricks including triggering the encoder pipeline to start without
+// actually passing through data.
+pub struct EmptyVideoFrame {
+    // Hold the underlying C++ object alive as long as this VideoFrame is alive.
+    #[allow(dead_code)]
+    color_space: UniquePtr<ArcasColorSpace>,
+    // Bytes reference to ensure as long as this video frame is alive it's pointer is valid.
+    video_frame: UniquePtr<ArcasCxxVideoFrame>,
+}
+
+impl EmptyVideoFrame {
+    pub fn create(timestamp_ms: u64) -> Result<Self> {
+        let frame_factory = create_arcas_video_frame_factory();
+        let color_space = create_arcas_color_space();
+        let color_space_ref = color_space
+            .as_ref()
+            .ok_or_else(|| WebRTCError::CXXUnwrapError("failed to get color space ref".into()))?;
+
+        frame_factory.set_timestamp_ms(timestamp_ms);
+        frame_factory.set_empty_video_frame_buffer();
+        frame_factory.set_color_space(color_space_ref);
+        frame_factory.set_ntp_time_ms(timestamp_ms as i64);
+        frame_factory.set_timestamp_rtp(timestamp_ms as u32);
+        let video_frame = frame_factory.build();
+
+        Ok(Self {
+            video_frame,
+            color_space,
+        })
+    }
+}
+
+impl AsCxxVideoFrame for EmptyVideoFrame {
+    fn as_cxx_video_frame_ref(&self) -> Result<&ArcasCxxVideoFrame> {
+        self.video_frame.as_ref().ok_or_else(|| {
+            error::WebRTCError::CXXUnwrapError("failed to unwrap video frame".into())
+        })
+    }
 }
 
 pub struct RawVideoFrame {
@@ -44,6 +84,8 @@ impl RawVideoFrame {
         frame_factory.set_timestamp_ms(timestamp_ms);
         frame_factory.set_raw_video_frame_buffer(video_frame_buffer_ref);
         frame_factory.set_color_space(color_space_ref);
+        frame_factory.set_ntp_time_ms(timestamp_ms as i64);
+        frame_factory.set_timestamp_rtp(timestamp_ms as u32);
         let video_frame = frame_factory.build();
 
         Ok(Self {

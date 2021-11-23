@@ -14,8 +14,6 @@ public:
     std::unique_ptr<ArcasPeerConnectionFactory> create_factory() const
     {
         auto cxx_factory = internal->create_factory();
-        auto copy = internal;
-        auto copy2 = internal;
         RTC_LOG(LS_INFO) << "create_factory()";
         return std::make_unique<ArcasPeerConnectionFactory>(internal, cxx_factory);
     }
@@ -23,6 +21,7 @@ public:
     std::unique_ptr<ArcasPeerConnectionFactory> create_factory_with_arcas_video_encoder_factory(std::unique_ptr<ArcasVideoEncoderFactory> video_encoder_factory) const
     {
         auto cxx_factory = internal->create_factory_with_arcas_video_encoder_factory(std::move(video_encoder_factory));
+        RTC_LOG(LS_INFO) << "field: " << webrtc::field_trial::GetFieldTrialString();
         return std::make_unique<ArcasPeerConnectionFactory>(internal, cxx_factory);
     }
 };
