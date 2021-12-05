@@ -1,5 +1,5 @@
 #![allow(unreachable_patterns)]
-use cxx::UniquePtr;
+use cxx::{CxxVector, SharedPtr, UniquePtr};
 use ffi::ArcasAPI;
 use ffi::ArcasCodecSpecificInfo;
 use ffi::ArcasColorSpace;
@@ -836,6 +836,9 @@ pub mod ffi {
         fn get_stats(self: &ArcasPeerConnection, callback: Box<ArcasRustRTCStatsCollectorCallback>);
         fn add_ice_candidate(self: &ArcasPeerConnection, candidate: UniquePtr<ArcasICECandidate>);
         fn close(self: &ArcasPeerConnection);
+        fn get_transceivers(
+            self: &ArcasPeerConnection,
+        ) -> UniquePtr<CxxVector<ArcasRTPTransceiver>>;
 
         // session description
         #[cxx_name = "to_string"]
@@ -851,6 +854,16 @@ pub mod ffi {
         // ArcasRTPVideoSender
         fn set_track(self: &ArcasRTPVideoSender, track: &ArcasVideoTrack) -> bool;
 
+        // ArcasRTPTransceiver
+        fn video_transceiver_from_base(
+            base: &ArcasRTPTransceiver,
+        ) -> UniquePtr<ArcasRTPVideoTransceiver>;
+        fn audio_transceiver_from_base(
+            base: &ArcasRTPTransceiver,
+        ) -> UniquePtr<ArcasRTPAudioTransceiver>;
+        fn direction(self: &ArcasRTPTransceiver) -> ArcasRTPTransceiverDirection;
+        fn media_type(self: &ArcasRTPTransceiver) -> ArcasMediaType;
+
         // ArcasRTPVideoTransceiver
         fn mid(self: &ArcasRTPVideoTransceiver) -> String;
         fn media_type(self: &ArcasRTPVideoTransceiver) -> ArcasMediaType;
@@ -860,6 +873,7 @@ pub mod ffi {
         fn stopping(self: &ArcasRTPVideoTransceiver) -> bool;
         fn direction(self: &ArcasRTPVideoTransceiver) -> ArcasRTPTransceiverDirection;
         fn stop(self: &ArcasRTPVideoTransceiver) -> UniquePtr<ArcasRTCError>;
+        fn clone(self: &ArcasRTPVideoTransceiver) -> UniquePtr<ArcasRTPVideoTransceiver>;
 
         fn header_extensions_to_offer(
             self: &ArcasRTPVideoTransceiver,
@@ -872,6 +886,11 @@ pub mod ffi {
         fn codec_preferences(
             self: &ArcasRTPVideoTransceiver,
         ) -> UniquePtr<CxxVector<ArcasRTPCodecCapability>>;
+
+        fn set_direction(
+            self: &ArcasRTPVideoTransceiver,
+            direction: ArcasRTPTransceiverDirection,
+        ) -> UniquePtr<ArcasRTCError>;
 
         fn set_codec_preferences(
             self: &ArcasRTPVideoTransceiver,
@@ -892,6 +911,7 @@ pub mod ffi {
         fn stopping(self: &ArcasRTPAudioTransceiver) -> bool;
         fn direction(self: &ArcasRTPAudioTransceiver) -> ArcasRTPTransceiverDirection;
         fn stop(self: &ArcasRTPAudioTransceiver) -> UniquePtr<ArcasRTCError>;
+        fn clone(self: &ArcasRTPAudioTransceiver) -> UniquePtr<ArcasRTPAudioTransceiver>;
 
         fn header_extensions_to_offer(
             self: &ArcasRTPAudioTransceiver,
@@ -908,6 +928,11 @@ pub mod ffi {
         fn set_codec_preferences(
             self: &ArcasRTPAudioTransceiver,
             codec_preferences: UniquePtr<CxxVector<ArcasRTPCodecCapability>>,
+        ) -> UniquePtr<ArcasRTCError>;
+
+        fn set_direction(
+            self: &ArcasRTPAudioTransceiver,
+            direction: ArcasRTPTransceiverDirection,
         ) -> UniquePtr<ArcasRTCError>;
 
         fn set_offerred_rtp_header_extensions(

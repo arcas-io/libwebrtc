@@ -60,4 +60,6 @@ public:
 
     void get_stats(rust::Box<ArcasRustRTCStatsCollectorCallback> cb) const;
     void add_ice_candidate(std::unique_ptr<ArcasICECandidate> candidate) const;
+
+    std::unique_ptr<std::vector<ArcasRTPTransceiver>> get_transceivers() const;
 };

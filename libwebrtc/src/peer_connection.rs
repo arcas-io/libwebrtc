@@ -3,7 +3,8 @@ use std::sync::Arc;
 use cxx::{SharedPtr, UniquePtr};
 use libwebrtc_sys::{
     ffi::{
-        create_rtc_configuration, ArcasAudioReceiverStats, ArcasAudioSenderStats, ArcasICEServer,
+        audio_transceiver_from_base, create_rtc_configuration, video_transceiver_from_base,
+        ArcasAudioReceiverStats, ArcasAudioSenderStats, ArcasICEServer, ArcasMediaType,
         ArcasPeerConnection, ArcasPeerConnectionConfig, ArcasPeerConnectionFactory,
         ArcasRTCConfiguration, ArcasSDPSemantics, ArcasVideoReceiverStats, ArcasVideoSenderStats,
     },
@@ -51,7 +52,7 @@ use crate::{
     peer_connection_observer::{ConnectionState, PeerConnectionObserver},
     rx_recv_async_or_err,
     sdp::SessionDescription,
-    transceiver::{TransceiverInit, VideoTransceiver},
+    transceiver::{self, AudioTransceiver, TransceiverInit, VideoTransceiver},
     video_track::VideoTrack,
     video_track_source::VideoTrackSource,
 };
@@ -314,6 +315,23 @@ impl<'a> PeerConnection {
         Ok(())
     }
 
+    pub fn get_transceivers(&self) -> (Vec<VideoTransceiver>, Vec<AudioTransceiver>) {
+        let cxx_vec = self.cxx_pc.get_transceivers();
+        let (mut video, mut audio) = (vec![], vec![]);
+        cxx_vec
+            .into_iter()
+            .for_each(|transceiver| match transceiver.media_type() {
+                ArcasMediaType::MEDIA_TYPE_AUDIO => audio.push(AudioTransceiver::new(
+                    audio_transceiver_from_base(&transceiver),
+                )),
+                ArcasMediaType::MEDIA_TYPE_VIDEO => video.push(VideoTransceiver::new(
+                    video_transceiver_from_base(&transceiver),
+                )),
+                _ => {}
+            });
+        return (video, audio);
+    }
+
     pub fn take_connection_state_rx(&mut self) -> Result<Receiver<ConnectionState>> {
         let mut lock = self.observer.lock();
         lock.take_connection_state_rx()
@@ -411,6 +429,11 @@ mod tests {
             .add_video_transceiver(TransceiverInit::default(), track)
             .await
             .unwrap();
+
+        {
+            let (video_transceivers, _) = pc1.get_transceivers();
+            assert!(video_transceivers.len() == 1);
+        }
 
         let offer = pc1.create_offer().await.unwrap();
         let remote_offer = offer.copy_to_remote().unwrap();

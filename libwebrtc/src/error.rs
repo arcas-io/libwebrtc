@@ -81,6 +81,9 @@ pub enum WebRTCError {
 
     #[error("Failed to set SDP: {0}")]
     FailedToSetSDP(String),
+
+    #[error("Failed to set transceiver direction")]
+    FailedToSetDirection,
 }
 
 impl<T> From<SendError<T>> for WebRTCError {

@@ -4,6 +4,7 @@ pub mod error;
 pub mod factory;
 pub mod ice_candidate;
 mod macros;
+pub mod media_type;
 pub mod now;
 pub mod passthrough_video_encoder;
 pub mod peer_connection;

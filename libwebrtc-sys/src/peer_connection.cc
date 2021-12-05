@@ -5,6 +5,7 @@
 #include "libwebrtc-sys/include/peer_connection_stats_callback.h"
 #include "libwebrtc-sys/src/lib.rs.h"
 #include <iostream>
+#include <vector>
 
 void ArcasPeerConnection::create_offer(rust::Box<ArcasRustCreateSessionDescriptionObserver> observer) const
 {
@@ -103,4 +104,13 @@ void ArcasPeerConnection::add_ice_candidate(std::unique_ptr<ArcasICECandidate> c
                                  RTC_LOG(LS_ERROR) << "ArcasPeerConnection::add_ice_candidate error: " << err.message();
                              }
                          });
+}
+
+std::unique_ptr<std::vector<ArcasRTPTransceiver>> ArcasPeerConnection::get_transceivers() const {
+    auto transceivers = api->GetTransceivers();
+    std::vector<ArcasRTPTransceiver> result;
+    for(auto txrx : transceivers) {
+        result.push_back(ArcasRTPTransceiver(txrx));
+    }
+    return std::make_unique<std::vector<ArcasRTPTransceiver>>(std::move(result));
 }
