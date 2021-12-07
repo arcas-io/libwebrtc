@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use crossbeam_channel::Sender;
 use cxx::UniquePtr;
 use libwebrtc_sys::{
     ffi::{create_arcas_video_encoder_factory, ArcasAPI},
@@ -8,7 +9,8 @@ use libwebrtc_sys::{
 
 use crate::{
     error::Result, passthrough_video_encoder::PassThroughVideoEncoderFactory,
-    peer_connection::PeerConnectionFactory,
+    peer_connection::PeerConnectionFactory, reactive_video_encoder::ReactiveVideoEncoderFactory,
+    video_encoder_pool::VideoEncoderPoolRequest,
 };
 
 /// Each factory holds the references to the underlying threads that run
@@ -32,6 +34,21 @@ impl Factory {
         let video_encoder_factory = create_arcas_video_encoder_factory(Box::new(
             VideoEncoderFactoryProxy::new(Box::new(PassThroughVideoEncoderFactory::new())),
         ));
+        let cxx_factory = self
+            .cxx
+            .create_factory_with_arcas_video_encoder_factory(video_encoder_factory);
+
+        Ok(PeerConnectionFactory::new(cxx_factory))
+    }
+
+    pub fn create_peer_connection_factory_reactive(
+        &self,
+        encoder_pool_request_tx: Sender<VideoEncoderPoolRequest>,
+    ) -> Result<PeerConnectionFactory> {
+        let video_encoder_factory =
+            create_arcas_video_encoder_factory(Box::new(VideoEncoderFactoryProxy::new(Box::new(
+                ReactiveVideoEncoderFactory::create(encoder_pool_request_tx)?,
+            ))));
         let cxx_factory = self
             .cxx
             .create_factory_with_arcas_video_encoder_factory(video_encoder_factory);

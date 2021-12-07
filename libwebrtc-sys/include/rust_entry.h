@@ -4,6 +4,7 @@
 #include "libwebrtc-sys/include/utils.h"
 #include "libwebrtc-sys/include/video_codec.h"
 #include "libwebrtc-sys/include/encoded_image_factory.h"
+#include "libwebrtc-sys/include/reactive_video_encoder_wrapper.h"
 #include "libwebrtc-sys/include/video_encoder.h"
 #include "libwebrtc-sys/include/video_encoder_factory.h"
 #include "libwebrtc-sys/include/media_stream.h"
@@ -23,6 +24,7 @@
 #include "libwebrtc-sys/include/logging.h"
 #include "libwebrtc-sys/include/video_encoding_wrapper.h"
 
+
 // The below header statements will cause Cxx to generate UniquePtrTarget types
 // for anything returned by these functions. This is required for some reason and is
 // not done automatically just by using these types.
@@ -31,5 +33,6 @@ std::unique_ptr<ArcasDataChannel> gen_unique_ptr1();
 std::unique_ptr<ArcasMediaStream> gen_unique_ptr2();
 std::unique_ptr<ArcasVideoCodecSettings> gen_unique_ptr3();
 std::unique_ptr<ArcasPeerConnectionConfig> gen_unique_ptr4();
+std::unique_ptr<ArcasSpatialLayer> gen_unique_ptr5();
 std::shared_ptr<ArcasCxxEncodedImage> gen_shared_ptr1();
 std::shared_ptr<ArcasCodecSpecificInfo> gen_shared_ptr2();

@@ -3,7 +3,23 @@
 #include "libwebrtc-sys/include/peer_connection_factory.h"
 #include "libwebrtc-sys/include/audio_device_module.h"
 
-class ArcasAPIInternal : public rtc::RefCountedBase, public rtc::RefCountInterface
+class ArcasFieldTrial : public webrtc::WebRtcKeyValueConfig
+{
+    std::string Lookup(absl::string_view key) const override
+    {
+        RTC_LOG(LS_VERBOSE) << "Lookup: " << key;
+
+        if (key.compare("WebRTC-TaskQueuePacer") == 0)
+        {
+            return "Enabled";
+        }
+
+        return "";
+    }
+};
+
+class ArcasAPIInternal : public rtc::RefCountedBase,
+                         public rtc::RefCountInterface
 {
 private:
     std::unique_ptr<rtc::Thread> worker_thread;
@@ -16,8 +32,11 @@ public:
                          signaling_thread(rtc::Thread::Create()),
                          network_thread(rtc::Thread::CreateWithSocketServer())
     {
+        worker_thread->SetName("worker_thread", &worker_thread);
         worker_thread->Start();
+        signaling_thread->SetName("signaling_thread", &signaling_thread);
         signaling_thread->Start();
+        network_thread->SetName("network_thread", &network_thread);
         network_thread->Start();
     }
 
@@ -38,10 +57,6 @@ public:
 
     rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> create_factory() const
     {
-        // TODO: Add configuration options for log levels.
-        // rtc::LogMessage::LogToDebug(rtc::LS_VERBOSE);
-        // rtc::LogMessage::SetLogToStderr(true);
-
         webrtc::PeerConnectionFactoryDependencies dependencies;
         dependencies.network_thread = network_thread.get();
         dependencies.signaling_thread = signaling_thread.get();
@@ -49,6 +64,7 @@ public:
         dependencies.call_factory = webrtc::CreateCallFactory();
         dependencies.task_queue_factory = webrtc::CreateDefaultTaskQueueFactory();
         dependencies.event_log_factory = std::make_unique<webrtc::RtcEventLogFactory>(dependencies.task_queue_factory.get());
+        dependencies.trials = std::make_unique<ArcasFieldTrial>();
 
         auto adm = rtc::make_ref_counted<ArcasAudioDeviceModule>();
 
@@ -58,7 +74,9 @@ public:
         media_deps.audio_decoder_factory = webrtc::CreateBuiltinAudioDecoderFactory();
         media_deps.video_encoder_factory = webrtc::CreateBuiltinVideoEncoderFactory();
         media_deps.video_decoder_factory = webrtc::CreateBuiltinVideoDecoderFactory();
-        media_deps.audio_processing = webrtc::AudioProcessingBuilder().Create();
+        // Audio processing is turned off as an optimization. This avoids
+        // initializing EchoCancellation3 which is modestly expensive.
+        media_deps.audio_processing = nullptr;
         media_deps.audio_mixer = webrtc::AudioMixerImpl::Create();
         media_deps.adm = adm;
 
@@ -69,10 +87,6 @@ public:
 
     rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> create_factory_with_arcas_video_encoder_factory(std::unique_ptr<ArcasVideoEncoderFactory> video_encoder_factory) const
     {
-        // TODO: Add configuration options for log levels.
-        // rtc::LogMessage::LogToDebug(rtc::LS_VERBOSE);
-        // rtc::LogMessage::SetLogToStderr(true);
-
         webrtc::PeerConnectionFactoryDependencies dependencies;
         dependencies.network_thread = network_thread.get();
         dependencies.signaling_thread = signaling_thread.get();
@@ -80,6 +94,7 @@ public:
         dependencies.call_factory = webrtc::CreateCallFactory();
         dependencies.task_queue_factory = webrtc::CreateDefaultTaskQueueFactory();
         dependencies.event_log_factory = std::make_unique<webrtc::RtcEventLogFactory>(dependencies.task_queue_factory.get());
+        dependencies.trials = std::make_unique<ArcasFieldTrial>();
 
         auto adm = rtc::make_ref_counted<ArcasAudioDeviceModule>();
 
@@ -89,7 +104,8 @@ public:
         media_deps.audio_decoder_factory = webrtc::CreateBuiltinAudioDecoderFactory();
         media_deps.video_encoder_factory = std::move(video_encoder_factory);
         media_deps.video_decoder_factory = webrtc::CreateBuiltinVideoDecoderFactory();
-        media_deps.audio_processing = webrtc::AudioProcessingBuilder().Create();
+        // media_deps.audio_processing = webrtc::AudioProcessingBuilder().Create();
+        media_deps.audio_processing = nullptr;
         media_deps.audio_mixer = webrtc::AudioMixerImpl::Create();
         media_deps.adm = adm;
 

@@ -3,7 +3,8 @@ use std::sync::Arc;
 use cxx::{SharedPtr, UniquePtr};
 use libwebrtc_sys::{
     ffi::{
-        create_rtc_configuration, ArcasAudioReceiverStats, ArcasAudioSenderStats, ArcasICEServer,
+        audio_transceiver_from_base, create_rtc_configuration, video_transceiver_from_base,
+        ArcasAudioReceiverStats, ArcasAudioSenderStats, ArcasICEServer, ArcasMediaType,
         ArcasPeerConnection, ArcasPeerConnectionConfig, ArcasPeerConnectionFactory,
         ArcasRTCConfiguration, ArcasSDPSemantics, ArcasVideoReceiverStats, ArcasVideoSenderStats,
     },
@@ -46,13 +47,12 @@ impl PeerConnectionStats {
 
 use crate::{
     error::{aracs_rtc_error_to_err, Result, WebRTCError},
-    factory::Factory,
     ice_candidate::ICECandidate,
     ok_or_return,
     peer_connection_observer::{ConnectionState, PeerConnectionObserver},
     rx_recv_async_or_err,
     sdp::SessionDescription,
-    transceiver::{TransceiverInit, VideoTransceiver},
+    transceiver::{self, AudioTransceiver, TransceiverInit, VideoTransceiver},
     video_track::VideoTrack,
     video_track_source::VideoTrackSource,
 };
@@ -315,6 +315,23 @@ impl<'a> PeerConnection {
         Ok(())
     }
 
+    pub fn get_transceivers(&self) -> (Vec<VideoTransceiver>, Vec<AudioTransceiver>) {
+        let cxx_vec = self.cxx_pc.get_transceivers();
+        let (mut video, mut audio) = (vec![], vec![]);
+        cxx_vec
+            .into_iter()
+            .for_each(|transceiver| match transceiver.media_type() {
+                ArcasMediaType::MEDIA_TYPE_AUDIO => audio.push(AudioTransceiver::new(
+                    audio_transceiver_from_base(&transceiver),
+                )),
+                ArcasMediaType::MEDIA_TYPE_VIDEO => video.push(VideoTransceiver::new(
+                    video_transceiver_from_base(&transceiver),
+                )),
+                _ => {}
+            });
+        return (video, audio);
+    }
+
     pub fn take_connection_state_rx(&mut self) -> Result<Receiver<ConnectionState>> {
         let mut lock = self.observer.lock();
         lock.take_connection_state_rx()
@@ -342,10 +359,7 @@ impl Drop for PeerConnection {
 mod tests {
     use std::time::Duration;
 
-    use tokio::{
-        test,
-        time::{sleep, sleep_until, Sleep},
-    };
+    use tokio::{test, time::sleep};
 
     use super::*;
     use crate::{
@@ -384,7 +398,7 @@ mod tests {
             let _ = Factory::new();
         }
 
-        let pc_factory1 = factory1.create_peer_connection_factory().unwrap();
+        let _pc_factory1 = factory1.create_peer_connection_factory().unwrap();
         // shouldn't panic because pc1 has a reference in C++.
         drop(factory1);
     }
@@ -406,7 +420,7 @@ mod tests {
             .create_peer_connection(PeerConnectionConfig::default())
             .unwrap();
 
-        let (source, mut source_write) = VideoTrackSource::create();
+        let (source, source_write) = VideoTrackSource::create();
         let track = pc_factory1
             .create_video_track("test".into(), &source)
             .unwrap();
@@ -415,6 +429,11 @@ mod tests {
             .add_video_transceiver(TransceiverInit::default(), track)
             .await
             .unwrap();
+
+        {
+            let (video_transceivers, _) = pc1.get_transceivers();
+            assert!(video_transceivers.len() == 1);
+        }
 
         let offer = pc1.create_offer().await.unwrap();
         let remote_offer = offer.copy_to_remote().unwrap();

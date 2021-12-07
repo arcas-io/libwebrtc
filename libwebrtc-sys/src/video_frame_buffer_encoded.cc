@@ -4,10 +4,8 @@
 std::unique_ptr<ArcasVideoFrameEncodedImageData> create_arcas_video_frame_buffer_from_encoded_image(const webrtc::EncodedImage &encodedImage, const ArcasCodecSpecificInfo &codec_info)
 {
     auto info = codec_info.get_copy();
-    return std::unique_ptr<ArcasVideoFrameEncodedImageData>(
-        new ArcasVideoFrameEncodedImageData(
-            new ArcasVideoFrameEncodedImageDataInternal(
-                encodedImage, info)));
+    auto buffer = rtc::make_ref_counted<ArcasVideoFrameEncodedImageDataInternal>(encodedImage, info);
+    return std::make_unique<ArcasVideoFrameEncodedImageData>(buffer);
 }
 
 std::unique_ptr<ArcasVideoFrameRawImageData> create_arcas_video_frame_buffer_from_I420(

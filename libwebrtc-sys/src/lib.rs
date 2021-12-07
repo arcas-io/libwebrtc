@@ -1,9 +1,12 @@
-use cxx::UniquePtr;
+#![allow(unreachable_patterns)]
+use cxx::{CxxVector, SharedPtr, UniquePtr};
 use ffi::ArcasAPI;
 use ffi::ArcasCodecSpecificInfo;
 use ffi::ArcasColorSpace;
+use ffi::ArcasCxxCodecSpecificInfo;
 use ffi::ArcasCxxEncodedImage;
 use ffi::ArcasCxxVideoFrame;
+use ffi::ArcasEncodedImageCallback;
 use ffi::ArcasICECandidate;
 
 use ffi::ArcasPeerConnectionObserver;
@@ -20,9 +23,9 @@ use ffi::ArcasVideoFrameEncodedImageData;
 use ffi::ArcasVideoFrameRawImageData;
 use ffi::ArcasVideoTrack;
 use ffi::ArcasVideoTrackSource;
-#[macro_use]
 extern crate lazy_static;
 
+pub mod into;
 pub mod peer_connection;
 pub mod video_encoder;
 pub mod video_encoder_factory;
@@ -208,6 +211,8 @@ pub mod ffi {
         LS_WARNING,
         LS_ERROR,
         LS_NONE,
+        // We must have the following to appease CXX which expects the same
+        // number of enum variants as the C++ version.
         INFO = 1,
         WARNING = 2,
         LERROR = 3,
@@ -373,7 +378,7 @@ pub mod ffi {
         ERROR_SEND_FAILED,
     }
 
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     struct ArcasVideoEncoderResolutionBitrateLimits {
         frame_size_pixels: i32,
         min_start_bitrate_bps: i32,
@@ -381,13 +386,13 @@ pub mod ffi {
         max_bitrate_bps: i32,
     }
 
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     struct ArcasVideoEncoderQpThresholds {
         low: i32,
         high: i32,
     }
 
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     struct ArcasVideoEncoderScalingSettings {
         // When this is true other values are completely ignored.
         // used in rust -> C++ only (not the reverse)
@@ -403,12 +408,12 @@ pub mod ffi {
         thresholds: Vec<ArcasVideoEncoderQpThresholds>,
     }
 
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     struct ArcasVideoEncoderInfoFPSAllocation {
         allocation: Vec<u8>,
     }
 
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     struct ArcasVideoEncoderInfo {
         scaling_settings: ArcasVideoEncoderScalingSettings,
         requested_resolution_alignment: i32,
@@ -685,7 +690,12 @@ pub mod ffi {
         type ArcasVideoEncoderSettings;
         type ArcasVideoFrameFactory;
         type ArcasAPI;
+        type ArcasCxxVideoEncoder;
         type ArcasCxxVideoFrameType;
+        type ArcasCxxVideoEncoderSettings;
+        type ArcasCxxVideoEncoderEncoderInfo;
+        type ArcasReactiveVideoEncoderWrapper;
+        type ArcasVideoFrameBufferEmpty;
 
         // wrapper functions around constructors.
         fn create_arcas_api() -> UniquePtr<ArcasAPI>;
@@ -720,6 +730,9 @@ pub mod ffi {
         ) -> SharedPtr<ArcasVideoFrameTypesCollection>;
 
         fn create_arcas_spatial_layer() -> SharedPtr<ArcasSpatialLayer>;
+        unsafe fn create_arcas_video_codec_from_cxx(
+            ptr: *const ArcasCxxVideoCodec,
+        ) -> UniquePtr<ArcasVideoCodec>;
         fn create_arcas_video_codec() -> SharedPtr<ArcasVideoCodec>;
         fn create_arcas_video_encoder_settings(
             loss_notification: bool,
@@ -823,6 +836,9 @@ pub mod ffi {
         fn get_stats(self: &ArcasPeerConnection, callback: Box<ArcasRustRTCStatsCollectorCallback>);
         fn add_ice_candidate(self: &ArcasPeerConnection, candidate: UniquePtr<ArcasICECandidate>);
         fn close(self: &ArcasPeerConnection);
+        fn get_transceivers(
+            self: &ArcasPeerConnection,
+        ) -> UniquePtr<CxxVector<ArcasRTPTransceiver>>;
 
         // session description
         #[cxx_name = "to_string"]
@@ -838,6 +854,16 @@ pub mod ffi {
         // ArcasRTPVideoSender
         fn set_track(self: &ArcasRTPVideoSender, track: &ArcasVideoTrack) -> bool;
 
+        // ArcasRTPTransceiver
+        fn video_transceiver_from_base(
+            base: &ArcasRTPTransceiver,
+        ) -> UniquePtr<ArcasRTPVideoTransceiver>;
+        fn audio_transceiver_from_base(
+            base: &ArcasRTPTransceiver,
+        ) -> UniquePtr<ArcasRTPAudioTransceiver>;
+        fn direction(self: &ArcasRTPTransceiver) -> ArcasRTPTransceiverDirection;
+        fn media_type(self: &ArcasRTPTransceiver) -> ArcasMediaType;
+
         // ArcasRTPVideoTransceiver
         fn mid(self: &ArcasRTPVideoTransceiver) -> String;
         fn media_type(self: &ArcasRTPVideoTransceiver) -> ArcasMediaType;
@@ -847,6 +873,7 @@ pub mod ffi {
         fn stopping(self: &ArcasRTPVideoTransceiver) -> bool;
         fn direction(self: &ArcasRTPVideoTransceiver) -> ArcasRTPTransceiverDirection;
         fn stop(self: &ArcasRTPVideoTransceiver) -> UniquePtr<ArcasRTCError>;
+        fn clone(self: &ArcasRTPVideoTransceiver) -> UniquePtr<ArcasRTPVideoTransceiver>;
 
         fn header_extensions_to_offer(
             self: &ArcasRTPVideoTransceiver,
@@ -859,6 +886,11 @@ pub mod ffi {
         fn codec_preferences(
             self: &ArcasRTPVideoTransceiver,
         ) -> UniquePtr<CxxVector<ArcasRTPCodecCapability>>;
+
+        fn set_direction(
+            self: &ArcasRTPVideoTransceiver,
+            direction: ArcasRTPTransceiverDirection,
+        ) -> UniquePtr<ArcasRTCError>;
 
         fn set_codec_preferences(
             self: &ArcasRTPVideoTransceiver,
@@ -879,6 +911,7 @@ pub mod ffi {
         fn stopping(self: &ArcasRTPAudioTransceiver) -> bool;
         fn direction(self: &ArcasRTPAudioTransceiver) -> ArcasRTPTransceiverDirection;
         fn stop(self: &ArcasRTPAudioTransceiver) -> UniquePtr<ArcasRTCError>;
+        fn clone(self: &ArcasRTPAudioTransceiver) -> UniquePtr<ArcasRTPAudioTransceiver>;
 
         fn header_extensions_to_offer(
             self: &ArcasRTPAudioTransceiver,
@@ -895,6 +928,11 @@ pub mod ffi {
         fn set_codec_preferences(
             self: &ArcasRTPAudioTransceiver,
             codec_preferences: UniquePtr<CxxVector<ArcasRTPCodecCapability>>,
+        ) -> UniquePtr<ArcasRTCError>;
+
+        fn set_direction(
+            self: &ArcasRTPAudioTransceiver,
+            direction: ArcasRTPTransceiverDirection,
         ) -> UniquePtr<ArcasRTCError>;
 
         fn set_offerred_rtp_header_extensions(
@@ -1039,7 +1077,7 @@ pub mod ffi {
 
         // ArcasEncodedImageCallback
         unsafe fn on_encoded_image(
-            self: Pin<&mut ArcasEncodedImageCallback>,
+            self: &ArcasEncodedImageCallback,
             image: &ArcasCxxEncodedImage,
             info: *const ArcasCodecSpecificInfo,
         ) -> ArcasEncodedImageCallbackResult;
@@ -1096,6 +1134,13 @@ pub mod ffi {
             settings: &ArcasVideoEncoderSettings,
         ) -> i32;
 
+        unsafe fn cxx_init_encode(
+            self: &ArcasVideoEncoderWrapper,
+            codec: *const ArcasCxxVideoCodec,
+            number_of_cores: i32,
+            max_payload_size: usize,
+        ) -> i32;
+
         fn release(self: &ArcasVideoEncoderWrapper) -> i32;
 
         fn encode(
@@ -1104,9 +1149,20 @@ pub mod ffi {
             frame_types: &ArcasVideoFrameTypesCollection,
         ) -> i32;
 
+        unsafe fn cxx_encode(
+            self: &ArcasVideoEncoderWrapper,
+            frame: &ArcasCxxVideoFrame,
+            frame_types: *const CxxVector<ArcasCxxVideoFrameType>,
+        ) -> i32;
+
         fn set_rates(
             self: &ArcasVideoEncoderWrapper,
             rates: &ArcasVideoEncoderRateControlParameters,
+        );
+
+        fn cxx_set_rates(
+            self: &ArcasVideoEncoderWrapper,
+            rates: &ArcasCxxVideoEncoderRateControlParameters,
         );
 
         fn on_rtt_update(self: &ArcasVideoEncoderWrapper, rtt: i64);
@@ -1122,17 +1178,30 @@ pub mod ffi {
             self: &ArcasVideoEncoderFactoryWrapper,
         ) -> UniquePtr<CxxVector<ArcasSDPVideoFormatWrapper>>;
 
+        fn cxx_get_supported_formats(
+            self: &ArcasVideoEncoderFactoryWrapper,
+        ) -> UniquePtr<CxxVector<ArcasCxxSdpVideoFormat>>;
+
         fn create_encoder(
             self: &ArcasVideoEncoderFactoryWrapper,
             format: &ArcasSDPVideoFormatWrapper,
             callback: Box<EncodedImageCallbackHandler>,
         ) -> UniquePtr<ArcasVideoEncoderWrapper>;
 
+        /// Intended to be used by rust calling back into C++ factories.
+        fn create_encoder_reactive(
+            self: &ArcasVideoEncoderFactoryWrapper,
+            format: &ArcasCxxSdpVideoFormat,
+        ) -> UniquePtr<ArcasReactiveVideoEncoderWrapper>;
+
         // ArcasSDPVideoFormatWrapper
         fn get_name(self: &ArcasSDPVideoFormatWrapper) -> String;
         fn get_parameters(self: &ArcasSDPVideoFormatWrapper) -> Vec<ArcasRustDict>;
         fn to_string(self: &ArcasSDPVideoFormatWrapper) -> String;
         fn clone(self: &ArcasSDPVideoFormatWrapper) -> UniquePtr<ArcasSDPVideoFormatWrapper>;
+        fn cxx_format_list(
+            self: &ArcasSDPVideoFormatWrapper,
+        ) -> UniquePtr<CxxVector<ArcasCxxSdpVideoFormat>>;
 
         // ArcasVideoFrameFactory
         fn set_encoded_video_frame_buffer(
@@ -1143,11 +1212,23 @@ pub mod ffi {
             self: &ArcasVideoFrameFactory,
             buffer: &ArcasVideoFrameRawImageData,
         );
+        fn set_empty_video_frame_buffer(self: &ArcasVideoFrameFactory);
         fn set_timestamp_ms(self: &ArcasVideoFrameFactory, timestamp_ms: u64);
+        fn set_timestamp_rtp(self: &ArcasVideoFrameFactory, timestamp_ms: u32);
+        fn set_ntp_time_ms(self: &ArcasVideoFrameFactory, timestamp_ms: i64);
         fn set_color_space(self: &ArcasVideoFrameFactory, color_space: &ArcasColorSpace);
         fn build(self: &ArcasVideoFrameFactory) -> UniquePtr<ArcasCxxVideoFrame>;
 
         // ArcasSpatialLayer
+        fn get_width(self: &ArcasSpatialLayer) -> i32;
+        fn get_height(self: &ArcasSpatialLayer) -> i32;
+        fn get_max_framerate(self: &ArcasSpatialLayer) -> f32;
+        fn get_number_of_temporal_layers(self: &ArcasSpatialLayer) -> u8;
+        fn get_max_bitrate(self: &ArcasSpatialLayer) -> u32;
+        fn get_target_bitrate(self: &ArcasSpatialLayer) -> u32;
+        fn get_min_bitrate(self: &ArcasSpatialLayer) -> u32;
+        fn get_qp_max(self: &ArcasSpatialLayer) -> u32;
+        fn get_active(self: &ArcasSpatialLayer) -> bool;
         fn set_width(self: &ArcasSpatialLayer, width: i32);
         fn set_height(self: &ArcasSpatialLayer, height: i32);
         fn set_max_framerate(self: &ArcasSpatialLayer, max_frame_rate: f32);
@@ -1159,6 +1240,18 @@ pub mod ffi {
         fn set_active(self: &ArcasSpatialLayer, active: bool);
 
         // ArcasVideoCodec
+        fn get_scalability_mode(self: &ArcasVideoCodec) -> String;
+        fn get_width(self: &ArcasVideoCodec) -> i32;
+        fn get_height(self: &ArcasVideoCodec) -> i32;
+        fn get_max_bitrate(self: &ArcasVideoCodec) -> u32;
+        fn get_min_bitrate(self: &ArcasVideoCodec) -> u32;
+        fn get_start_bitrate(self: &ArcasVideoCodec) -> u32;
+        fn get_max_framerate(self: &ArcasVideoCodec) -> u32;
+        fn get_active(self: &ArcasVideoCodec) -> bool;
+        fn get_qp_max(self: &ArcasVideoCodec) -> u32;
+        fn get_number_of_simulcast_streams(self: &ArcasVideoCodec) -> u8;
+        fn spatial_layers(self: &ArcasVideoCodec) -> UniquePtr<CxxVector<ArcasSpatialLayer>>;
+        fn simulcast_streams(self: &ArcasVideoCodec) -> UniquePtr<CxxVector<ArcasSpatialLayer>>;
         fn set_scalability_mode(self: &ArcasVideoCodec, scalability_mode: String);
         fn set_codec_type(self: &ArcasVideoCodec, codec_type: ArcasCxxVideoCodecType);
         fn set_width(self: &ArcasVideoCodec, width: u16);
@@ -1212,12 +1305,14 @@ pub mod ffi {
             self: &ArcasVideoCodec,
             number_of_temporal_layers: u8,
         );
+        fn cxx_clone(self: &ArcasVideoCodec) -> UniquePtr<ArcasVideoCodec>;
 
         // XXX: Hacks to ensure CXX generates the unique ptr bindings for these return types.
         fn gen_unique_ptr1() -> UniquePtr<ArcasDataChannel>;
         fn gen_unique_ptr2() -> UniquePtr<ArcasMediaStream>;
         fn gen_unique_ptr3() -> UniquePtr<ArcasVideoCodecSettings>;
         fn gen_unique_ptr4() -> UniquePtr<ArcasPeerConnectionConfig>;
+        fn gen_unique_ptr5() -> UniquePtr<ArcasSpatialLayer>;
 
         fn gen_shared_ptr1() -> SharedPtr<ArcasCxxEncodedImage>;
         fn gen_shared_ptr2() -> SharedPtr<ArcasCodecSpecificInfo>;
@@ -1372,36 +1467,36 @@ pub mod ffi {
 
         // ArcasRustVideoEncoder
         unsafe fn init_encode(
-            self: &VideoEncoderProxy,
+            self: &mut VideoEncoderProxy,
             codec_settings: *const ArcasCxxVideoCodec,
             number_of_cores: i32,
             max_payload_size: usize,
         ) -> i32;
 
         fn register_encode_complete_callback(
-            self: &VideoEncoderProxy,
+            self: &mut VideoEncoderProxy,
             callback: UniquePtr<ArcasEncodedImageCallback>,
         ) -> i32;
 
-        fn release(self: &VideoEncoderProxy) -> i32;
+        fn release(self: &mut VideoEncoderProxy) -> i32;
 
         unsafe fn encode(
-            self: &VideoEncoderProxy,
+            self: &mut VideoEncoderProxy,
             frame: &ArcasCxxVideoFrame,
             frame_types: *const CxxVector<ArcasCxxVideoFrameType>,
         ) -> i32;
 
         fn set_rates(
-            self: &VideoEncoderProxy,
+            self: &mut VideoEncoderProxy,
             parameters: UniquePtr<ArcasVideoEncoderRateControlParameters>,
         );
 
-        fn on_packet_loss_rate_update(self: &VideoEncoderProxy, packet_loss_rate: f32);
+        fn on_packet_loss_rate_update(self: &mut VideoEncoderProxy, packet_loss_rate: f32);
 
-        fn on_rtt_update(self: &VideoEncoderProxy, rtt: i64);
+        fn on_rtt_update(self: &mut VideoEncoderProxy, rtt: i64);
 
         fn on_loss_notification(
-            self: &VideoEncoderProxy,
+            self: &mut VideoEncoderProxy,
             loss_notification: ArcasVideoEncoderLossNotification,
         );
 
@@ -1511,12 +1606,15 @@ unsafe impl Sync for ArcasPeerConnectionObserver {}
 unsafe impl Send for ArcasPeerConnectionObserver {}
 unsafe impl Send for ArcasEncodedImageFactory {}
 unsafe impl Send for ArcasCxxEncodedImage {}
+unsafe impl Sync for ArcasCxxEncodedImage {}
 unsafe impl Send for ArcasCodecSpecificInfo {}
+unsafe impl Sync for ArcasCodecSpecificInfo {}
 unsafe impl Send for ArcasVideoFrameEncodedImageData {}
 unsafe impl Send for ArcasCxxVideoFrame {}
 unsafe impl Send for ArcasVideoCodec {}
 unsafe impl Send for ArcasVideoEncoderSettings {}
 unsafe impl Send for ArcasVideoEncoderRateControlParameters {}
+unsafe impl Sync for ArcasVideoEncoderRateControlParameters {}
 unsafe impl Send for ArcasVideoFrameRawImageData {}
 unsafe impl Send for ArcasColorSpace {}
 unsafe impl Send for ArcasVideoTrack {}
@@ -1534,3 +1632,7 @@ unsafe impl Sync for ArcasPeerConnection {}
 unsafe impl Send for ArcasPeerConnection {}
 unsafe impl Send for ArcasSessionDescription {}
 unsafe impl Sync for ArcasSessionDescription {}
+unsafe impl Send for ArcasEncodedImageCallback {}
+unsafe impl Sync for ArcasEncodedImageCallback {}
+unsafe impl Send for ArcasCxxCodecSpecificInfo {}
+unsafe impl Sync for ArcasCxxCodecSpecificInfo {}

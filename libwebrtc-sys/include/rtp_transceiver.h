@@ -6,8 +6,16 @@
 #include "libwebrtc-sys/include/error.h"
 #include "rust/cxx.h"
 
+class ArcasRTPTransceiver;
+class ArcasRTPVideoTransceiver;
+class ArcasRTPAudioTransceiver;
+
+std::unique_ptr<ArcasRTPVideoTransceiver> video_transceiver_from_base(const ArcasRTPTransceiver&);
+std::unique_ptr<ArcasRTPAudioTransceiver> audio_transceiver_from_base(const ArcasRTPTransceiver&);
 class ArcasRTPTransceiver
 {
+    friend std::unique_ptr<ArcasRTPVideoTransceiver> video_transceiver_from_base(const ArcasRTPTransceiver&);
+    friend std::unique_ptr<ArcasRTPAudioTransceiver> audio_transceiver_from_base(const ArcasRTPTransceiver&);
 protected:
     rtc::scoped_refptr<webrtc::RtpTransceiverInterface> api;
 
@@ -94,6 +102,10 @@ public:
         return out;
     }
 
+    std::unique_ptr<ArcasRTCError> set_direction(webrtc::RtpTransceiverDirection direction) const {
+        return std::make_unique<ArcasRTCError>(api->SetDirectionWithError(direction));
+    }
+
     std::unique_ptr<ArcasRTCError> set_codec_preferences(std::unique_ptr<std::vector<ArcasRTPCodecCapability>> codecs) const
     {
         std::vector<webrtc::RtpCodecCapability> list;
@@ -136,6 +148,10 @@ public:
     {
         return std::make_unique<ArcasRTPVideoReceiver>(api->receiver());
     }
+
+    std::unique_ptr<ArcasRTPVideoTransceiver> clone() const {
+        return std::make_unique<ArcasRTPVideoTransceiver>(api);
+    }
 };
 
 class ArcasRTPAudioTransceiver : public ArcasRTPTransceiver
@@ -151,4 +167,9 @@ public:
     {
         return std::make_unique<ArcasRTPAudioReceiver>(api->receiver());
     }
+
+    std::unique_ptr<ArcasRTPAudioTransceiver> clone() const {
+        return std::make_unique<ArcasRTPAudioTransceiver>(api);
+    }
 };
+

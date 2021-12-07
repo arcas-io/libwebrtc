@@ -18,6 +18,7 @@ impl From<ArcasSDPType> for SDPType {
             ArcasSDPType::kPrAnswer => SDPType::PrAnswer,
             ArcasSDPType::kAnswer => SDPType::Answer,
             ArcasSDPType::kRollback => SDPType::Rollback,
+            #[allow(unreachable_patterns)]
             _ => panic!("Unknown SDP type"),
         }
     }
@@ -30,6 +31,7 @@ impl From<SDPType> for ArcasSDPType {
             SDPType::PrAnswer => ArcasSDPType::kPrAnswer,
             SDPType::Answer => ArcasSDPType::kAnswer,
             SDPType::Rollback => ArcasSDPType::kRollback,
+            #[allow(unreachable_patterns)]
             _ => panic!("Unknown SDP type"),
         }
     }

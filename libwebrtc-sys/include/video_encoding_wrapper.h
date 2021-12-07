@@ -4,47 +4,8 @@
 #include "libwebrtc-sys/include/video_codec.h"
 #include "libwebrtc-sys/include/video_encoder.h"
 #include "libwebrtc-sys/include/webrtc_api.h"
-
-class ArcasVideoFrameTypesCollection
-{
-private:
-    const std::vector<webrtc::VideoFrameType> types_;
-
-public:
-    ArcasVideoFrameTypesCollection(rust::Vec<webrtc::VideoFrameType> types) : types_(types.begin(), types.end())
-    {
-    }
-
-    const std::vector<webrtc::VideoFrameType> *as_ptr() const
-    {
-        return &types_;
-    }
-};
-
-class ArcasVideoEncoderSettings
-{
-private:
-    const webrtc::VideoEncoder::Capabilities capabilities_;
-    const webrtc::VideoEncoder::Settings settings_;
-
-public:
-    ArcasVideoEncoderSettings(
-        bool loss_notification,
-        int number_of_cores,
-        size_t max_payload_size) : capabilities_(loss_notification), settings_(capabilities_, number_of_cores, max_payload_size)
-    {
-    }
-
-    const webrtc::VideoEncoder::Settings &as_ref() const
-    {
-        return settings_;
-    }
-
-    const webrtc::VideoEncoder::Capabilities &capabilities_ref() const
-    {
-        return capabilities_;
-    }
-};
+#include "libwebrtc-sys/include/video_encoder_settings.h"
+#include "libwebrtc-sys/include/reactive_video_encoder_wrapper.h"
 
 class ArcasSDPVideoFormatWrapper
 {
@@ -69,6 +30,14 @@ public:
     std::unique_ptr<ArcasSDPVideoFormatWrapper> clone() const
     {
         return std::make_unique<ArcasSDPVideoFormatWrapper>(api_);
+    }
+
+    // Helper for use with encoder get_supported_formats.
+    std::unique_ptr<std::vector<webrtc::SdpVideoFormat>> cxx_format_list() const
+    {
+        auto output = std::make_unique<std::vector<webrtc::SdpVideoFormat>>();
+        output->push_back(this->get_copy());
+        return output;
     }
 
     webrtc::SdpVideoFormat get_copy() const
@@ -96,8 +65,13 @@ public:
 
     int init_encode(const ArcasVideoCodec &codec, const ArcasVideoEncoderSettings &settings) const
     {
-        RTC_LOG(LS_INFO) << "DO the thing " << codec.as_ptr()->VP9()->numberOfSpatialLayers << "<< \n";
         return video_encoder_->InitEncode(codec.as_ptr(), settings.as_ref());
+    }
+
+    int cxx_init_encode(const ArcasCxxVideoCodec *codec, int32_t number_of_cores, size_t max_payload_size) const
+    {
+        webrtc::VideoEncoder::Settings settings(webrtc::VideoEncoder::Capabilities(true), number_of_cores, max_payload_size);
+        return video_encoder_->InitEncode(codec, settings);
     }
 
     int32_t release() const
@@ -105,10 +79,21 @@ public:
         return video_encoder_->Release();
     }
 
+    int32_t cxx_encode(const webrtc::VideoFrame &frame,
+                       const std::vector<webrtc::VideoFrameType> *frame_types) const
+    {
+        return video_encoder_->Encode(frame, frame_types);
+    }
+
     int32_t encode(const webrtc::VideoFrame &frame,
                    const ArcasVideoFrameTypesCollection &frame_types) const
     {
         return video_encoder_->Encode(frame, frame_types.as_ptr());
+    }
+
+    void cxx_set_rates(const webrtc::VideoEncoder::RateControlParameters &parameters) const
+    {
+        video_encoder_->SetRates(parameters);
     }
 
     void set_rates(const ArcasVideoEncoderRateControlParameters &settings) const
@@ -151,10 +136,26 @@ public:
         return output;
     }
 
+    std::unique_ptr<std::vector<webrtc::SdpVideoFormat>> cxx_get_supported_formats() const
+    {
+        auto formats = video_encoding_factory_->GetSupportedFormats();
+        auto output = std::make_unique<std::vector<webrtc::SdpVideoFormat>>();
+        for (auto format : formats)
+        {
+            output->push_back(format);
+        }
+        return output;
+    }
+
     std::unique_ptr<ArcasVideoEncoderWrapper> create_encoder(const ArcasSDPVideoFormatWrapper &format, rust::Box<ArcasRustEncodedImageCallbackHandler> frame_handler) const
     {
         auto copy = format.get_copy();
         return std::make_unique<ArcasVideoEncoderWrapper>(video_encoding_factory_->CreateVideoEncoder(copy), std::move(frame_handler));
+    }
+
+    std::unique_ptr<ArcasReactiveVideoEncoderWrapper> create_encoder_reactive(const webrtc::SdpVideoFormat &format) const
+    {
+        return std::make_unique<ArcasReactiveVideoEncoderWrapper>(video_encoding_factory_->CreateVideoEncoder(format));
     }
 };
 
@@ -166,3 +167,4 @@ std::shared_ptr<ArcasVideoEncoderSettings> create_arcas_video_encoder_settings(
     size_t max_payload_size);
 
 std::unique_ptr<ArcasVideoEncoderFactoryWrapper> create_arcas_video_encoder_factory_from_builtin();
+std::unique_ptr<ArcasCxxVideoEncoderEncoderInfo> get_video_encoder_encoder_info(const webrtc::VideoEncoder &encoder);

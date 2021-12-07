@@ -1,5 +1,4 @@
 use crossbeam_channel::{unbounded, Receiver, Sender};
-use libwebrtc_sys::video_encoder::VideoEncoderImpl;
 use log::{debug, warn};
 
 use crate::{
@@ -39,7 +38,7 @@ pub struct EncodedFrameProducerProducer {
     pub height: i32,
     pub encoded_rx: Receiver<EncodedVideoFrame>,
     pub encoder_err_rx: Receiver<WebRTCError>,
-    pub raw_frame_tx: Sender<RawVideoFrame>,
+    pub(crate) raw_frame_tx: Sender<RawVideoFrame>,
 }
 
 impl EncodedFrameProducerProducer {
@@ -142,13 +141,22 @@ impl EncodedFrameProducerProducer {
             encoder_err_rx,
         })
     }
+
+    /// Push a raw frame unto the encoders queue for later encoding.
+    pub fn queue(&self, frame: RawVideoFrame) -> Result<()> {
+        self.raw_frame_tx.send(frame)?;
+        Ok(())
+    }
+
+    /// Get a clone of the raw frame sender for use with select!
+    pub fn get_queue_sender(&self) -> Sender<RawVideoFrame> {
+        self.raw_frame_tx.clone()
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        raw_video_frame_producer::{GStreamerRawFrameProducer, RawFrameProducer},
-    };
+    use crate::raw_video_frame_producer::{GStreamerRawFrameProducer, RawFrameProducer};
 
     use super::*;
 

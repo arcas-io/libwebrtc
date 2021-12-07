@@ -42,7 +42,6 @@ int32_t ArcasVideoEncoder::Release()
 int32_t ArcasVideoEncoder::Encode(const webrtc::VideoFrame &frame,
                                   const std::vector<webrtc::VideoFrameType> *frame_types)
 {
-    RTC_LOG(LS_INFO) << "Encode!!!";
     return api->encode(frame, frame_types);
 };
 
@@ -125,28 +124,30 @@ webrtc::VideoEncoder::EncoderInfo ArcasVideoEncoder::GetEncoderInfo() const
     info.is_hardware_accelerated = rust_info.is_hardware_accelerated;
     info.has_internal_source = rust_info.has_internal_source;
 
-    if (info.fps_allocation->size() > webrtc::kMaxTemporalStreams)
-    {
-        RTC_LOG(LS_ERROR) << "FPS allocation vector is too big";
-    }
-    else
-    {
+    // FPS allocation code is turned off for now. The below implementation crashes.
+    //
+    // if (info.fps_allocation->size() > webrtc::kMaxTemporalStreams)
+    // {
+    //     RTC_LOG(LS_ERROR) << "FPS allocation vector is too big";
+    // }
+    // else
+    // {
 
-        for (auto i = 0; i < rust_info.fps_allocation.size(); i++)
-        {
-            auto allocation_size = rust_info.fps_allocation[i].allocation.size();
-            if (allocation_size > webrtc::kMaxSpatialLayers)
-            {
-                RTC_LOG(LS_ERROR) << "FPS allocation vector is too big";
-                continue;
-            }
-            for (auto j = 0; j < allocation_size; j++)
-            {
-                auto cxx_fps_allocation = &info.fps_allocation[i];
-                cxx_fps_allocation[j].push_back(rust_info.fps_allocation[i].allocation[j]);
-            };
-        }
-    }
+    //     for (auto i = 0; i < rust_info.fps_allocation.size(); i++)
+    //     {
+    //         auto allocation_size = rust_info.fps_allocation[i].allocation.size();
+    //         if (allocation_size > webrtc::kMaxSpatialLayers)
+    //         {
+    //             RTC_LOG(LS_ERROR) << "FPS allocation vector is too big";
+    //             continue;
+    //         }
+    //         for (auto j = 0; j < allocation_size; j++)
+    //         {
+    //             auto cxx_fps_allocation = &info.fps_allocation[i];
+    //             cxx_fps_allocation[j].push_back(rust_info.fps_allocation[i].allocation[j]);
+    //         };
+    //     }
+    // }
 
     std::vector<webrtc::VideoEncoder::ResolutionBitrateLimits> resolution_bitrate_limits;
     for (auto &limit : rust_info.resolution_bitrate_limits)
@@ -178,16 +179,6 @@ webrtc::VideoEncoder::EncoderInfo ArcasVideoEncoder::GetEncoderInfo() const
 
     return info;
 };
-
-ArcasEncodedImageCallbackResult ArcasEncodedImageCallback::on_encoded_image(const webrtc::EncodedImage &image, const ArcasCodecSpecificInfo *codec_specific_info)
-{
-    auto result = api->OnEncodedImage(image, codec_specific_info->as_ptr());
-    return ArcasEncodedImageCallbackResult{
-        .error = result.error,
-        .frame_id = result.frame_id,
-        .drop_next_frame = result.drop_next_frame,
-    };
-}
 
 std::shared_ptr<ArcasVideoEncoderRateControlParameters> create_arcas_video_encoder_rate_control_parameters(
     const ArcasCxxVideoBitrateAllocation &bitrate, double framerate_fps)

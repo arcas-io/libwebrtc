@@ -20,6 +20,12 @@ impl PassThroughVideoEncoderFactory {
     }
 }
 
+impl Default for PassThroughVideoEncoderFactory {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl VideoEncoderFactoryImpl for PassThroughVideoEncoderFactory {
     fn get_supported_formats(&self) -> UniquePtr<cxx::CxxVector<ffi::ArcasCxxSdpVideoFormat>> {
         create_sdp_video_format_list(ffi::ArcasSdpVideoFormatVecInit {
@@ -105,7 +111,7 @@ impl Default for PassThroughVideoEncoder {
 
 impl VideoEncoderImpl for PassThroughVideoEncoder {
     unsafe fn init_encode(
-        &self,
+        &mut self,
         _codec_settings: *const ffi::ArcasCxxVideoCodec,
         _number_of_cores: i32,
         _max_payload_sizesize: usize,
@@ -114,34 +120,32 @@ impl VideoEncoderImpl for PassThroughVideoEncoder {
     }
 
     fn register_encode_complete_callback(
-        &self,
+        &mut self,
         callback: UniquePtr<ArcasEncodedImageCallback>,
     ) -> i32 {
         self.state.lock().callback = Some(Mutex::new(callback));
         *VIDEO_CODEC_OK
     }
 
-    fn release(&self) -> i32 {
+    fn release(&mut self) -> i32 {
         *VIDEO_CODEC_OK
     }
 
-    fn encode(
-        &self,
+    unsafe fn encode(
+        &mut self,
         frame: &ffi::ArcasCxxVideoFrame,
         _frame_types: *const cxx::CxxVector<ffi::ArcasCxxVideoFrameType>,
     ) -> i32 {
         match &self.state.lock().callback {
             Some(callback) => {
                 let video_frame_data = ffi::extract_arcas_video_frame_to_raw_frame_buffer(frame);
-                let _out = unsafe {
-                    callback.lock().as_mut().unwrap().on_encoded_image(
-                        video_frame_data.encoded_image_ref(),
-                        video_frame_data
-                            .arcas_codec_specific_info()
-                            .as_ref()
-                            .unwrap(),
-                    )
-                };
+                callback.lock().as_mut().unwrap().on_encoded_image(
+                    video_frame_data.encoded_image_ref(),
+                    video_frame_data
+                        .arcas_codec_specific_info()
+                        .as_ref()
+                        .unwrap(),
+                );
             }
             None => {}
         }
@@ -149,14 +153,13 @@ impl VideoEncoderImpl for PassThroughVideoEncoder {
         *VIDEO_CODEC_OK
     }
 
-    fn set_rates(&self, _parameters: UniquePtr<ffi::ArcasVideoEncoderRateControlParameters>) {}
+    fn set_rates(&mut self, _parameters: UniquePtr<ffi::ArcasVideoEncoderRateControlParameters>) {}
 
-    fn on_packet_loss_rate_update(&self, _packet_loss_rate: f32) {}
+    fn on_packet_loss_rate_update(&mut self, _packet_loss_rate: f32) {}
 
-    fn on_rtt_update(&self, _rtt: i64) {}
+    fn on_rtt_update(&mut self, _rtt: i64) {}
 
-    fn on_loss_notification(&self, _loss_notification: ffi::ArcasVideoEncoderLossNotification) {
-        println!("LOSS NOTIFICATION");
+    fn on_loss_notification(&mut self, _loss_notification: ffi::ArcasVideoEncoderLossNotification) {
     }
 
     fn get_encoder_info(&self) -> ArcasVideoEncoderInfo {
@@ -191,190 +194,68 @@ impl VideoEncoderImpl for PassThroughVideoEncoder {
 
 #[cfg(test)]
 mod tests {
-    use std::time::Instant;
+    use crossbeam_channel::{select, unbounded};
 
-    use crossbeam_channel::{select, unbounded, Receiver, Sender};
-
-    use libwebrtc_sys::{
-        ffi::{
-            create_peer_connection_observer, ArcasICECandidate, ArcasPeerConnectionObserver,
-            ArcasRTPVideoTransceiver,
-        },
-        peer_connection::PeerConnectionObserverImpl,
-        ArcasRustCreateSessionDescriptionObserver, ArcasRustRTCStatsCollectorCallback,
-        ArcasRustSetSessionDescriptionObserver, PeerConnectionObserverProxy,
-        VideoEncoderFactoryProxy,
-    };
+    use tokio::{sync::mpsc::channel, time::sleep};
 
     use crate::{
         encoded_video_frame_producer::{
             EncodedFrameProducerProducer, DEFAULT_HEIGHT, DEFAULT_WIDTH,
         },
+        factory::Factory,
+        peer_connection::PeerConnectionConfig,
         raw_video_frame_producer::{GStreamerRawFrameProducer, RawFrameProducer},
         video_codec::VideoCodec,
         video_encoder::VideoEncoderSettings,
-        video_frame::AsCxxVideoFrame,
+        video_track_source::VideoTrackSource,
     };
 
-    use super::*;
-    pub struct TestIcePeerConnectionObserver {
-        ice_tx: Sender<UniquePtr<ArcasICECandidate>>,
-        video_tx: Sender<UniquePtr<ArcasRTPVideoTransceiver>>,
-    }
+    #[tokio::test]
+    async fn test_custom_video_encoder_factory() {
+        let api_factory = Factory::new();
+        let api_factory2 = Factory::new();
+        let config = PeerConnectionConfig::default();
+        let config2 = PeerConnectionConfig::default();
 
-    impl TestIcePeerConnectionObserver {
-        pub fn new(
-            video_tx: Sender<UniquePtr<ArcasRTPVideoTransceiver>>,
-            ice_tx: Sender<UniquePtr<ArcasICECandidate>>,
-        ) -> TestIcePeerConnectionObserver {
-            TestIcePeerConnectionObserver { ice_tx, video_tx }
-        }
-    }
+        let pc_factory_passthrough = api_factory
+            .create_peer_connection_factory_passthrough()
+            .unwrap();
 
-    impl PeerConnectionObserverImpl for TestIcePeerConnectionObserver {
-        fn on_ice_candidate(&self, candidate: UniquePtr<ArcasICECandidate>) {
-            self.ice_tx.send(candidate).unwrap();
-        }
+        let mut pc = pc_factory_passthrough
+            .create_peer_connection(config)
+            .unwrap();
+        let (source, source_writer) = VideoTrackSource::create();
+        let track = pc_factory_passthrough
+            .create_video_track("test".into(), &source)
+            .unwrap();
+        pc.add_video_track(["test".into()].to_vec(), track)
+            .await
+            .unwrap();
 
-        fn on_connection_change(&self, state: ffi::ArcasPeerConnectionState) {
-            println!("GOT CONNECTION CHANGE: {:?}", state);
-        }
+        let sdp = pc.create_offer().await.unwrap();
+        pc.set_local_description(sdp.copy_to_remote().unwrap())
+            .await
+            .unwrap();
 
-        fn on_video_track(&self, transceiver: UniquePtr<ffi::ArcasRTPVideoTransceiver>) {
-            println!("GOT TRANSCEIVER: {:?}", transceiver.mid());
-            self.video_tx.send(transceiver).unwrap();
-        }
-    }
+        let pc_factory2 = api_factory2.create_peer_connection_factory().unwrap();
+        let mut pc2 = pc_factory2.create_peer_connection(config2).unwrap();
+        pc2.set_remote_description(sdp.copy_to_remote().unwrap())
+            .await
+            .unwrap();
 
-    pub fn create_test_ice_peer_connection_observer() -> (
-        Receiver<UniquePtr<ArcasICECandidate>>,
-        Receiver<UniquePtr<ArcasRTPVideoTransceiver>>,
-        UniquePtr<ArcasPeerConnectionObserver>,
-    ) {
-        let (tx, rx) = unbounded();
-        let (tx_video, rx_video) = unbounded();
-        let out = create_peer_connection_observer(Box::new(PeerConnectionObserverProxy::new(
-            Box::new(TestIcePeerConnectionObserver::new(tx_video, tx)),
-        )));
-        (rx, rx_video, out)
-    }
+        let answer = pc2.create_answer().await.unwrap();
+        let answer_for_remote = answer.copy_to_remote().unwrap();
 
-    #[test]
-    fn test_custom_video_encoder_factory() {
-        let ice = ffi::ArcasICEServer {
-            urls: vec!["stun:stun.l.google.com:19302".to_owned()],
-            username: "".to_owned(),
-            password: "".to_owned(),
-        };
-        let config = ffi::create_rtc_configuration(ffi::ArcasPeerConnectionConfig {
-            ice_servers: vec![ice.clone()],
-            sdp_semantics: ffi::ArcasSDPSemantics::kUnifiedPlan,
-        });
-        let config2 = ffi::create_rtc_configuration(ffi::ArcasPeerConnectionConfig {
-            ice_servers: vec![ice],
-            sdp_semantics: ffi::ArcasSDPSemantics::kUnifiedPlan,
-        });
+        pc2.set_local_description(answer).await.unwrap();
+        pc.set_remote_description(answer_for_remote).await.unwrap();
 
-        let video_encoder_factory = ffi::create_arcas_video_encoder_factory(Box::new(
-            VideoEncoderFactoryProxy::new(Box::new(PassThroughVideoEncoderFactory {})),
-        ));
+        let mut ice_rx = pc.take_ice_candidate_rx().unwrap();
+        let mut ice_rx2 = pc2.take_ice_candidate_rx().unwrap();
 
-        // Each api has it's own threadpool...
-        let api1 = ffi::create_arcas_api();
-        let api2 = ffi::create_arcas_api();
-
-        let mut factory1 =
-            api1.create_factory_with_arcas_video_encoder_factory(video_encoder_factory);
-        let (ice_rx, _, mut observer) = create_test_ice_peer_connection_observer();
-        let pc = unsafe {
-            factory1.create_peer_connection(config, observer.pin_mut().get_unchecked_mut())
-        };
-        let source = ffi::create_arcas_video_track_source();
-        let track = factory1
-            .as_mut()
-            .unwrap()
-            .create_video_track("test".into(), source.as_ref().unwrap());
-        pc.add_video_track(track, ["test".into()].to_vec());
-
-        let (tx, rx) = unbounded();
-
-        pc.create_offer(Box::new(ArcasRustCreateSessionDescriptionObserver::new(
-            Box::new(move |session_description| {
-                tx.send(session_description)
-                    .expect("Can send set desc message");
-            }),
-            Box::new(move |_err| panic!("Failed to set description")),
-        )));
-
-        let sdp = rx.recv().expect("Can get offer");
-        assert!(!sdp.cxx_to_string().is_empty(), "has sdp string");
-
-        let (set_tx, set_rx) = unbounded();
-        let set_session_observer = ArcasRustSetSessionDescriptionObserver::new(
-            Box::new(move || {
-                set_tx.send(1).expect("Can send set desc message");
-            }),
-            Box::new(move |_err| panic!("Failed to set description")),
-        );
-        let cc_observer = Box::new(set_session_observer);
-        println!("SET OFFER\n: {}", sdp.cxx_to_string());
-        pc.set_local_description(cc_observer, sdp.clone_cxx());
-        set_rx.recv().expect("Can set description");
-
-        let factory2 = api2.create_factory();
-        let (ice_rx2, video_transceiver_rx, mut observer2) =
-            create_test_ice_peer_connection_observer();
-        let pc2 = unsafe {
-            factory2.create_peer_connection(config2, observer2.pin_mut().get_unchecked_mut())
-        };
-        let (set_remote_tx, set_remote_rx) = unbounded();
-        let set_session_observer = ArcasRustSetSessionDescriptionObserver::new(
-            Box::new(move || {
-                set_remote_tx.send(1).expect("Can send set desc message");
-            }),
-            Box::new(move |_err| panic!("Failed to set description")),
-        );
-        pc2.set_remote_description(Box::new(set_session_observer), sdp.clone_cxx());
-        set_remote_rx.recv().expect("Can set description");
-        let (tx_answer, rx_answer) = unbounded();
-        pc2.create_answer(Box::new(ArcasRustCreateSessionDescriptionObserver::new(
-            Box::new(move |session_description| {
-                assert_eq!(session_description.get_type(), ffi::ArcasSDPType::kAnswer);
-                println!("got sdp: {}", session_description.cxx_to_string(),);
-                tx_answer.send(session_description).expect("Can send");
-            }),
-            Box::new(move |_err| {
-                println!("got some kind of error");
-                panic!("Failed to create session description");
-            }),
-        )));
-        let answer = rx_answer.recv().expect("Creates answer");
-        let answer_for_remote = answer.clone_cxx();
-
-        let (set_local_tx2, set_local_rx2) = unbounded();
-        let observer = ArcasRustSetSessionDescriptionObserver::new(
-            Box::new(move || {
-                set_local_tx2.send(1).expect("Can send set desc message");
-            }),
-            Box::new(move |_err| panic!("Failed to set description")),
-        );
-        pc2.set_local_description(Box::new(observer), answer);
-        set_local_rx2.recv().expect("Can finish connection loop");
-
-        let (set_remote_tx2, set_remote_rx2) = unbounded();
-        let observer = ArcasRustSetSessionDescriptionObserver::new(
-            Box::new(move || {
-                set_remote_tx2.send(1).expect("Cyn send set desc message");
-            }),
-            Box::new(move |_err| panic!("Failed to set description")),
-        );
-        pc.set_remote_description(Box::new(observer), answer_for_remote);
-        set_remote_rx2.recv().expect("Can finish connection loop");
-
-        let pc1_ice = ice_rx.recv().expect("Can get ice");
-        let pc2_ice = ice_rx2.recv().expect("Can get ice");
-        pc.add_ice_candidate(pc2_ice);
-        pc2.add_ice_candidate(pc1_ice);
+        let pc1_ice = ice_rx.recv().await.expect("Can get ice");
+        let pc2_ice = ice_rx2.recv().await.expect("Can get ice");
+        pc.add_ice_candidate(pc2_ice).await.unwrap();
+        pc2.add_ice_candidate(pc1_ice).await.unwrap();
 
         let mut codec = VideoCodec::vp9(DEFAULT_WIDTH / 2, DEFAULT_HEIGHT / 2, 10);
         codec.primary.max_bitrate_kbs = 2000;
@@ -394,41 +275,28 @@ mod tests {
                 },
                 recv(raw_frames_rx) -> frame_result => {
                     let frame = frame_result.unwrap();
-                    encoder.raw_frame_tx.send(frame).unwrap();
+                    encoder.queue(frame).unwrap();
                     let frame = encoder.encoded_rx.recv().unwrap();
-                    source.push_frame(frame.as_cxx_video_frame_ref().unwrap());
+                    source_writer.push_encoded_frame(frame).unwrap();
                     std::thread::sleep(std::time::Duration::from_millis(10));
                 }
             }
         });
 
-        std::thread::sleep(std::time::Duration::from_millis(1000));
-        let (test_done_tx, test_done_rx) = unbounded();
-        std::thread::spawn(move || loop {
-            let (stat_tx, stat_rx) = unbounded();
-            let observer = Box::new(ArcasRustRTCStatsCollectorCallback::new(Box::new(
-                move |video_recv, _, _, _| {
-                    stat_tx.send(video_recv).expect("Can send");
-                },
-            )));
-            pc2.get_stats(observer);
-            let stats = stat_rx.recv().unwrap();
-            for stat in stats {
-                if stat.frames_decoded > 1 {
-                    if cancel_push_tx.send(()).is_ok() {}
-                    test_done_tx.send(1).unwrap();
-                    // Very important otherwise we crash.
-                    pc2.close();
-                    break;
+        let (test_done_tx, mut test_done_rx) = channel(1);
+        tokio::spawn(async move {
+            loop {
+                let stats = pc2.get_stats().await.unwrap();
+                for stat in stats.video_receiver_stats {
+                    if stat.frames_decoded > 1 {
+                        if cancel_push_tx.send(()).is_ok() {}
+                        test_done_tx.send(1).await.unwrap();
+                        break;
+                    }
                 }
+                sleep(std::time::Duration::from_millis(1000)).await
             }
-            std::thread::sleep(std::time::Duration::from_millis(1000));
         });
-        let _video_transceiver = video_transceiver_rx.recv().unwrap();
-        test_done_rx
-            .recv_deadline(Instant::now() + std::time::Duration::from_secs(10))
-            .unwrap();
-        // Very important otherwise we crash.
-        pc.close();
+        test_done_rx.recv().await.unwrap();
     }
 }

@@ -47,6 +47,9 @@ using ArcasCxxVideoFrameType = webrtc::VideoFrameType;
 using ArcasCxxVideoCodecComplexity = webrtc::VideoCodecComplexity;
 using ArcasCxxInterLayerPredMode = webrtc::InterLayerPredMode;
 using ArcasRTCErrorType = webrtc::RTCErrorType;
+using ArcasCxxVideoEncoder = webrtc::VideoEncoder;
+using ArcasCxxVideoEncoderSettings = webrtc::VideoEncoder::Settings;
+using ArcasCxxVideoEncoderEncoderInfo = webrtc::VideoEncoder::EncoderInfo;
 
 // using ArcasIceGatheringState = webrtc::PeerConnectionInterface::IceGatheringState;
 // using ArcasIceGatheringState = webrtc::PeerConnectionInterface::IceGatheringState;

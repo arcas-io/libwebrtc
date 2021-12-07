@@ -85,19 +85,18 @@ ArcasVideoEncoderInfo ArcasVideoEncoderWrapper::get_encoder_info() const
     }
 
     rust::Vec<ArcasVideoEncoderInfoFPSAllocation> fps_allocation;
-    fps_allocation.reserve(webrtc::kMaxTemporalStreams);
 
-    for (auto i = 0; i < webrtc::kMaxTemporalStreams; i++)
-    {
-        // ArcasVideoEncoderInfoFPSAllocation rust_fps_allocation;
-        // rust_fps_allocation.allocation.reserve(webrtc::kMaxSpatialLayers);
+    // for (auto i = 0; i < webrtc::kMaxTemporalStreams; i++)
+    // {
+    //     ArcasVideoEncoderInfoFPSAllocation rust_fps_allocation;
+    //     rust_fps_allocation.allocation.reserve(webrtc::kMaxSpatialLayers);
 
-        // for (auto j = 0; j < webrtc::kMaxSpatialLayers; j++)
-        // {
-        //     rust_fps_allocation.allocation.push_back(info.fps_allocation[i][j]);
-        // }
-        // fps_allocation.push_back(rust_fps_allocation);
-    }
+    //     for (auto j = 0; j < webrtc::kMaxSpatialLayers; j++)
+    //     {
+    //         rust_fps_allocation[i][j] = info.fps_allocation[i][j];
+    //     }
+    //     fps_allocation.push_back(rust_fps_allocation);
+    // }
 
     rust::Vec<ArcasVideoEncoderResolutionBitrateLimits> resolution_bitrate_limits;
 
@@ -150,4 +149,9 @@ std::unique_ptr<ArcasVideoEncoderFactoryWrapper> create_arcas_video_encoder_fact
 {
     auto factory = webrtc::CreateBuiltinVideoEncoderFactory();
     return std::make_unique<ArcasVideoEncoderFactoryWrapper>(std::move(factory));
+}
+
+std::unique_ptr<ArcasCxxVideoEncoderEncoderInfo> get_video_encoder_encoder_info(const webrtc::VideoEncoder &encoder)
+{
+    return std::make_unique<ArcasCxxVideoEncoderEncoderInfo>(encoder.GetEncoderInfo());
 }
