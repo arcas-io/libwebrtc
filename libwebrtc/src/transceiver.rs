@@ -48,6 +48,17 @@ impl From<TransceiverDirection> for ArcasRTPTransceiverDirection {
     }
 }
 
+impl ToString for TransceiverDirection {
+    fn to_string(&self) -> String {
+        match self {
+            TransceiverDirection::SendRecv => "sendrecv".to_string(),
+            TransceiverDirection::SendOnly => "sendonly".to_string(),
+            TransceiverDirection::RecvOnly => "recvonly".to_string(),
+            TransceiverDirection::Inactive => "inactive".to_string(),
+        }
+    }
+}
+
 pub struct TransceiverInit {
     cxx: ArcasTransceiverInit,
 }
