@@ -27,11 +27,15 @@ extern crate lazy_static;
 
 pub mod into;
 pub mod peer_connection;
+pub mod video_decoder;
+pub mod video_decoder_factory;
 pub mod video_encoder;
 pub mod video_encoder_factory;
 
 use crate::ffi::ArcasEncodedImageFactory;
 pub use crate::peer_connection::PeerConnectionObserverProxy;
+pub use crate::video_decoder::VideoDecoderProxy;
+pub use crate::video_decoder_factory::VideoDecoderFactoryProxy;
 pub use crate::video_encoder::{EncodedImageCallbackHandler, VideoEncoderProxy};
 pub use crate::video_encoder_factory::{VideoEncoderFactoryProxy, VideoEncoderSelectorProxy};
 
@@ -96,7 +100,6 @@ lazy_static::lazy_static! {
 
 #[cxx::bridge]
 pub mod ffi {
-
     #[derive(Debug)]
     struct ArcasRustDict {
         key: String,
@@ -492,6 +495,12 @@ pub mod ffi {
     }
 
     #[derive(Debug)]
+    struct ArcasVideoDecoderFactoryCodecSupport {
+        is_supported: bool,
+        is_power_efficient: bool,
+    }
+
+    #[derive(Debug)]
     struct ArcasCandidatePairChangeEvent {
         selected_remote_id: String,
         selected_local_id: String,
@@ -697,8 +706,17 @@ pub mod ffi {
         type ArcasReactiveVideoEncoderWrapper;
         type ArcasVideoFrameBufferEmpty;
 
+        type ArcasVideoDecoder;
+        type ArcasVideoDecoderFactory;
+
+        type ArcasPeerConnectionFactoryConfig;
         // wrapper functions around constructors.
         fn create_arcas_api() -> UniquePtr<ArcasAPI>;
+
+        fn create_arcas_peerconnection_factory_config(
+            video_encoder_factory: UniquePtr<ArcasVideoEncoderFactory>,
+            video_decoder_factory: UniquePtr<ArcasVideoDecoderFactory>,
+        ) -> UniquePtr<ArcasPeerConnectionFactoryConfig>;
 
         fn create_arcas_video_track_source() -> UniquePtr<ArcasVideoTrackSource>;
         fn create_arcas_encoded_image_factory() -> UniquePtr<ArcasEncodedImageFactory>;
@@ -769,11 +787,16 @@ pub mod ffi {
 
         // ArcasAPI
         fn create_factory(self: &ArcasAPI) -> UniquePtr<ArcasPeerConnectionFactory>;
+
         fn create_factory_with_arcas_video_encoder_factory(
             self: &ArcasAPI,
             video_encoder_factory: UniquePtr<ArcasVideoEncoderFactory>,
         ) -> UniquePtr<ArcasPeerConnectionFactory>;
 
+        fn create_factory_with_config(
+            self: &ArcasAPI,
+            config: UniquePtr<ArcasPeerConnectionFactoryConfig>,
+        ) -> UniquePtr<ArcasPeerConnectionFactory>;
         // ArcasPeerConnectionFactory
         /// PeerConnection objects are threadsafe and can be shared between threads.
         /// the actual work happens on the worker thread.
@@ -1023,6 +1046,10 @@ pub mod ffi {
         fn create_arcas_video_encoder_factory(
             factory: Box<VideoEncoderFactoryProxy>,
         ) -> UniquePtr<ArcasVideoEncoderFactory>;
+
+        fn create_arcas_video_decoder_factory(
+            factory: Box<VideoDecoderFactoryProxy>,
+        ) -> UniquePtr<ArcasVideoDecoderFactory>;
 
         // ArcasCxxDataRate
         fn bytes_per_sec(self: &ArcasCxxDataRate) -> i64;
@@ -1333,6 +1360,11 @@ pub mod ffi {
         #[rust_name = "EncodedImageCallbackHandler"]
         type ArcasRustEncodedImageCallbackHandler;
 
+        #[rust_name = "VideoDecoderProxy"]
+        type ArcasRustVideoDecoder;
+        #[rust_name = "VideoDecoderFactoryProxy"]
+        type ArcasRustVideoDecoderFactory;
+
         // Stats callbacks
         fn on_stats_delivered(
             self: &ArcasRustRTCStatsCollectorCallback,
@@ -1522,6 +1554,35 @@ pub mod ffi {
         );
 
         fn trigger_dropped(self: &EncodedImageCallbackHandler, reason: ArcasVideoEncoderDropReason);
+
+        // ArcasRustVideoDecoder
+        fn decode(
+            self: &mut VideoDecoderProxy,
+            image: &ArcasCxxEncodedImage,
+            missing_frames: bool,
+            render_time_ms: i64,
+        ) -> i32;
+
+        fn release(self: &mut VideoDecoderProxy) -> i32;
+
+        fn get_num_frames_received(self: &VideoDecoderProxy) -> i32;
+
+        // ArcasRustVideoDecoderFactory
+        fn get_supported_formats(
+            self: &VideoDecoderFactoryProxy,
+        ) -> UniquePtr<CxxVector<ArcasCxxSdpVideoFormat>>;
+
+        fn query_codec_support(
+            self: &VideoDecoderFactoryProxy,
+            format: &ArcasCxxSdpVideoFormat,
+            reference_scaling: bool,
+        ) -> ArcasVideoDecoderFactoryCodecSupport;
+
+        fn create_video_decoder(
+            self: &mut VideoDecoderFactoryProxy,
+            format: &ArcasCxxSdpVideoFormat,
+        ) -> Box<VideoDecoderProxy>;
+
     }
 }
 

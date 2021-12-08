@@ -359,13 +359,20 @@ impl Drop for PeerConnection {
 mod tests {
     use std::time::Duration;
 
+    use libwebrtc_sys::{
+        video_decoder_factory::VideoDecoderFactoryImpl,
+        video_encoder_factory::VideoEncoderFactoryImpl,
+    };
     use tokio::{test, time::sleep};
 
     use super::*;
     use crate::{
-        factory::Factory,
+        factory::{Factory, FactoryConfig},
+        passthrough_video_decoder_factory::PassthroughVideoDecoderFactory,
         raw_video_frame_producer::{GStreamerRawFrameProducer, RawFrameProducer},
+        reactive_video_encoder::ReactiveVideoEncoderFactory,
         video_codec::VideoCodec,
+        video_encoder_pool,
     };
 
     #[test]
@@ -481,5 +488,26 @@ mod tests {
             }
         });
         done_rx.recv().await.unwrap();
+    }
+
+    #[test]
+    async fn test_create_peer_connection_with_factory_config() {
+        use libwebrtc_sys::video_decoder_factory::VideoDecoderFactoryImpl;
+        use libwebrtc_sys::video_encoder_factory::VideoEncoderFactoryImpl;
+        let (_, enc_tx) = video_encoder_pool::VideoEncoderPool::create().unwrap();
+        let video_encoder_factory: Option<Box<dyn VideoEncoderFactoryImpl>> = Some(Box::new(
+            ReactiveVideoEncoderFactory::create(enc_tx).unwrap(),
+        ));
+        let video_decoder_factory: Option<Box<dyn VideoDecoderFactoryImpl>> =
+            Some(Box::new(PassthroughVideoDecoderFactory::new()));
+        let config = FactoryConfig {
+            video_encoder_factory,
+            video_decoder_factory,
+        };
+        let api = Factory::new();
+        let pc_factory = api.create_factory_with_config(config).unwrap();
+        let _ = pc_factory
+            .create_peer_connection(PeerConnectionConfig::default())
+            .unwrap();
     }
 }

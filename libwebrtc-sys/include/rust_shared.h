@@ -25,3 +25,5 @@ struct ArcasRustEncodedImageCallbackHandler;
 struct ArcasVideoEncoderLossNotification;
 struct ArcasVideoEncoderInfo;
 struct ArcasVideoEncoderInfoFPSAllocation;
+struct ArcasRustVideoDecoderFactory;
+struct ArcasRustVideoDecoder;

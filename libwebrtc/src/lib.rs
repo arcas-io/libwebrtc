@@ -21,3 +21,6 @@ pub mod video_encoder_pool;
 pub mod video_frame;
 pub mod video_track;
 pub mod video_track_source;
+
+pub mod passthrough_video_decoder;
+pub mod passthrough_video_decoder_factory;

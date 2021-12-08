@@ -7,6 +7,8 @@
 #include "libwebrtc-sys/include/reactive_video_encoder_wrapper.h"
 #include "libwebrtc-sys/include/video_encoder.h"
 #include "libwebrtc-sys/include/video_encoder_factory.h"
+#include "libwebrtc-sys/include/video_decoder.h"
+#include "libwebrtc-sys/include/video_decoder_factory.h"
 #include "libwebrtc-sys/include/media_stream.h"
 #include "libwebrtc-sys/include/data_channel.h"
 #include "libwebrtc-sys/include/session_description.h"

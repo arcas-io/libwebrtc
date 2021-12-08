@@ -3,8 +3,13 @@ use std::sync::Arc;
 use crossbeam_channel::Sender;
 use cxx::UniquePtr;
 use libwebrtc_sys::{
-    ffi::{create_arcas_video_encoder_factory, ArcasAPI},
-    VideoEncoderFactoryProxy,
+    ffi::{
+        create_arcas_peerconnection_factory_config, create_arcas_video_decoder_factory,
+        create_arcas_video_encoder_factory, ArcasAPI,
+    },
+    video_decoder_factory::VideoDecoderFactoryImpl,
+    video_encoder_factory::VideoEncoderFactoryImpl,
+    VideoDecoderFactoryProxy, VideoEncoderFactoryProxy,
 };
 
 use crate::{
@@ -17,6 +22,13 @@ use crate::{
 /// everything
 pub struct Factory {
     cxx: Arc<UniquePtr<ArcasAPI>>,
+}
+
+/// FactoryConfig
+#[derive(Default)]
+pub struct FactoryConfig {
+    pub video_encoder_factory: Option<Box<dyn VideoEncoderFactoryImpl>>,
+    pub video_decoder_factory: Option<Box<dyn VideoDecoderFactoryImpl>>,
 }
 
 impl Factory {
@@ -53,6 +65,31 @@ impl Factory {
             .cxx
             .create_factory_with_arcas_video_encoder_factory(video_encoder_factory);
 
+        Ok(PeerConnectionFactory::new(cxx_factory))
+    }
+
+    pub fn create_factory_with_config(
+        &self,
+        config: FactoryConfig,
+    ) -> Result<PeerConnectionFactory> {
+        let encoder_factory = config
+            .video_encoder_factory
+            .and_then(|enc| {
+                Some(create_arcas_video_encoder_factory(Box::new(
+                    VideoEncoderFactoryProxy::new(enc),
+                )))
+            })
+            .unwrap_or(UniquePtr::null());
+        let decoder_factory = config
+            .video_decoder_factory
+            .and_then(|dec| {
+                Some(create_arcas_video_decoder_factory(Box::new(
+                    VideoDecoderFactoryProxy::new(dec),
+                )))
+            })
+            .unwrap_or(UniquePtr::null());
+        let config = create_arcas_peerconnection_factory_config(encoder_factory, decoder_factory);
+        let cxx_factory = self.cxx.create_factory_with_config(config);
         Ok(PeerConnectionFactory::new(cxx_factory))
     }
 }
