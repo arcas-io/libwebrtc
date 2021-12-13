@@ -44,7 +44,12 @@ impl VideoDecoderProxy {
         render_times_ms: i64,
         decoded_image_callback: &crate::ffi::ArcasDecodedImageCallback,
     ) -> i32 {
-        self.decoder.decode(image, missing_frames, render_times_ms, DecodedImageCallback::new(decoded_image_callback))
+        self.decoder.decode(
+            image,
+            missing_frames,
+            render_times_ms,
+            DecodedImageCallback::new(decoded_image_callback),
+        )
     }
 
     pub fn release(&mut self) -> i32 {

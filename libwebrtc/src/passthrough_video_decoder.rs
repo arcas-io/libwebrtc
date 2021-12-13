@@ -1,6 +1,9 @@
-use libwebrtc_sys::video_decoder::{VideoDecoderImpl, DecodedImageCallback};
+use libwebrtc_sys::video_decoder::{DecodedImageCallback, VideoDecoderImpl};
 
-use crate::{video_frame::{EmptyVideoFrame, AsCxxVideoFrame}, now::now};
+use crate::{
+    now::now,
+    video_frame::{AsCxxVideoFrame, EmptyVideoFrame},
+};
 
 #[derive(Default)]
 pub struct PassthroughVideoDecoder {
@@ -21,7 +24,8 @@ impl VideoDecoderImpl for PassthroughVideoDecoder {
             Ok(f) => f,
             Err(_) => return 0,
         };
-        let _ = frame.as_cxx_video_frame_ref_mut()
+        let _ = frame
+            .as_cxx_video_frame_ref_mut()
             .and_then(|f| Ok(callback.decoded(f)));
         0
     }

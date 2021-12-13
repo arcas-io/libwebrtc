@@ -1,5 +1,5 @@
 #![allow(unreachable_patterns)]
-use cxx::{UniquePtr};
+use cxx::UniquePtr;
 use ffi::ArcasAPI;
 use ffi::ArcasCodecSpecificInfo;
 use ffi::ArcasColorSpace;
@@ -585,7 +585,6 @@ pub mod ffi {
         pub audio_level: f64,
         pub total_audio_energy: f64,
     }
-
 
     unsafe extern "C++" {
         include!("libwebrtc-sys/include/alias.h");
@@ -1337,10 +1336,7 @@ pub mod ffi {
         fn cxx_clone(self: &ArcasVideoCodec) -> UniquePtr<ArcasVideoCodec>;
 
         // ArcasDecodedImageCallback
-        fn decoded(
-            self: &ArcasDecodedImageCallback,
-            frame: Pin<&mut ArcasCxxVideoFrame>,
-        ) -> i32;
+        fn decoded(self: &ArcasDecodedImageCallback, frame: Pin<&mut ArcasCxxVideoFrame>) -> i32;
 
         // XXX: Hacks to ensure CXX generates the unique ptr bindings for these return types.
         fn gen_unique_ptr1() -> UniquePtr<ArcasDataChannel>;
