@@ -1,5 +1,13 @@
 #include "libwebrtc-sys/src/lib.rs.h"
 
+void ArcasDecodedImageCallback::SetCallback(webrtc::DecodedImageCallback* cb) {
+    this->cb = cb;
+}
+
+int32_t ArcasDecodedImageCallback::decoded(webrtc::VideoFrame& frame) const {
+    return this->cb? this->cb->Decoded(frame) : 0;
+}
+
 bool ArcasVideoDecoder::Configure(const webrtc::VideoDecoder::Settings& settings) {
     return true;
 }
@@ -9,14 +17,13 @@ int32_t ArcasVideoDecoder::Decode(
     bool missing_frames,
     int64_t render_times_ms
 ) {
-    return api->decode(image, missing_frames, render_times_ms);
+    return api->decode(image, missing_frames, render_times_ms, cb);
 }
 
 int32_t ArcasVideoDecoder::RegisterDecodeCompleteCallback(
     webrtc::DecodedImageCallback* cb
 ) {
-    // TODO: support this callback
-    /* api->register_decode_complete_callback(cb); */
+    this->cb.SetCallback(cb);
     return 0;
 }
 

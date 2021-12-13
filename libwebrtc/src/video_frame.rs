@@ -1,3 +1,5 @@
+use std::pin::Pin;
+
 use bytes::Bytes;
 use cxx::UniquePtr;
 use libwebrtc_sys::ffi::{
@@ -11,6 +13,7 @@ use crate::error::{self, Result, WebRTCError};
 
 pub trait AsCxxVideoFrame {
     fn as_cxx_video_frame_ref(&self) -> Result<&ArcasCxxVideoFrame>;
+    fn as_cxx_video_frame_ref_mut(&mut self) -> Result<Pin<&mut ArcasCxxVideoFrame>>;
 }
 
 // We use empty video frame for a number of tricks including triggering the encoder pipeline to start without
@@ -48,6 +51,12 @@ impl EmptyVideoFrame {
 impl AsCxxVideoFrame for EmptyVideoFrame {
     fn as_cxx_video_frame_ref(&self) -> Result<&ArcasCxxVideoFrame> {
         self.video_frame.as_ref().ok_or_else(|| {
+            error::WebRTCError::CXXUnwrapError("failed to unwrap video frame".into())
+        })
+    }
+
+    fn as_cxx_video_frame_ref_mut(&mut self) -> Result<Pin<&mut ArcasCxxVideoFrame>> {
+        self.video_frame.as_mut().ok_or_else(|| {
             error::WebRTCError::CXXUnwrapError("failed to unwrap video frame".into())
         })
     }
@@ -103,6 +112,12 @@ impl AsCxxVideoFrame for RawVideoFrame {
             error::WebRTCError::CXXUnwrapError("failed to unwrap video frame".into())
         })
     }
+
+    fn as_cxx_video_frame_ref_mut(&mut self) -> Result<Pin<&mut ArcasCxxVideoFrame>> {
+        self.video_frame.as_mut().ok_or_else(|| {
+            error::WebRTCError::CXXUnwrapError("failed to unwrap video frame".into())
+        })
+    }
 }
 
 pub struct EncodedVideoFrame {
@@ -151,6 +166,12 @@ impl EncodedVideoFrame {
 impl AsCxxVideoFrame for EncodedVideoFrame {
     fn as_cxx_video_frame_ref(&self) -> Result<&ArcasCxxVideoFrame> {
         self.video_frame.as_ref().ok_or_else(|| {
+            error::WebRTCError::CXXUnwrapError("failed to unwrap video frame".into())
+        })
+    }
+
+    fn as_cxx_video_frame_ref_mut(&mut self) -> Result<Pin<&mut ArcasCxxVideoFrame>> {
+        self.video_frame.as_mut().ok_or_else(|| {
             error::WebRTCError::CXXUnwrapError("failed to unwrap video frame".into())
         })
     }

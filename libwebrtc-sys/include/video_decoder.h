@@ -4,6 +4,20 @@
 #include "libwebrtc-sys/include/rust_shared.h"
 #include "rust/cxx.h"
 
+class ArcasDecodedImageCallback {
+    private:
+    webrtc::DecodedImageCallback* cb;
+
+    public:
+    ArcasDecodedImageCallback(): cb(nullptr) {}
+
+    void SetCallback(webrtc::DecodedImageCallback* cb);
+    
+    int32_t decoded(webrtc::VideoFrame&) const;
+};
+
+int32_t decoded_image_callback_on_decoded(ArcasDecodedImageCallback&, webrtc::VideoFrame&);
+
 class ArcasVideoDecoder: public webrtc::VideoDecoder {
     public:
     ArcasVideoDecoder(rust::Box<ArcasRustVideoDecoder> api): api(std::move(api)) {}
@@ -26,4 +40,5 @@ class ArcasVideoDecoder: public webrtc::VideoDecoder {
 
     private:
     rust::Box<ArcasRustVideoDecoder> api;
+    ArcasDecodedImageCallback cb;
 };
