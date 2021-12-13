@@ -19,8 +19,12 @@ impl VideoDecoderImpl for PassthroughVideoDecoder {
         callback: DecodedImageCallback<'_>,
     ) -> i32 {
         self.num_frames_received += 1;
+        let ts = match now() {
+            Ok(x) => x,
+            Err(_) => return 0,
+        };
         // call the decoded image callback here
-        let mut frame = match EmptyVideoFrame::create(now().unwrap()) {
+        let mut frame = match EmptyVideoFrame::create(ts) {
             Ok(f) => f,
             Err(_) => return 0,
         };
