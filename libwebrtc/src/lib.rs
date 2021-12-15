@@ -8,7 +8,7 @@ pub mod media_type;
 pub mod now;
 pub mod passthrough_video_encoder;
 pub mod peer_connection;
-mod peer_connection_observer;
+pub mod peer_connection_observer;
 pub mod raw_video_frame_producer;
 pub mod reactive_video_encoder;
 pub mod rtc_error;
