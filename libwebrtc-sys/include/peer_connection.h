@@ -2,7 +2,6 @@
 #include "api/create_peerconnection_factory.h"
 #include "libwebrtc-sys/include/rust_shared.h"
 #include "libwebrtc-sys/include/ice_candidate.h"
-#include "libwebrtc-sys/include/webrtc_api.h"
 #include "libwebrtc-sys/include/rtp_sender.h"
 #include "libwebrtc-sys/include/rtp_receiver.h"
 #include "libwebrtc-sys/include/rtp_transceiver.h"
@@ -63,3 +62,5 @@ public:
 
     std::unique_ptr<std::vector<ArcasRTPTransceiver>> get_transceivers() const;
 };
+
+std::shared_ptr<ArcasPeerConnection> gen_shared_peer_connection();

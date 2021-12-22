@@ -1,5 +1,6 @@
 #pragma once
-#include "libwebrtc-sys/include/webrtc_api.h"
+#include "api/jsep.h"
+#include "api/jsep_ice_candidate.h"
 #include "libwebrtc-sys/include/rust_shared.h"
 #include "rust/cxx.h"
 

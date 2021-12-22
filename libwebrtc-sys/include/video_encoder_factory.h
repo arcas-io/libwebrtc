@@ -1,6 +1,6 @@
 #pragma once
 #include "libwebrtc-sys/include/alias.h"
-#include "libwebrtc-sys/include/webrtc_api.h"
+#include "api/video_codecs/video_encoder_factory.h"
 #include "libwebrtc-sys/include/rust_shared.h"
 #include "rust/cxx.h"
 
@@ -73,3 +73,8 @@ public:
 std::unique_ptr<ArcasVideoEncoderFactory> create_arcas_video_encoder_factory(rust::Box<ArcasRustVideoEncoderFactory> api);
 
 ArcasVideoEncodingErrCode get_arcas_video_encoding_err_codes();
+
+template <>
+struct rust::IsRelocatable<ArcasRustVideoEncoder> : std::true_type
+{
+};

@@ -1,5 +1,9 @@
 #include "libwebrtc-sys/include/video_encoding_wrapper.h"
-#include "libwebrtc-sys/src/lib.rs.h"
+#include "libwebrtc-sys/src/shared_bridge.rs.h"
+#include "libwebrtc-sys/src/video_encoding.rs.h"
+#include "libwebrtc-sys/src/video_frame_buffer.rs.h"
+#include "api/video_codecs/builtin_video_encoder_factory.h"
+#include "libwebrtc-sys/src/video_encoder_factory_wrapper.rs.h"
 #include <iostream>
 
 rust::Vec<ArcasRustDict> ArcasSDPVideoFormatWrapper::get_parameters() const
@@ -110,7 +114,7 @@ ArcasVideoEncoderInfo ArcasVideoEncoderWrapper::get_encoder_info() const
         resolution_bitrate_limits.push_back(rust_resolution_bitrate_limit);
     }
 
-    rust::Vec<ArcasCxxVideoFrameBufferType> preferred_pixel_formats;
+    rust::Vec<webrtc::VideoFrameBuffer::Type> preferred_pixel_formats;
 
     for (auto pixel_format : info.preferred_pixel_formats)
     {
@@ -138,11 +142,6 @@ ArcasVideoEncoderInfo ArcasVideoEncoderWrapper::get_encoder_info() const
         .is_qp_trusted = is_qp_trusted,
     };
     return output;
-}
-
-std::shared_ptr<ArcasVideoFrameTypesCollection> create_arcas_video_frame_types_collection(rust::Vec<webrtc::VideoFrameType> types)
-{
-    return std::make_shared<ArcasVideoFrameTypesCollection>(types);
 }
 
 std::unique_ptr<ArcasVideoEncoderFactoryWrapper> create_arcas_video_encoder_factory_from_builtin()

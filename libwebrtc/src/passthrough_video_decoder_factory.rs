@@ -1,6 +1,6 @@
 use libwebrtc_sys::{
     ffi::{create_sdp_video_format_list, ArcasSdpVideoFormatInit, ArcasSdpVideoFormatVecInit},
-    video_decoder_factory::VideoDecoderFactoryImpl,
+    video_decoding::VideoDecoderFactoryImpl,
     VideoDecoderProxy,
 };
 

@@ -11,8 +11,7 @@ use libwebrtc_sys::{
         self, create_arcas_video_encoder_factory_from_builtin, ArcasEncodedImageCallback,
         ArcasVideoCodec, ArcasVideoEncoderInfo, ArcasVideoEncoderRateControlParameters,
     },
-    video_encoder::VideoEncoderImpl,
-    video_encoder_factory::VideoEncoderFactoryImpl,
+    video_encoding::{VideoEncoderFactoryImpl, VideoEncoderImpl},
     VideoEncoderProxy, VideoEncoderSelectorProxy,
 };
 use log::{error, info};

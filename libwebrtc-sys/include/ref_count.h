@@ -1,5 +1,5 @@
 #pragma once
-#include "libwebrtc-sys/include/webrtc_api.h"
+#include "rtc_base/ref_count.h"
 
 // Utility class to implement "ref counting" for an object that's held by a
 // unique ptr.  This is glue code that shouldn't be used unless the object

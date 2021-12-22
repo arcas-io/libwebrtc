@@ -1,5 +1,4 @@
 #pragma once
-#include "libwebrtc-sys/include/webrtc_api.h"
 #include "libwebrtc-sys/include/peer_connection.h"
 #include "libwebrtc-sys/include/video_track.h"
 #include "libwebrtc-sys/include/audio_track.h"
@@ -8,6 +7,7 @@
 #include "libwebrtc-sys/include/video_decoder_factory.h"
 #include "libwebrtc-sys/include/video_track_source.h"
 #include "libwebrtc-sys/include/audio_device_module.h"
+#include "libwebrtc-sys/include/api_internal.h"
 
 class ArcasAPIInternal;
 
@@ -44,4 +44,4 @@ public:
 };
 
 std::unique_ptr<webrtc::PeerConnectionInterface::RTCConfiguration> create_rtc_configuration(ArcasPeerConnectionConfig config);
-std::unique_ptr<ArcasPeerConnectionObserver> create_peer_connection_observer(rust::Box<ArcasRustPeerConnectionObserver>);
+std::unique_ptr<ArcasPeerConnectionFactory> gen_unique_peer_connection_factory();

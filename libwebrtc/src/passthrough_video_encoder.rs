@@ -6,8 +6,7 @@ use libwebrtc_sys::{
         self, create_sdp_video_format_list, ArcasEncodedImageCallback, ArcasVideoEncoderInfo,
         ArcasVideoEncoderScalingSettings,
     },
-    video_encoder::VideoEncoderImpl,
-    video_encoder_factory::VideoEncoderFactoryImpl,
+    video_encoding::{VideoEncoderFactoryImpl, VideoEncoderImpl},
     VideoEncoderProxy, VideoEncoderSelectorProxy, VIDEO_CODEC_OK,
 };
 use parking_lot::Mutex;

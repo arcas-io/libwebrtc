@@ -1,5 +1,5 @@
-#include "libwebrtc-sys/include/video_encoder_factory.h"
-#include "libwebrtc-sys/src/lib.rs.h"
+#include "libwebrtc-sys/include/video_encoder.h"
+#include "libwebrtc-sys/src/video_encoding.rs.h"
 
 std::vector<webrtc::SdpVideoFormat> ArcasVideoEncoderFactory::GetSupportedFormats() const
 {

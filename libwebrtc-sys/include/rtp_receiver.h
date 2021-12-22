@@ -1,5 +1,5 @@
 #pragma once
-#include "libwebrtc-sys/include/webrtc_api.h"
+#include "api/rtp_receiver_interface.h"
 
 class ArcasRTPReceiver
 {
@@ -21,3 +21,7 @@ class ArcasRTPAudioReceiver : public ArcasRTPReceiver
 public:
     ArcasRTPAudioReceiver(rtc::scoped_refptr<webrtc::RtpReceiverInterface> api) : ArcasRTPReceiver(api){};
 };
+
+std::unique_ptr<ArcasRTPReceiver> gen_unique_rtp_receiver();
+std::unique_ptr<ArcasRTPAudioReceiver> gen_unique_rtp_audio_receiver();
+std::unique_ptr<ArcasRTPVideoReceiver> gen_unique_rtp_video_receiver();

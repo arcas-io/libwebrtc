@@ -1,5 +1,6 @@
 #pragma once
-#include "libwebrtc-sys/include/webrtc_api.h"
+#include "rtc_base/logging.h"
+#include "api/media_stream_interface.h"
 #include "rust/cxx.h"
 
 class ArcasVideoTrack
@@ -28,3 +29,5 @@ public:
         return rust::String(api->id().c_str());
     }
 };
+
+std::unique_ptr<ArcasVideoTrack> gen_unique_video_track();

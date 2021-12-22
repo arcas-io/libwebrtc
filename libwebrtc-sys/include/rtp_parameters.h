@@ -1,7 +1,7 @@
 #pragma once
 #include "rust/cxx.h"
 #include "libwebrtc-sys/include/alias.h"
-#include "libwebrtc-sys/include/webrtc_api.h"
+#include "api/rtp_parameters.h"
 
 class ArcasRTPCodecCapability
 {
@@ -29,3 +29,6 @@ public:
 
     rust::String get_uri() const { return rust::String(api.uri.c_str()); }
 };
+
+std::unique_ptr<std::vector<ArcasRTPHeaderExtensionCapability>> gen_unique_vector_rtp_header_extension_capabilities();
+std::unique_ptr<std::vector<ArcasRTPCodecCapability>> gen_unique_vector_rtp_codec_capabilities();

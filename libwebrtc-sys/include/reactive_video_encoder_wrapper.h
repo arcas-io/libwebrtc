@@ -1,7 +1,6 @@
 #pragma once
-#include "libwebrtc-sys/include/webrtc_api.h"
 #include "libwebrtc-sys/include/video_codec.h"
-#include "libwebrtc-sys/include/video_encoder_settings.h"
+#include "libwebrtc-sys/include/video_frame.h"
 #include "libwebrtc-sys/include/rust_shared.h"
 #include "libwebrtc-sys/include/video_encoder_rate_control_parameters.h"
 #include "libwebrtc-sys/include/encoded_image_callback.h"

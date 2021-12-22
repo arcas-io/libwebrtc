@@ -1,6 +1,6 @@
-#pragma once
 #include "libwebrtc-sys/include/reactive_video_encoder_wrapper.h"
-#include "libwebrtc-sys/src/lib.rs.h"
+#include "libwebrtc-sys/src/shared_bridge.rs.h"
+#include "libwebrtc-sys/src/video_encoding.rs.h"
 
 void ArcasReactiveVideoEncoderWrapper::on_loss_notification(ArcasVideoEncoderLossNotification loss) const
 {

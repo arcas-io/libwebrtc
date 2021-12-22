@@ -1,156 +1,243 @@
 use cxx::UniquePtr;
 
-use crate::ffi::{
-    self, ArcasCandidatePairChangeEvent, ArcasDataChannel, ArcasICECandidate,
-    ArcasIceConnectionState, ArcasIceGatheringState, ArcasMediaStream, ArcasPeerConnectionState,
-    ArcasRTCSignalingState, ArcasRTPReceiver,
-};
+use self::ffi::{ArcasRTCError, ArcasSessionDescription};
 
-pub trait PeerConnectionObserverImpl {
-    fn on_signaling_state_change(&self, _state: ArcasRTCSignalingState) {}
-    fn on_add_stream(&self, _stream: UniquePtr<ArcasMediaStream>) {}
-    fn on_remove_stream(&self, _stream: UniquePtr<ArcasMediaStream>) {}
-    fn on_datachannel(&self, _data_channel: UniquePtr<ArcasDataChannel>) {}
-    fn on_renegotiation_needed(&self) {}
-    fn on_renegotiation_needed_event(&self, _event: u32) {}
-    fn on_ice_connection_change(&self, _state: ArcasIceConnectionState) {}
-    fn on_connection_change(&self, _state: ArcasPeerConnectionState) {}
-    fn on_ice_gathering_change(&self, _state: ArcasIceGatheringState) {}
-    fn on_ice_candidate(&self, _candidate: UniquePtr<ArcasICECandidate>) {}
-    fn on_ice_candidate_error(
-        &self,
-        _host_candidate: String,
-        _url: String,
-        _error_code: i32,
-        _error_text: String,
-    ) {
+#[cxx::bridge]
+pub mod ffi {
+
+    struct ArcasTransceiverInit {
+        stream_ids: Vec<String>,
+        direction: ArcasCxxRtpTransceiverDirection,
     }
 
-    fn on_ice_candidate_error_address_port(
-        &self,
-        _address: String,
-        _port: i32,
-        _url: String,
-        _error_code: i32,
-        _error_text: String,
-    ) {
+    // stats types
+    #[derive(Debug)]
+    struct ArcasVideoReceiverStats {
+        pub ssrc: u32,
+        pub packets_received: u32,
+        pub packets_lost: i32,
+        pub packets_repaired: u32,
+        pub bytes_received: u64,
+        pub frames_decoded: u32,
+        pub keyframes_decoded: u32,
+        pub frames_dropped: u32,
+        pub total_decode_time: f64,
+        pub frame_width: u32,
+        pub frame_height: u32,
     }
 
-    fn on_ice_candidates_removed(&self, _removed: Vec<String>) {}
-    fn on_ice_connection_receiving_change(&self, _receiving: bool) {}
-    fn on_ice_selected_candidate_pair_change(&self, _event: ArcasCandidatePairChangeEvent) {}
+    #[derive(Debug)]
+    struct ArcasVideoSenderStats {
+        pub ssrc: u32,
+        pub packets_sent: u32,
+        pub bytes_sent: u64,
+        pub frames_encoded: u32,
+        pub key_frames_encoded: u32,
+        pub total_encode_time: f64,
+        pub frame_width: u32,
+        pub frame_height: u32,
+        pub retransmitted_packets_sent: u64,
+        pub retransmitted_bytes_sent: u64,
+        pub total_packet_send_delay: f64,
+        pub nack_count: u32,
+        pub fir_count: u32,
+        pub pli_count: u32,
+        pub quality_limitation_reason: u32, // 0 - kNone, 1 - kCpu, 2 - kBandwidth, 3 - kOther
+        pub quality_limitation_resolution_changes: u32,
+        pub remote_packets_lost: i32,
+        pub remote_jitter: f64,
+        pub remote_round_trip_time: f64,
+    }
 
-    fn on_add_track(&self, _receiver: UniquePtr<ArcasRTPReceiver>) {}
-    fn on_video_track(&self, _transceiver: UniquePtr<ffi::ArcasRTPVideoTransceiver>) {}
-    fn on_audio_track(&self, _transceiver: UniquePtr<ffi::ArcasRTPAudioTransceiver>) {}
-    fn on_remove_track(&self, _receiver: UniquePtr<ArcasRTPReceiver>) {}
-    fn on_interesting_usage(&self, _pattern: i32) {}
+    #[derive(Debug)]
+    struct ArcasAudioReceiverStats {
+        pub ssrc: u32,
+        pub packets_received: u32,
+        pub packets_lost: i32,
+        pub bytes_received: u64,
+        pub jitter: f64,
+        pub frames_decoded: u32,
+        pub total_decode_time: f64,
+        pub audio_level: f64,
+        pub total_audio_energy: f64,
+    }
+
+    #[derive(Debug)]
+    struct ArcasAudioSenderStats {
+        pub ssrc: u32,
+        pub packets_sent: u32,
+        pub bytes_sent: u64,
+        pub remote_packets_lost: i32,
+        pub remote_jitter: f64,
+        pub remote_round_trip_time: f64,
+        pub audio_level: f64,
+        pub total_audio_energy: f64,
+    }
+
+    unsafe extern "C++" {
+        include!("include/alias.h");
+        include!("include/peer_connection_stats_callback.h");
+        include!("include/peer_connection.h");
+        include!("libwebrtc-sys/src/video_track.rs.h");
+        type ArcasPeerConnection;
+        type ArcasSDPSemantics = crate::shared_bridge::ffi::ArcasSDPSemantics;
+        type ArcasRTCConfiguration = crate::shared_bridge::ffi::ArcasRTCConfiguration;
+        type ArcasSessionDescription = crate::session_description::ffi::ArcasSessionDescription;
+        type ArcasRTPVideoTransceiver = crate::rtp_transceiver::ffi::ArcasRTPVideoTransceiver;
+        type ArcasRTPAudioTransceiver = crate::rtp_transceiver::ffi::ArcasRTPAudioTransceiver;
+        type ArcasRTPTransceiver = crate::rtp_transceiver::ffi::ArcasRTPTransceiver;
+        type ArcasVideoTrack = crate::video_track::ffi::ArcasVideoTrack;
+        type ArcasICECandidate = crate::ice_candidate::ffi::ArcasICECandidate;
+        type ArcasRTCError = crate::error::ffi::ArcasRTCError;
+        type ArcasCxxRtpTransceiverDirection =
+            crate::shared_bridge::ffi::ArcasCxxRtpTransceiverDirection;
+        type ArcasRTCStatsCollectorCallback;
+
+        fn gen_shared_peer_connection() -> SharedPtr<ArcasPeerConnection>;
+
+        // ArcasPeerConnection
+        fn create_offer(
+            self: &ArcasPeerConnection,
+            observer: Box<ArcasRustCreateSessionDescriptionObserver>,
+        );
+        fn create_answer(
+            self: &ArcasPeerConnection,
+            observer: Box<ArcasRustCreateSessionDescriptionObserver>,
+        );
+        fn set_local_description(
+            self: &ArcasPeerConnection,
+            observer: Box<ArcasRustSetSessionDescriptionObserver>,
+            session: UniquePtr<ArcasSessionDescription>,
+        );
+
+        fn set_remote_description(
+            self: &ArcasPeerConnection,
+            observer: Box<ArcasRustSetSessionDescriptionObserver>,
+            session: UniquePtr<ArcasSessionDescription>,
+        );
+
+        fn add_video_transceiver(self: &ArcasPeerConnection)
+            -> UniquePtr<ArcasRTPVideoTransceiver>;
+
+        fn add_video_transceiver_with_track(
+            self: &ArcasPeerConnection,
+            track: UniquePtr<ArcasVideoTrack>,
+            init: ArcasTransceiverInit,
+        ) -> UniquePtr<ArcasRTPVideoTransceiver>;
+
+        fn add_audio_transceiver(self: &ArcasPeerConnection)
+            -> UniquePtr<ArcasRTPAudioTransceiver>;
+
+        fn add_video_track(
+            self: &ArcasPeerConnection,
+            track: UniquePtr<ArcasVideoTrack>,
+            stream_ids: Vec<String>,
+        );
+
+        fn get_stats(self: &ArcasPeerConnection, callback: Box<ArcasRustRTCStatsCollectorCallback>);
+        fn add_ice_candidate(self: &ArcasPeerConnection, candidate: UniquePtr<ArcasICECandidate>);
+        fn close(self: &ArcasPeerConnection);
+        fn get_transceivers(
+            self: &ArcasPeerConnection,
+        ) -> UniquePtr<CxxVector<ArcasRTPTransceiver>>;
+
+    }
+
+    extern "Rust" {
+        type ArcasRustCreateSessionDescriptionObserver;
+        type ArcasRustSetSessionDescriptionObserver;
+        type ArcasRustRTCStatsCollectorCallback;
+        fn on_stats_delivered(
+            self: &ArcasRustRTCStatsCollectorCallback,
+            video_rx: Vec<ArcasVideoReceiverStats>,
+            audio_rx: Vec<ArcasAudioReceiverStats>,
+            video_tx: Vec<ArcasVideoSenderStats>,
+            audio_tx: Vec<ArcasAudioSenderStats>,
+        );
+
+        // ArcasRustCreateSessionDescriptionObserver
+        fn on_success(
+            self: &ArcasRustCreateSessionDescriptionObserver,
+            success: UniquePtr<ArcasSessionDescription>,
+        );
+        fn on_failure(
+            self: &ArcasRustCreateSessionDescriptionObserver,
+            failure: UniquePtr<ArcasRTCError>,
+        );
+        // ArcasRustSetSessionDescriptionObserver
+        fn on_success(self: &ArcasRustSetSessionDescriptionObserver);
+        fn on_failure(
+            self: &ArcasRustSetSessionDescriptionObserver,
+            failure: UniquePtr<ArcasRTCError>,
+        );
+    }
 }
 
-pub struct PeerConnectionObserverProxy {
-    api: Box<dyn PeerConnectionObserverImpl>,
+pub struct ArcasRustCreateSessionDescriptionObserver {
+    success: Box<dyn Fn(UniquePtr<ArcasSessionDescription>)>,
+    failure: Box<dyn Fn(UniquePtr<ArcasRTCError>)>,
 }
 
-impl PeerConnectionObserverProxy {
-    pub fn new(api: Box<dyn PeerConnectionObserverImpl>) -> PeerConnectionObserverProxy {
-        PeerConnectionObserverProxy { api }
+impl ArcasRustCreateSessionDescriptionObserver {
+    pub fn new(
+        success: Box<dyn Fn(UniquePtr<ArcasSessionDescription>)>,
+        failure: Box<dyn Fn(UniquePtr<ArcasRTCError>)>,
+    ) -> Self {
+        Self { success, failure }
     }
 
-    pub fn on_signaling_state_change(&self, state: ArcasRTCSignalingState) {
-        self.api.on_signaling_state_change(state)
+    fn on_success(&self, description: UniquePtr<ArcasSessionDescription>) {
+        (self.success)(description);
+    }
+    fn on_failure(&self, err: UniquePtr<ArcasRTCError>) {
+        (self.failure)(err);
+    }
+}
+
+pub struct ArcasRustSetSessionDescriptionObserver {
+    success: Box<dyn Fn()>,
+    failure: Box<dyn Fn(UniquePtr<ArcasRTCError>)>,
+}
+
+impl ArcasRustSetSessionDescriptionObserver {
+    pub fn new(
+        success: Box<dyn Fn()>,
+        failure: Box<dyn Fn(UniquePtr<self::ffi::ArcasRTCError>)>,
+    ) -> Self {
+        Self { success, failure }
     }
 
-    pub fn on_add_stream(&self, stream: UniquePtr<ArcasMediaStream>) {
-        self.api.on_add_stream(stream);
+    fn on_success(&self) {
+        (self.success)();
+    }
+    fn on_failure(&self, err: UniquePtr<self::ffi::ArcasRTCError>) {
+        (self.failure)(err);
+    }
+}
+
+type StatsCallbackFn = dyn Fn(
+    Vec<self::ffi::ArcasVideoReceiverStats>,
+    Vec<self::ffi::ArcasAudioReceiverStats>,
+    Vec<self::ffi::ArcasVideoSenderStats>,
+    Vec<self::ffi::ArcasAudioSenderStats>,
+);
+
+pub struct ArcasRustRTCStatsCollectorCallback {
+    cb: Box<StatsCallbackFn>,
+}
+
+impl ArcasRustRTCStatsCollectorCallback {
+    pub fn new(cb: Box<StatsCallbackFn>) -> Self {
+        Self { cb }
     }
 
-    pub fn on_remove_stream(&self, stream: UniquePtr<ArcasMediaStream>) {
-        self.api.on_remove_stream(stream);
-    }
-
-    pub fn on_datachannel(&self, data_channel: UniquePtr<ArcasDataChannel>) {
-        self.api.on_datachannel(data_channel);
-    }
-
-    pub fn on_renegotiation_needed(&self) {
-        self.api.on_renegotiation_needed();
-    }
-
-    pub fn on_renegotiation_needed_event(&self, event: u32) {
-        self.api.on_renegotiation_needed_event(event);
-    }
-
-    pub fn on_ice_connection_change(&self, state: ArcasIceConnectionState) {
-        self.api.on_ice_connection_change(state);
-    }
-
-    pub fn on_connection_change(&self, state: ArcasPeerConnectionState) {
-        self.api.on_connection_change(state);
-    }
-
-    pub fn on_ice_gathering_change(&self, state: ArcasIceGatheringState) {
-        self.api.on_ice_gathering_change(state);
-    }
-
-    pub fn on_ice_candidate(&self, candidate: UniquePtr<ArcasICECandidate>) {
-        self.api.on_ice_candidate(candidate);
-    }
-
-    pub fn on_ice_candidate_error(
-        &self,
-        host_candidate: String,
-        url: String,
-        error_code: i32,
-        error_text: String,
+    fn on_stats_delivered(
+        self: &ArcasRustRTCStatsCollectorCallback,
+        video_rx: Vec<self::ffi::ArcasVideoReceiverStats>,
+        audio_rx: Vec<self::ffi::ArcasAudioReceiverStats>,
+        video_tx: Vec<self::ffi::ArcasVideoSenderStats>,
+        audio_tx: Vec<self::ffi::ArcasAudioSenderStats>,
     ) {
-        self.api
-            .on_ice_candidate_error(host_candidate, url, error_code, error_text);
-    }
-
-    pub fn on_ice_candidate_error_address_port(
-        &self,
-        address: String,
-        port: i32,
-        url: String,
-        error_code: i32,
-        error_text: String,
-    ) {
-        self.api
-            .on_ice_candidate_error_address_port(address, port, url, error_code, error_text);
-    }
-
-    pub fn on_ice_candidates_removed(&self, removed: Vec<String>) {
-        self.api.on_ice_candidates_removed(removed);
-    }
-
-    pub fn on_ice_connection_receiving_change(&self, receiving: bool) {
-        self.api.on_ice_connection_receiving_change(receiving)
-    }
-
-    pub fn on_ice_selected_candidate_pair_change(
-        self: &PeerConnectionObserverProxy,
-        event: ArcasCandidatePairChangeEvent,
-    ) {
-        self.api.on_ice_selected_candidate_pair_change(event);
-    }
-
-    pub fn on_add_track(&self, receiver: UniquePtr<ArcasRTPReceiver>) {
-        self.api.on_add_track(receiver);
-    }
-
-    pub fn on_audio_track(&self, transceiver: UniquePtr<ffi::ArcasRTPAudioTransceiver>) {
-        self.api.on_audio_track(transceiver);
-    }
-
-    pub fn on_video_track(&self, transceiver: UniquePtr<ffi::ArcasRTPVideoTransceiver>) {
-        self.api.on_video_track(transceiver);
-    }
-
-    pub fn on_remove_track(&self, receiver: UniquePtr<ArcasRTPReceiver>) {
-        self.api.on_remove_track(receiver);
-    }
-
-    pub fn on_interesting_usage(&self, pattern: i32) {
-        self.api.on_interesting_usage(pattern);
+        (self.cb)(video_rx, audio_rx, video_tx, audio_tx)
     }
 }

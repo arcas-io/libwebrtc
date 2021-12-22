@@ -1,8 +1,21 @@
 #pragma once
-#include "libwebrtc-sys/include/webrtc_api.h"
 #include "libwebrtc-sys/include/peer_connection_factory.h"
 #include "libwebrtc-sys/include/audio_device_module.h"
 #include "libwebrtc-sys/include/peerconnection_factory_config.h"
+#include "api/task_queue/default_task_queue_factory.h"
+#include "api/audio_codecs/audio_decoder_factory.h"
+#include "api/audio_codecs/audio_encoder_factory.h"
+#include "api/video_codecs/video_decoder_factory.h"
+#include "api/video_codecs/video_encoder_factory.h"
+#include "api/video_codecs/video_decoder_factory.h"
+#include "api/video_codecs/builtin_video_decoder_factory.h"
+#include "api/video_codecs/builtin_video_encoder_factory.h"
+#include "api/audio_codecs/builtin_audio_decoder_factory.h"
+#include "api/audio_codecs/builtin_audio_encoder_factory.h"
+#include "api/rtc_event_log/rtc_event_log_factory.h"
+#include "media/engine/webrtc_media_engine.h"
+#include "media/base/media_engine.h"
+#include "modules/audio_mixer/audio_mixer_impl.h"
 
 class ArcasFieldTrial : public webrtc::WebRtcKeyValueConfig
 {
@@ -115,7 +128,8 @@ public:
         return webrtc::CreateModularPeerConnectionFactory(std::move(dependencies));
     }
 
-    rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> create_factory_with_config(std::unique_ptr<ArcasPeerConnectionFactoryConfig> config) {
+    rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> create_factory_with_config(std::unique_ptr<ArcasPeerConnectionFactoryConfig> config)
+    {
         webrtc::PeerConnectionFactoryDependencies dependencies;
         dependencies.network_thread = network_thread.get();
         dependencies.signaling_thread = signaling_thread.get();
@@ -127,20 +141,25 @@ public:
 
         auto adm = rtc::make_ref_counted<ArcasAudioDeviceModule>();
 
-
         cricket::MediaEngineDependencies media_deps;
         media_deps.task_queue_factory = dependencies.task_queue_factory.get();
         media_deps.audio_encoder_factory = webrtc::CreateBuiltinAudioEncoderFactory();
         media_deps.audio_decoder_factory = webrtc::CreateBuiltinAudioDecoderFactory();
-        if (config->video_encoder_factory != nullptr) {
+        if (config->video_encoder_factory != nullptr)
+        {
             media_deps.video_encoder_factory = std::move(config->video_encoder_factory);
-        } else {
+        }
+        else
+        {
             media_deps.video_encoder_factory = webrtc::CreateBuiltinVideoEncoderFactory();
         }
 
-        if (config->video_decoder_factory != nullptr) {
+        if (config->video_decoder_factory != nullptr)
+        {
             media_deps.video_decoder_factory = std::move(config->video_decoder_factory);
-        } else {
+        }
+        else
+        {
             media_deps.video_decoder_factory = webrtc::CreateBuiltinVideoDecoderFactory();
         }
         // media_deps.audio_processing = webrtc::AudioProcessingBuilder().Create();
@@ -151,6 +170,5 @@ public:
         dependencies.media_engine = cricket::CreateMediaEngine(std::move(media_deps));
 
         return webrtc::CreateModularPeerConnectionFactory(std::move(dependencies));
-
     }
 };

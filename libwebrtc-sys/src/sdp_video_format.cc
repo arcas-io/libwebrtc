@@ -1,5 +1,5 @@
 #include "libwebrtc-sys/include/sdp_video_format.h"
-#include "libwebrtc-sys/src/lib.rs.h"
+#include "libwebrtc-sys/src/shared_bridge.rs.h"
 
 rust::Vec<ArcasRustDict> sdp_video_format_get_parameters(const webrtc::SdpVideoFormat &format)
 {

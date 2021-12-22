@@ -1,5 +1,5 @@
 #include "libwebrtc-sys/include/session_description.h"
-#include "libwebrtc-sys/src/lib.rs.h"
+#include "libwebrtc-sys/src/session_description.rs.h"
 
 ArcasSessionDescription::ArcasSessionDescription(
     std::unique_ptr<webrtc::SessionDescriptionInterface> api) : api(std::move(api)){};

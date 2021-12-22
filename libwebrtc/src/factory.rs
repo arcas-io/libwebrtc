@@ -7,8 +7,8 @@ use libwebrtc_sys::{
         create_arcas_peerconnection_factory_config, create_arcas_video_decoder_factory,
         create_arcas_video_encoder_factory, ArcasAPI,
     },
-    video_decoder_factory::VideoDecoderFactoryImpl,
-    video_encoder_factory::VideoEncoderFactoryImpl,
+    video_decoding::VideoDecoderFactoryImpl,
+    video_encoding::VideoEncoderFactoryImpl,
     VideoDecoderFactoryProxy, VideoEncoderFactoryProxy,
 };
 
@@ -74,18 +74,14 @@ impl Factory {
     ) -> Result<PeerConnectionFactory> {
         let encoder_factory = config
             .video_encoder_factory
-            .and_then(|enc| {
-                Some(create_arcas_video_encoder_factory(Box::new(
-                    VideoEncoderFactoryProxy::new(enc),
-                )))
+            .map(|enc| {
+                create_arcas_video_encoder_factory(Box::new(VideoEncoderFactoryProxy::new(enc)))
             })
             .unwrap_or(UniquePtr::null());
         let decoder_factory = config
             .video_decoder_factory
-            .and_then(|dec| {
-                Some(create_arcas_video_decoder_factory(Box::new(
-                    VideoDecoderFactoryProxy::new(dec),
-                )))
+            .map(|dec| {
+                create_arcas_video_decoder_factory(Box::new(VideoDecoderFactoryProxy::new(dec)))
             })
             .unwrap_or(UniquePtr::null());
         let config = create_arcas_peerconnection_factory_config(encoder_factory, decoder_factory);

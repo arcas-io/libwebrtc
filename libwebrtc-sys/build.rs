@@ -169,7 +169,39 @@ fn build_entrypoint(output_dir: String, target_os: String) {
             .unwrap(),
     );
     // let mut builder = autocxx_build::Builder::new(&"src/lib.rs", &include_path_list);
-    let mut builder = cxx_build::bridge(&"src/lib.rs");
+    let mut builder = cxx_build::bridges(&[
+        &"src/shared_bridge.rs",
+        &"src/logging.rs",
+        &"src/rtp_parameters.rs",
+        &"src/sdp_video_format.rs",
+        &"src/video_frame_buffer_encoded.rs",
+        &"src/video_frame.rs",
+        &"src/ice_candidate.rs",
+        &"src/session_description.rs",
+        &"src/p2p/lib.rs",
+        &"src/codec_specific_info.rs",
+        &"src/spatial_layer.rs",
+        &"src/video_frame_buffer.rs",
+        &"src/video_codec.rs",
+        &"src/encoded_image_factory.rs",
+        &"src/video_decoding.rs",
+        &"src/video_encoding.rs",
+        &"src/video_encoding_wrapper.rs",
+        &"src/video_encoder_factory_wrapper.rs",
+        &"src/peer_connection_factory.rs",
+        &"src/peer_connection_observer.rs",
+        &"src/peer_connection.rs",
+        &"src/video_track.rs",
+        &"src/video_track_source.rs",
+        &"src/media_stream.rs",
+        &"src/rtp_receiver.rs",
+        &"src/rtp_sender.rs",
+        &"src/rtp_transceiver.rs",
+        &"src/data_channel.rs",
+        &"src/error.rs",
+        &"src/peerconnection_factory_config.rs",
+        &"src/api.rs",
+    ]);
 
     for include_path in include_path_list {
         builder.include(include_path);
@@ -207,14 +239,12 @@ fn build_entrypoint(output_dir: String, target_os: String) {
         .define("USE_AURA", "1")
         .define("USE_OZONE", "1")
         .define("USE_NSS_CERTS", "1")
-        .define("DYNAMIC_ANNOTATIONS_ENABLED", "0")
         .define("WEBRTC_ENABLE_PROTOBUF", "0")
         .define("WEBRTC_INCLUDE_INTERNAL_AUDIO_DEVICE", None)
         .define("RTC_ENABLE_VP9", None)
         .define("WEBRTC_HAVE_SCTP", None)
         .define("WEBRTC_LIBRARY_IMPL", None)
         .define("WEBRTC_ENABLE_AVX2", None)
-        .define("WEBRTC_NON_STATIC_TRACE_EVENT_HANDLERS", "0")
         .define("ABSL_ALLOCATOR_NOTHROW", "1")
         .define("NDEBUG", None)
         .define("NVALGRIND", None)

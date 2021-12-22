@@ -1,5 +1,6 @@
+#include "libwebrtc-sys/src/shared_bridge.rs.h"
+#include "libwebrtc-sys/src/video_encoding.rs.h"
 #include "libwebrtc-sys/include/video_encoder.h"
-#include "libwebrtc-sys/src/lib.rs.h"
 
 int32_t ArcasVideoEncoder::InitEncode(const webrtc::VideoCodec *codec_settings,
                                       int number_of_cores,

@@ -1,5 +1,5 @@
 #include "libwebrtc-sys/include/ice_candidate.h"
-#include "libwebrtc-sys/src/lib.rs.h"
+#include "libwebrtc-sys/src/ice_candidate.rs.h"
 
 ArcasCreateICECandidateResult create_arcas_ice_candidate(
     rust::String sdp_mid,

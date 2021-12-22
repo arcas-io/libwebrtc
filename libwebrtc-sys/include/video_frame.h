@@ -1,9 +1,49 @@
 #pragma once
-#include "libwebrtc-sys/include/webrtc_api.h"
 #include "libwebrtc-sys/include/color_space.h"
 #include "libwebrtc-sys/include/video_track_source.h"
 #include "libwebrtc-sys/include/encoded_image_factory.h"
 #include "libwebrtc-sys/include/video_frame_buffer_empty.h"
+
+class ArcasVideoFrameTypesCollection
+{
+private:
+    const std::vector<webrtc::VideoFrameType> types_;
+
+public:
+    ArcasVideoFrameTypesCollection(rust::Vec<webrtc::VideoFrameType> types) : types_(types.begin(), types.end())
+    {
+    }
+
+    const std::vector<webrtc::VideoFrameType> *as_ptr() const
+    {
+        return &types_;
+    }
+};
+
+class ArcasVideoEncoderSettings
+{
+private:
+    const webrtc::VideoEncoder::Capabilities capabilities_;
+    const webrtc::VideoEncoder::Settings settings_;
+
+public:
+    ArcasVideoEncoderSettings(
+        bool loss_notification,
+        int number_of_cores,
+        size_t max_payload_size) : capabilities_(loss_notification), settings_(capabilities_, number_of_cores, max_payload_size)
+    {
+    }
+
+    const webrtc::VideoEncoder::Settings &as_ref() const
+    {
+        return settings_;
+    }
+
+    const webrtc::VideoEncoder::Capabilities &capabilities_ref() const
+    {
+        return capabilities_;
+    }
+};
 
 class ArcasVideoFrameFactory
 {
@@ -58,3 +98,5 @@ public:
 };
 
 std::unique_ptr<ArcasVideoFrameFactory> create_arcas_video_frame_factory();
+std::shared_ptr<ArcasVideoFrameTypesCollection> create_arcas_video_frame_types_collection(rust::Vec<webrtc::VideoFrameType> types);
+std::unique_ptr<webrtc::VideoFrame> gen_unique_cxx_video_frame();

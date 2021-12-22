@@ -1,6 +1,7 @@
 #include "iostream"
 #include "rust/cxx.h"
-#include "libwebrtc-sys/src/lib.rs.h"
+#include "libwebrtc-sys/src/shared_bridge.rs.h"
+#include "libwebrtc-sys/src/peer_connection_observer.rs.h"
 #include "libwebrtc-sys/include/ice_candidate.h"
 #include "libwebrtc-sys/include/peer_connection_observer.h"
 
@@ -157,3 +158,8 @@ void ArcasPeerConnectionObserver::OnInterestingUsage(int usage_pattern)
 {
     observer->on_interesting_usage(usage_pattern);
 };
+
+std::unique_ptr<ArcasPeerConnectionObserver> create_peer_connection_observer(rust::Box<ArcasRustPeerConnectionObserver> rust_box)
+{
+    return std::make_unique<ArcasPeerConnectionObserver>(std::move(rust_box));
+}

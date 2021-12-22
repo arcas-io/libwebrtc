@@ -1,7 +1,8 @@
 #pragma once
 #include "rust/cxx.h"
-#include "libwebrtc-sys/include/webrtc_api.h"
-#include "libwebrtc-sys/include/rust_shared.h"
+#include "api/jsep_session_description.h"
+
+struct ArcasCreateSessionDescriptionResult;
 
 class ArcasSessionDescription
 {

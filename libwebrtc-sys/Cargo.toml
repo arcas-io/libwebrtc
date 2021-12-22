@@ -12,7 +12,7 @@ lazy_static = "1.4.0"
 parking_lot = "0.11.2"
 
 [build-dependencies]
-cxx-build = "1.0.56"
+cxx-build = { version = "1.0.56", features = ["parallel"] }
 reqwest = "0.11.5"
 run_script = "^0.9.0"
 

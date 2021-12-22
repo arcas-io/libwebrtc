@@ -1,5 +1,7 @@
 #pragma once
-#include "libwebrtc-sys/include/webrtc_api.h"
+#include "rtc_base/logging.h"
+#include "api/ref_counted_base.h"
+#include "api/video/video_frame_buffer.h"
 
 class ArcasVideoFrameBufferEmpty : public rtc::RefCountedBase, public webrtc::VideoFrameBuffer
 {

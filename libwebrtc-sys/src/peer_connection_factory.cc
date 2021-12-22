@@ -1,9 +1,10 @@
 #include "iostream"
 #include "rust/cxx.h"
+#include "libwebrtc-sys/src/shared_bridge.rs.h"
+#include "libwebrtc-sys/src/peer_connection_factory.rs.h"
 #include "libwebrtc-sys/include/peer_connection_factory.h"
 #include "libwebrtc-sys/include/api_internal.h"
 #include "libwebrtc-sys/include/peer_connection_observer.h"
-#include "libwebrtc-sys/src/lib.rs.h"
 
 ArcasPeerConnectionFactory::ArcasPeerConnectionFactory(
     rtc::scoped_refptr<ArcasAPIInternal> internal_api,
@@ -39,9 +40,4 @@ std::unique_ptr<webrtc::PeerConnectionInterface::RTCConfiguration> create_rtc_co
     RTC_LOG(LS_VERBOSE) << "RTC LOG WITH " << servers.size() << " URLS";
 
     return rtc;
-}
-
-std::unique_ptr<ArcasPeerConnectionObserver> create_peer_connection_observer(rust::Box<ArcasRustPeerConnectionObserver> rust_box)
-{
-    return std::make_unique<ArcasPeerConnectionObserver>(std::move(rust_box));
 }

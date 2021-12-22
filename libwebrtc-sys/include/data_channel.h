@@ -1,5 +1,5 @@
 #pragma once
-#include "libwebrtc-sys/include/webrtc_api.h"
+#include "api/data_channel_interface.h"
 
 class ArcasDataChannel
 {
@@ -9,3 +9,5 @@ private:
 public:
     ArcasDataChannel(rtc::scoped_refptr<webrtc::DataChannelInterface> api);
 };
+
+std::unique_ptr<ArcasDataChannel> gen_unique_data_channel();

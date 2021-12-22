@@ -1,4 +1,4 @@
-use libwebrtc_sys::video_decoder::{DecodedImageCallback, VideoDecoderImpl};
+use libwebrtc_sys::video_decoding::{DecodedImageCallback, VideoDecoderImpl};
 
 use crate::{
     now::now,
@@ -30,7 +30,7 @@ impl VideoDecoderImpl for PassthroughVideoDecoder {
         };
         let _ = frame
             .as_cxx_video_frame_ref_mut()
-            .and_then(|f| Ok(callback.decoded(f)));
+            .map(|f| callback.decoded(f));
         0
     }
 

@@ -1,7 +1,7 @@
 use cxx::UniquePtr;
 use libwebrtc_sys::ffi::{
-    ArcasCxxRtpTransceiverDirection, ArcasMediaType, ArcasRTPAudioTransceiver,
-    ArcasRTPTransceiverDirection, ArcasRTPVideoTransceiver, ArcasTransceiverInit,
+    ArcasCxxRtpTransceiverDirection, ArcasRTPAudioTransceiver, ArcasRTPTransceiverDirection,
+    ArcasRTPVideoTransceiver, ArcasTransceiverInit,
 };
 
 use crate::{error::WebRTCError, media_type::MediaType};

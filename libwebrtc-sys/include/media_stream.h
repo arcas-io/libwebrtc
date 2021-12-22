@@ -1,6 +1,6 @@
 #pragma once
 #include "rust/cxx.h"
-#include "libwebrtc-sys/include/webrtc_api.h"
+#include "api/media_stream_interface.h"
 
 class ArcasMediaStream
 {
@@ -39,3 +39,5 @@ public:
         return vec;
     }
 };
+
+std::unique_ptr<ArcasMediaStream> gen_unique_media_stream();

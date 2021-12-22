@@ -3,6 +3,7 @@
 #include "api/media_types.h"
 #include "api/video_codecs/video_encoder.h"
 #include "api/video_codecs/video_encoder_factory.h"
+#include "api/video/video_frame.h"
 
 /**
  * @brief Naming Conventions
@@ -50,7 +51,14 @@ using ArcasRTCErrorType = webrtc::RTCErrorType;
 using ArcasCxxVideoEncoder = webrtc::VideoEncoder;
 using ArcasCxxVideoEncoderSettings = webrtc::VideoEncoder::Settings;
 using ArcasCxxVideoEncoderEncoderInfo = webrtc::VideoEncoder::EncoderInfo;
+using ArcasCxxVideoFrame = webrtc::VideoFrame;
 
 // using ArcasIceGatheringState = webrtc::PeerConnectionInterface::IceGatheringState;
 // using ArcasIceGatheringState = webrtc::PeerConnectionInterface::IceGatheringState;
 // using ArcasIceGatheringState = webrtc::PeerConnectionInterface::IceGatheringState;
+std::unique_ptr<ArcasCxxSdpVideoFormat> gen_unique_cxx_video_format_wrapper();
+std::unique_ptr<std::vector<ArcasCxxSdpVideoFormat>> gen_unique_sdp_video_format_vector();
+std::shared_ptr<ArcasCxxEncodedImage> gen_shared_cxx_encoded_image();
+std::unique_ptr<ArcasCxxEncodedImage> gen_unique_cxx_encoded_image();
+std::unique_ptr<ArcasCxxVideoBitrateAllocation> gen_unique_cxx_video_bitrate_allocation();
+std::unique_ptr<ArcasRTCConfiguration> gen_unique_cxx_rtc_configuration();

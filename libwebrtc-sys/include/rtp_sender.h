@@ -1,5 +1,5 @@
 #pragma once
-#include "libwebrtc-sys/include/webrtc_api.h"
+#include "api/rtp_sender_interface.h"
 #include "libwebrtc-sys/include/video_track.h"
 
 class ArcasRTPSender
@@ -29,3 +29,6 @@ class ArcasRTPAudioSender : public ArcasRTPSender
 public:
     ArcasRTPAudioSender(rtc::scoped_refptr<webrtc::RtpSenderInterface> api) : ArcasRTPSender(api){};
 };
+
+std::unique_ptr<ArcasRTPAudioSender> gen_unique_rtp_audio_sender();
+std::unique_ptr<ArcasRTPVideoSender> gen_unique_rtp_video_sender();

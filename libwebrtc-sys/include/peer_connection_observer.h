@@ -1,7 +1,7 @@
 
 #pragma once
 #include "rust/cxx.h"
-// #include "libwebrtc-sys/src/lib.rs.h"
+// #include "libwebrtc-sys/src/shared_bridge.rs.h"
 #include "api/peer_connection_interface.h"
 #include "libwebrtc-sys/include/rtp_receiver.h"
 #include "libwebrtc-sys/include/rtp_transceiver.h"
@@ -81,3 +81,5 @@ public:
         rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver);
     void OnInterestingUsage(int usage_pattern);
 };
+
+std::unique_ptr<ArcasPeerConnectionObserver> create_peer_connection_observer(rust::Box<ArcasRustPeerConnectionObserver>);

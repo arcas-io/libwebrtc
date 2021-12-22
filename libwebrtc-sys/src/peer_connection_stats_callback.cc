@@ -1,10 +1,13 @@
 #include "rust/cxx.h"
+#include "libwebrtc-sys/src/shared_bridge.rs.h"
+#include "libwebrtc-sys/src/peer_connection.rs.h"
 #include "libwebrtc-sys/include/peer_connection_stats_callback.h"
-#include "libwebrtc-sys/src/lib.rs.h"
+#include "api/stats/rtcstats_objects.h"
 
 ArcasRTCStatsCollectorCallback::ArcasRTCStatsCollectorCallback(rust::Box<ArcasRustRTCStatsCollectorCallback> cb) : cb(std::move(cb)) {}
 
-void ArcasRTCStatsCollectorCallback::OnStatsDelivered(const rtc::scoped_refptr<const webrtc::RTCStatsReport>& report) {
+void ArcasRTCStatsCollectorCallback::OnStatsDelivered(const rtc::scoped_refptr<const webrtc::RTCStatsReport> &report)
+{
 
     auto inbound_stream_stats = report->GetStatsOfType<webrtc::RTCInboundRTPStreamStats>();
     auto outbound_stream_stats = report->GetStatsOfType<webrtc::RTCOutboundRTPStreamStats>();
@@ -63,7 +66,7 @@ void ArcasRTCStatsCollectorCallback::OnStatsDelivered(const rtc::scoped_refptr<c
         }
     }
 
-        // Outbound
+    // Outbound
     for (const auto &stat : outbound_stream_stats)
     {
 
@@ -154,7 +157,5 @@ void ArcasRTCStatsCollectorCallback::OnStatsDelivered(const rtc::scoped_refptr<c
         in_video,
         in_audio,
         out_video,
-        out_audio
-    );
+        out_audio);
 }
-

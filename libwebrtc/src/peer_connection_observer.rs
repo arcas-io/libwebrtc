@@ -2,11 +2,11 @@ use cxx::UniquePtr;
 use libwebrtc_sys::{
     ffi::{
         create_peer_connection_observer, ArcasCandidatePairChangeEvent, ArcasDataChannel,
-        ArcasICECandidate, ArcasMediaStream, ArcasPeerConnectionObserver, ArcasPeerConnectionState,
-        ArcasRTCSignalingState, ArcasRTPVideoTransceiver,
+        ArcasICECandidate, ArcasIceConnectionState, ArcasIceGatheringState, ArcasMediaStream,
+        ArcasPeerConnectionObserver, ArcasPeerConnectionState, ArcasRTCSignalingState,
+        ArcasRTPAudioTransceiver, ArcasRTPReceiver, ArcasRTPVideoTransceiver,
     },
-    peer_connection::PeerConnectionObserverImpl,
-    PeerConnectionObserverProxy,
+    peer_connection_observer::{PeerConnectionObserverImpl, PeerConnectionObserverProxy},
 };
 use tokio::sync::mpsc::{channel, Receiver, Sender};
 
@@ -68,13 +68,13 @@ impl PeerConnectionObserverImpl for PeerConnectionObserverHandler {
 
     fn on_renegotiation_needed_event(&self, _event: u32) {}
 
-    fn on_ice_connection_change(&self, _state: libwebrtc_sys::ffi::ArcasIceConnectionState) {}
+    fn on_ice_connection_change(&self, _state: ArcasIceConnectionState) {}
 
-    fn on_connection_change(&self, state: libwebrtc_sys::ffi::ArcasPeerConnectionState) {
+    fn on_connection_change(&self, state: ArcasPeerConnectionState) {
         ok_or_return!(self.connection_state_tx.blocking_send(state.into()));
     }
 
-    fn on_ice_gathering_change(&self, _state: libwebrtc_sys::ffi::ArcasIceGatheringState) {}
+    fn on_ice_gathering_change(&self, _state: ArcasIceGatheringState) {}
 
     fn on_ice_candidate(&self, candidate: UniquePtr<ArcasICECandidate>) {
         ok_or_return!(self
@@ -107,7 +107,7 @@ impl PeerConnectionObserverImpl for PeerConnectionObserverHandler {
 
     fn on_ice_selected_candidate_pair_change(&self, _event: ArcasCandidatePairChangeEvent) {}
 
-    fn on_add_track(&self, _receiver: UniquePtr<libwebrtc_sys::ffi::ArcasRTPReceiver>) {}
+    fn on_add_track(&self, _receiver: UniquePtr<ArcasRTPReceiver>) {}
 
     fn on_video_track(&self, transceiver: UniquePtr<ArcasRTPVideoTransceiver>) {
         ok_or_return!(self
@@ -115,13 +115,9 @@ impl PeerConnectionObserverImpl for PeerConnectionObserverHandler {
             .blocking_send(VideoTransceiver::new(transceiver)));
     }
 
-    fn on_audio_track(
-        &self,
-        _transceiver: UniquePtr<libwebrtc_sys::ffi::ArcasRTPAudioTransceiver>,
-    ) {
-    }
+    fn on_audio_track(&self, _transceiver: UniquePtr<ArcasRTPAudioTransceiver>) {}
 
-    fn on_remove_track(&self, _receiver: UniquePtr<libwebrtc_sys::ffi::ArcasRTPReceiver>) {}
+    fn on_remove_track(&self, _receiver: UniquePtr<ArcasRTPReceiver>) {}
 
     fn on_interesting_usage(&self, _pattern: i32) {}
 }

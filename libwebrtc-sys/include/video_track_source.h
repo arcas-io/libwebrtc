@@ -2,6 +2,7 @@
 #include "video_track_source_internal.h"
 #include "libwebrtc-sys/include/video_codec.h"
 #include "libwebrtc-sys/include/video_frame_buffer_encoded.h"
+#include "api/video/video_frame.h"
 
 class ArcasVideoTrackSource
 {

@@ -1,9 +1,9 @@
-#include "iostream"
 #include "rust/cxx.h"
+#include "libwebrtc-sys/src/shared_bridge.rs.h"
+#include "libwebrtc-sys/src/peer_connection.rs.h"
 #include "libwebrtc-sys/include/peer_connection_observer.h"
 #include "libwebrtc-sys/include/peer_connection.h"
 #include "libwebrtc-sys/include/peer_connection_stats_callback.h"
-#include "libwebrtc-sys/src/lib.rs.h"
 #include <iostream>
 #include <vector>
 
@@ -102,14 +102,15 @@ void ArcasPeerConnection::add_ice_candidate(std::unique_ptr<ArcasICECandidate> c
                              if (!err.ok())
                              {
                                  RTC_LOG(LS_ERROR) << "ArcasPeerConnection::add_ice_candidate error: " << err.message();
-                             }
-                         });
+                             } });
 }
 
-std::unique_ptr<std::vector<ArcasRTPTransceiver>> ArcasPeerConnection::get_transceivers() const {
+std::unique_ptr<std::vector<ArcasRTPTransceiver>> ArcasPeerConnection::get_transceivers() const
+{
     auto transceivers = api->GetTransceivers();
     std::vector<ArcasRTPTransceiver> result;
-    for(auto txrx : transceivers) {
+    for (auto txrx : transceivers)
+    {
         result.push_back(ArcasRTPTransceiver(txrx));
     }
     return std::make_unique<std::vector<ArcasRTPTransceiver>>(std::move(result));

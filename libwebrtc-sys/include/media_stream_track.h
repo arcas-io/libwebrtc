@@ -1,5 +1,5 @@
 #pragma once
-#include "libwebrtc-sys/include/webrtc_api.h"
+#include "api/media_stream_interface.h"
 
 class ArcasMediaStreamTrack
 {

@@ -1,5 +1,5 @@
 #pragma once
-#include "libwebrtc-sys/include/webrtc_api.h"
+#include "api/rtc_error.h"
 #include "rust/cxx.h"
 
 class ArcasRTCError
@@ -32,3 +32,5 @@ public:
         return message_;
     }
 };
+
+std::unique_ptr<ArcasRTCError> gen_unique_ptr_error();

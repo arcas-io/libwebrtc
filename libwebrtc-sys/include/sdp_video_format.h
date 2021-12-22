@@ -1,7 +1,6 @@
 #pragma once
 #include "rust/cxx.h"
 #include "libwebrtc-sys/include/rust_shared.h"
-#include "libwebrtc-sys/include/webrtc_api.h"
 #include "api/video_codecs/sdp_video_format.h"
 
 rust::Vec<ArcasRustDict> sdp_video_format_get_parameters(const webrtc::SdpVideoFormat &format);

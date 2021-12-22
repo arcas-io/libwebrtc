@@ -1,11 +1,15 @@
 #pragma once
 #include "rust/cxx.h"
 #include "libwebrtc-sys/include/rust_shared.h"
+#include "libwebrtc-sys/include/video_frame.h"
 #include "libwebrtc-sys/include/video_codec.h"
 #include "libwebrtc-sys/include/video_encoder.h"
-#include "libwebrtc-sys/include/webrtc_api.h"
-#include "libwebrtc-sys/include/video_encoder_settings.h"
 #include "libwebrtc-sys/include/reactive_video_encoder_wrapper.h"
+
+template <>
+struct rust::IsRelocatable<ArcasRustEncodedImageCallbackHandler> : std::true_type
+{
+};
 
 class ArcasSDPVideoFormatWrapper
 {
@@ -159,8 +163,6 @@ public:
     }
 };
 
-std::shared_ptr<ArcasVideoFrameTypesCollection> create_arcas_video_frame_types_collection(rust::Vec<webrtc::VideoFrameType> types);
-
 std::shared_ptr<ArcasVideoEncoderSettings> create_arcas_video_encoder_settings(
     bool loss_notification,
     int number_of_cores,
@@ -168,3 +170,7 @@ std::shared_ptr<ArcasVideoEncoderSettings> create_arcas_video_encoder_settings(
 
 std::unique_ptr<ArcasVideoEncoderFactoryWrapper> create_arcas_video_encoder_factory_from_builtin();
 std::unique_ptr<ArcasCxxVideoEncoderEncoderInfo> get_video_encoder_encoder_info(const webrtc::VideoEncoder &encoder);
+
+std::unique_ptr<ArcasVideoEncoderWrapper> gen_unique_video_encoder_wrapper();
+std::unique_ptr<ArcasSDPVideoFormatWrapper> gen_unique_sdp_video_format_wrapper();
+std::unique_ptr<std::vector<ArcasSDPVideoFormatWrapper>> gen_unique_vector_sdp_video_format_wrapper();

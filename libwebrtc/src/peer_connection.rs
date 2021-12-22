@@ -52,7 +52,7 @@ use crate::{
     peer_connection_observer::{ConnectionState, PeerConnectionObserver},
     rx_recv_async_or_err,
     sdp::SessionDescription,
-    transceiver::{self, AudioTransceiver, TransceiverInit, VideoTransceiver},
+    transceiver::{AudioTransceiver, TransceiverInit, VideoTransceiver},
     video_track::VideoTrack,
     video_track_source::VideoTrackSource,
 };
@@ -322,14 +322,14 @@ impl<'a> PeerConnection {
             .into_iter()
             .for_each(|transceiver| match transceiver.media_type() {
                 ArcasMediaType::MEDIA_TYPE_AUDIO => audio.push(AudioTransceiver::new(
-                    audio_transceiver_from_base(&transceiver),
+                    audio_transceiver_from_base(transceiver),
                 )),
                 ArcasMediaType::MEDIA_TYPE_VIDEO => video.push(VideoTransceiver::new(
-                    video_transceiver_from_base(&transceiver),
+                    video_transceiver_from_base(transceiver),
                 )),
                 _ => {}
             });
-        return (video, audio);
+        (video, audio)
     }
 
     pub fn take_connection_state_rx(&mut self) -> Result<Receiver<ConnectionState>> {
@@ -359,10 +359,6 @@ impl Drop for PeerConnection {
 mod tests {
     use std::time::Duration;
 
-    use libwebrtc_sys::{
-        video_decoder_factory::VideoDecoderFactoryImpl,
-        video_encoder_factory::VideoEncoderFactoryImpl,
-    };
     use tokio::{test, time::sleep};
 
     use super::*;
@@ -492,8 +488,8 @@ mod tests {
 
     #[test]
     async fn test_create_peer_connection_with_factory_config() {
-        use libwebrtc_sys::video_decoder_factory::VideoDecoderFactoryImpl;
-        use libwebrtc_sys::video_encoder_factory::VideoEncoderFactoryImpl;
+        use libwebrtc_sys::video_decoding::VideoDecoderFactoryImpl;
+        use libwebrtc_sys::video_encoding::VideoEncoderFactoryImpl;
         let (_, enc_tx) = video_encoder_pool::VideoEncoderPool::create().unwrap();
         let video_encoder_factory: Option<Box<dyn VideoEncoderFactoryImpl>> = Some(Box::new(
             ReactiveVideoEncoderFactory::create(enc_tx).unwrap(),

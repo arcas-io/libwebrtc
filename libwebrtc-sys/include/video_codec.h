@@ -1,6 +1,11 @@
 #pragma once
+#include "rtc_base/logging.h"
+#include "api/video_codecs/video_codec.h"
+#include "modules/video_coding/include/video_codec_interface.h"
+#include "api/video_codecs/spatial_layer.h"
+#include "libwebrtc-sys/include/codec_specific_info.h"
+#include "libwebrtc-sys/include/video_frame_buffer_encoded.h"
 #include "rust/cxx.h"
-#include "libwebrtc-sys/include/webrtc_api.h"
 
 class ArcasSpatialLayerInternal
 {
@@ -484,48 +489,8 @@ public:
     }
 };
 
-class ArcasCodecSpecificInfo
-{
-
-private:
-    std::unique_ptr<webrtc::CodecSpecificInfo> api;
-
-public:
-    ArcasCodecSpecificInfo() : api(std::make_unique<webrtc::CodecSpecificInfo>()) {}
-    ArcasCodecSpecificInfo(const webrtc::CodecSpecificInfo &api) : api(std::make_unique<webrtc::CodecSpecificInfo>(api)) {}
-
-    void set_codec_type(webrtc::VideoCodecType type) const
-    {
-        api->codecType = type;
-    }
-
-    webrtc::VideoCodecType get_codec_type() const
-    {
-        return this->api->codecType;
-    }
-
-    void set_end_of_picture(bool end_of_picture) const
-    {
-        this->api->end_of_picture = end_of_picture;
-    }
-
-    const webrtc::CodecSpecificInfo &as_ref() const
-    {
-        return *api.get();
-    }
-
-    const webrtc::CodecSpecificInfo *as_ptr() const
-    {
-        return api.get();
-    }
-
-    const webrtc::CodecSpecificInfo get_copy() const
-    {
-        return *api.get();
-    }
-};
-
-std::unique_ptr<ArcasCodecSpecificInfo> create_arcas_codec_specific_info();
 std::unique_ptr<ArcasVideoCodec> create_arcas_video_codec_from_cxx(const webrtc::VideoCodec *codec);
 std::shared_ptr<ArcasVideoCodec> create_arcas_video_codec();
 std::shared_ptr<ArcasSpatialLayer> create_arcas_spatial_layer();
+std::unique_ptr<std::vector<ArcasSpatialLayer>> gen_unique_vector_spatial_layers();
+std::shared_ptr<ArcasVideoCodec> gen_shared_video_codec();
