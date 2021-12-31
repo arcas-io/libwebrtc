@@ -1,6 +1,7 @@
 #pragma once
 #include "libwebrtc-sys/include/video_decoder_factory.h"
 #include "libwebrtc-sys/include/video_encoder_factory.h"
+#include "rust_shared.h"
 
 struct ArcasPeerConnectionFactoryConfig
 {

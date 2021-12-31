@@ -56,6 +56,9 @@ pub mod video_frame_buffer;
 pub mod video_frame_buffer_encoded;
 pub mod video_track;
 pub mod video_track_source;
+pub mod rtc_buffer;
+pub mod audio_track_source;
+pub mod audio_encoding;
 
 pub use crate::peer_connection::{
     ArcasRustCreateSessionDescriptionObserver, ArcasRustSetSessionDescriptionObserver, *,

@@ -24,3 +24,7 @@ pub mod video_track_source;
 
 pub mod passthrough_video_decoder;
 pub mod passthrough_video_decoder_factory;
+
+pub mod shared_audio_encoder;
+pub mod shared_audio_encoder_factory;
+pub mod audio_encoder_pool;

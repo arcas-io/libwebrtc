@@ -27,3 +27,8 @@ struct ArcasVideoEncoderInfo;
 struct ArcasVideoEncoderInfoFPSAllocation;
 struct ArcasRustVideoDecoderFactory;
 struct ArcasRustVideoDecoder;
+struct ArcasRustAudioEncoder;
+struct ArcasRustAudioEncoderFactory;
+struct ArcasAudioCodecInfo;
+struct ArcasAudioCodecSpec;
+struct ArcasSdpAudioFormat;

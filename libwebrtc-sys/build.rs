@@ -201,6 +201,7 @@ fn build_entrypoint(output_dir: String, target_os: String) {
         &"src/error.rs",
         &"src/peerconnection_factory_config.rs",
         &"src/api.rs",
+        &"src/audio_encoding.rs",
     ]);
 
     for include_path in include_path_list {
