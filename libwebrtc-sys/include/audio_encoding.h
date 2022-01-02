@@ -29,4 +29,4 @@ protected:
         rtc::Buffer *encoded) override;
 };
 
-std::unique_ptr<WebRTCAudioEncoder> create_audio_encoder(rust::Box<ArcasRustAudioEncoder>);
+std::unique_ptr<ArcasAudioEncoder> create_audio_encoder(rust::Box<ArcasRustAudioEncoder>);

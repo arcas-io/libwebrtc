@@ -147,7 +147,7 @@ std::unique_ptr<WebRTCAudioEncoder> ArcasAudioEncoderFactory::MakeAudioEncoder(
 
 ArcasAudioEncoderFactory::ArcasAudioEncoderFactory(rust::Box<ArcasRustAudioEncoderFactory> api): api(std::move(api)) {}
 
-std::unique_ptr<WebRTCAudioEncoder> create_audio_encoder(rust::Box<ArcasRustAudioEncoder> api)
+std::unique_ptr<ArcasAudioEncoder> create_audio_encoder(rust::Box<ArcasRustAudioEncoder> api)
 {
     auto result = std::make_unique<ArcasAudioEncoder>(std::move(api));
     return result;
