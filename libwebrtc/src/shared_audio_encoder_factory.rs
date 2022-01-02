@@ -1,7 +1,10 @@
 use std::sync::{atomic::AtomicBool, Arc};
 
 use libwebrtc_sys::audio_encoding::{
-    ffi::{ArcasAudioCodecInfo, ArcasAudioCodecSpec, ArcasAudioEncoder, ArcasSdpAudioFormat, create_audio_encoder},
+    ffi::{
+        create_audio_encoder, ArcasAudioCodecInfo, ArcasAudioCodecSpec, ArcasAudioEncoder,
+        ArcasSdpAudioFormat,
+    },
     AudioEncoderFactoryImpl, AudioEncoderProxy,
 };
 
@@ -47,6 +50,7 @@ impl AudioEncoderFactoryImpl for SharedAudioEncoderFactory {
                 ));
                 let proxy = AudioEncoderProxy::new(enc);
                 create_audio_encoder(Box::from(proxy))
-            }).unwrap_or_else(cxx::UniquePtr::null)
+            })
+            .unwrap_or_else(cxx::UniquePtr::null)
     }
 }

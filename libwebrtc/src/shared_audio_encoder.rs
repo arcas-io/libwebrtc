@@ -20,7 +20,7 @@ impl SharedAudioEncoder {
         sample_rate_hz: i32,
         num_channels: usize,
         target_bitrate: i32,
-        rx: Receiver<Bytes>
+        rx: Receiver<Bytes>,
     ) -> Self {
         Self {
             _id: id,
