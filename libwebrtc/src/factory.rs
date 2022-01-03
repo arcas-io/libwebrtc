@@ -9,7 +9,7 @@ use libwebrtc_sys::{
     },
     video_decoding::VideoDecoderFactoryImpl,
     video_encoding::VideoEncoderFactoryImpl,
-    VideoDecoderFactoryProxy, VideoEncoderFactoryProxy,
+    VideoDecoderFactoryProxy, VideoEncoderFactoryProxy, audio_encoding::{AudioEncoderFactoryImpl, AudioEncoderFactoryProxy},
 };
 
 use crate::{
@@ -29,6 +29,7 @@ pub struct Factory {
 pub struct FactoryConfig {
     pub video_encoder_factory: Option<Box<dyn VideoEncoderFactoryImpl>>,
     pub video_decoder_factory: Option<Box<dyn VideoDecoderFactoryImpl>>,
+    pub audio_encoder_factory: Option<Box<dyn AudioEncoderFactoryImpl>>,
 }
 
 impl Factory {
@@ -77,15 +78,20 @@ impl Factory {
             .map(|enc| {
                 create_arcas_video_encoder_factory(Box::new(VideoEncoderFactoryProxy::new(enc)))
             })
-            .unwrap_or(UniquePtr::null());
+            .unwrap_or_else(UniquePtr::null);
         let decoder_factory = config
             .video_decoder_factory
             .map(|dec| {
                 create_arcas_video_decoder_factory(Box::new(VideoDecoderFactoryProxy::new(dec)))
             })
-            .unwrap_or(UniquePtr::null());
-        let config = create_arcas_peerconnection_factory_config(encoder_factory, decoder_factory);
-        let cxx_factory = self.cxx.create_factory_with_config(config);
+            .unwrap_or_else(UniquePtr::null);
+        let mut cfg = create_arcas_peerconnection_factory_config(encoder_factory, decoder_factory);
+        config.audio_encoder_factory.into_iter().for_each(|enc| {
+            let proxy = Box::from(AudioEncoderFactoryProxy::new(enc));
+            let cfg = cfg.as_mut().unwrap();
+            cfg.set_audio_encoder_factory(proxy);
+        });
+        let cxx_factory = self.cxx.create_factory_with_config(cfg);
         Ok(PeerConnectionFactory::new(cxx_factory))
     }
 }

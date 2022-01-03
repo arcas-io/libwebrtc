@@ -112,6 +112,16 @@ pub mod ffi {
         ) -> UniquePtr<ArcasAudioEncoder>;
 
     }
+
+    unsafe extern "C++" {
+        include!("include/peerconnection_factory_config.h");
+        type ArcasPeerConnectionFactoryConfig = crate::peerconnection_factory_config::ffi::ArcasPeerConnectionFactoryConfig;
+
+        fn set_audio_encoder_factory(
+            self: Pin<&mut ArcasPeerConnectionFactoryConfig>,
+            factory: Box<AudioEncoderFactoryProxy>,
+        );
+    }
 }
 
 pub trait AudioEncoderImpl {
