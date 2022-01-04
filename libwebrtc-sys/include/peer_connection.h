@@ -44,6 +44,9 @@ public:
     std::unique_ptr<ArcasRTPVideoTransceiver>
     add_video_transceiver_with_track(std::unique_ptr<ArcasVideoTrack> track,
                                      ArcasTransceiverInit init) const;
+    std::unique_ptr<ArcasRTPAudioTransceiver>
+    add_audio_transceiver_with_track(std::unique_ptr<ArcasAudioTrack> track,
+                                     ArcasTransceiverInit init) const;
     void close() const
     {
         api->Close();
