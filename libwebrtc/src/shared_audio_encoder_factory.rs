@@ -1,5 +1,11 @@
-use std::sync::{atomic::AtomicBool, Arc};
+use std::{
+    borrow::BorrowMut,
+    sync::{atomic::AtomicBool, Arc},
+    thread,
+};
 
+use bytes::Bytes;
+use crossbeam_channel::{select, Receiver, Sender};
 use libwebrtc_sys::audio_encoding::{
     ffi::{
         create_audio_encoder, ArcasAudioCodecInfo, ArcasAudioCodecSpec, ArcasAudioEncoder,
@@ -8,12 +14,16 @@ use libwebrtc_sys::audio_encoding::{
     AudioEncoderFactoryImpl, AudioEncoderProxy,
 };
 
-use crate::audio_encoder_pool::AudioEncoderPool;
+use crate::{
+    audio_encoder_pool::AudioEncoderPool, encoded_audio_frame_producer::EncodedAudioFrameProducer,
+};
 
 struct SharedAudioEncoderFactory {
     pool: Arc<AudioEncoderPool>,
-    started: AtomicBool,
+    started: bool,
     supported_formats: Vec<ArcasAudioCodecSpec>,
+    frame_producer: Option<Box<dyn EncodedAudioFrameProducer>>,
+    cancel_tx: Option<Sender<()>>,
 }
 
 impl AudioEncoderFactoryImpl for SharedAudioEncoderFactory {
@@ -36,7 +46,8 @@ impl AudioEncoderFactoryImpl for SharedAudioEncoderFactory {
         payload_type: i32,
         format: &ArcasSdpAudioFormat,
     ) -> cxx::UniquePtr<ArcasAudioEncoder> {
-        self.supported_formats
+        let result = self
+            .supported_formats
             .iter()
             .find(|spec| {
                 spec.format.name == format.name && spec.format.num_channels == format.num_channels
@@ -51,6 +62,35 @@ impl AudioEncoderFactoryImpl for SharedAudioEncoderFactory {
                 let proxy = AudioEncoderProxy::new(enc);
                 create_audio_encoder(Box::from(proxy))
             })
-            .unwrap_or_else(cxx::UniquePtr::null)
+            .unwrap_or_else(cxx::UniquePtr::null);
+
+        if !result.is_null() && !self.started {
+            self.started = true;
+            let encoded_rx = match self
+                .frame_producer
+                .as_mut()
+                .map(|producer| producer.start().ok())
+                .and_then(|x| x)
+            {
+                Some(x) => x,
+                None => return result,
+            };
+            let (cancel_tx, cancel_rx) = crossbeam_channel::bounded::<()>(1);
+            self.cancel_tx = Some(cancel_tx);
+            let pool = self.pool.clone();
+            thread::spawn(move || loop {
+                select! {
+                    recv(encoded_rx) -> encoded_buf_res => {
+                        if let Ok(buf) = encoded_buf_res {
+                            pool.push_encoded_frame(buf);
+                        }
+                    },
+                    recv(cancel_rx) -> _ => {
+                        break;
+                    },
+                }
+            });
+        }
+        result
     }
 }

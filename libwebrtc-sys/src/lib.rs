@@ -27,6 +27,7 @@ use crate::video_track_source::ffi::ArcasVideoTrackSource;
 
 pub mod api;
 pub mod audio_encoding;
+pub mod audio_track;
 pub mod audio_track_source;
 pub mod codec_specific_info;
 pub mod data_channel;

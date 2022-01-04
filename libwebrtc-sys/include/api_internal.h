@@ -167,6 +167,15 @@ public:
         {
             media_deps.video_decoder_factory = webrtc::CreateBuiltinVideoDecoderFactory();
         }
+
+        if (config->audio_encoder_factory.has_value())
+        {
+            media_deps.audio_encoder_factory = config->audio_encoder_factory.value();
+        }
+        else
+        {
+            media_deps.audio_encoder_factory = webrtc::CreateBuiltinAudioEncoderFactory();
+        }
         // media_deps.audio_processing = webrtc::AudioProcessingBuilder().Create();
         media_deps.audio_processing = nullptr;
         media_deps.audio_mixer = webrtc::AudioMixerImpl::Create();

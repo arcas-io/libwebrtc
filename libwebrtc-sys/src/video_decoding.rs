@@ -75,7 +75,8 @@ pub mod ffi {
 
     unsafe extern "C++" {
         include!("include/peerconnection_factory_config.h");
-        type ArcasPeerConnectionFactoryConfig = crate::peerconnection_factory_config::ffi::ArcasPeerConnectionFactoryConfig;
+        type ArcasPeerConnectionFactoryConfig =
+            crate::peerconnection_factory_config::ffi::ArcasPeerConnectionFactoryConfig;
 
         fn set_video_decoder_factory(
             self: Pin<&mut ArcasPeerConnectionFactoryConfig>,

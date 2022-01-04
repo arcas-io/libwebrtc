@@ -8,6 +8,9 @@
 #include "libwebrtc-sys/include/video_encoder_factory.h"
 #include "libwebrtc-sys/include/video_track.h"
 #include "libwebrtc-sys/include/video_track_source.h"
+#include "libwebrtc-sys/include/audio_device_module.h"
+#include "libwebrtc-sys/include/api_internal.h"
+#include "libwebrtc-sys/include/audio_track_source.h"
 
 class ArcasAPIInternal;
 
@@ -42,6 +45,12 @@ public:
     {
         auto track = api->CreateVideoTrack(std::string(id.c_str()), video_source.ref());
         return std::make_unique<ArcasVideoTrack>(track);
+    }
+    
+    std::unique_ptr<ArcasAudioTrack> create_audio_track(rust::String id, const ArcasAudioTrackSource &audio_source) const
+    {
+        auto track = api->CreateAudioTrack(id.c_str(), audio_source.GetSource().get());
+        return std::make_unique<ArcasAudioTrack>(track);
     }
 };
 

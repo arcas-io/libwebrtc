@@ -499,6 +499,7 @@ mod tests {
         let config = FactoryConfig {
             video_encoder_factory,
             video_decoder_factory,
+            audio_encoder_factory: None,
         };
         let api = Factory::new();
         let pc_factory = api.create_factory_with_config(config).unwrap();

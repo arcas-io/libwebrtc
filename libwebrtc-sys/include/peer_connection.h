@@ -9,6 +9,7 @@
 #include "libwebrtc-sys/include/rust_shared.h"
 #include "libwebrtc-sys/include/session_description.h"
 #include "libwebrtc-sys/include/video_track.h"
+#include "libwebrtc-sys/include/audio_track.h"
 #include "rust/cxx.h"
 
 class ArcasPeerConnection
@@ -57,6 +58,16 @@ public:
 
         auto ptr = track->ref();
         api->AddTrack(ptr, stream_ids);
+    }
+    
+    void add_audio_track(std::unique_ptr<ArcasAudioTrack> track, rust::Vec<rust::String> rust_stream_ids) const
+    {
+        std::vector<std::string> stream_ids;
+
+        for (auto item : rust_stream_ids) {
+            stream_ids.push_back(item.c_str());
+        }
+        api->AddTrack(track->ref(), stream_ids);
     }
 
     void get_stats(rust::Box<ArcasRustRTCStatsCollectorCallback> cb) const;

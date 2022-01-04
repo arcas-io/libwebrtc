@@ -3,13 +3,14 @@ use std::sync::Arc;
 use crossbeam_channel::Sender;
 use cxx::UniquePtr;
 use libwebrtc_sys::{
+    audio_encoding::{AudioEncoderFactoryImpl, AudioEncoderFactoryProxy},
     ffi::{
         create_arcas_peerconnection_factory_config, create_arcas_video_decoder_factory,
         create_arcas_video_encoder_factory, ArcasAPI,
     },
     video_decoding::VideoDecoderFactoryImpl,
     video_encoding::VideoEncoderFactoryImpl,
-    VideoDecoderFactoryProxy, VideoEncoderFactoryProxy, audio_encoding::{AudioEncoderFactoryImpl, AudioEncoderFactoryProxy},
+    VideoDecoderFactoryProxy, VideoEncoderFactoryProxy,
 };
 
 use crate::{
