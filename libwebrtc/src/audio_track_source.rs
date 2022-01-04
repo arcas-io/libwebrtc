@@ -16,7 +16,7 @@ impl AudioTrackSource {
         }
     }
 
-    pub fn push_zeroed_data(&self) {
+    pub fn push_10ms_zeroed_data(&self) {
         self.cxx
             .push_zeroed_data(self.sample_rate_hz, self.num_channels);
     }

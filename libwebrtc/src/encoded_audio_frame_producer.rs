@@ -54,8 +54,14 @@ impl GStreamerOpusAudioFrameProducer {
     }
 
     pub fn cancel(&mut self) {
-        self.cancel_tx.iter_mut().for_each(|tx| {
+        if let Some(tx) = self.cancel_tx.as_mut() {
             let _ = tx.send(());
-        });
+        }
+    }
+}
+
+impl Drop for GStreamerOpusAudioFrameProducer {
+    fn drop(&mut self) {
+        self.cancel();
     }
 }

@@ -21,6 +21,7 @@ impl AudioEncoderPool {
             senders: DashMap::new(),
         }
     }
+
     pub fn push_encoded_frame(&self, data: Bytes) {
         let mut remove = vec![];
         self.senders.iter_mut().for_each(|mut sender| {

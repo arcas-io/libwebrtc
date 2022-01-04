@@ -94,3 +94,12 @@ impl AudioEncoderFactoryImpl for SharedAudioEncoderFactory {
         result
     }
 }
+
+impl Drop for SharedAudioEncoderFactory {
+    fn drop(&mut self) {
+        self.cancel_tx.as_mut().map(|tx| {
+            let _ = tx.send(());
+            Some(())
+        });
+    }
+}

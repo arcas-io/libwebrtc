@@ -46,6 +46,7 @@ impl PeerConnectionStats {
 }
 
 use crate::{
+    audio_track::AudioTrack,
     error::{aracs_rtc_error_to_err, Result, WebRTCError},
     ice_candidate::ICECandidate,
     ok_or_return,
@@ -278,6 +279,19 @@ impl<'a> PeerConnection {
         Ok(VideoTransceiver::new(transceiver))
     }
 
+    pub async fn add_audio_transceiver(
+        &self,
+        init: TransceiverInit,
+        mut track: AudioTrack,
+    ) -> Result<AudioTransceiver> {
+        let cxx_track = track.take_cxx()?;
+        let cxx_init = init.take_cxx();
+        let transceiver = self
+            .cxx_pc
+            .add_audio_transceiver_with_track(cxx_track, cxx_init);
+        Ok(AudioTransceiver::new(transceiver))
+    }
+
     pub async fn add_video_track(
         &self,
         stream_ids: Vec<String>,
@@ -285,6 +299,16 @@ impl<'a> PeerConnection {
     ) -> Result<()> {
         let cxx_track = track.take_cxx()?;
         self.cxx_pc.add_video_track(cxx_track, stream_ids);
+        Ok(())
+    }
+
+    pub async fn add_audio_track(
+        &self,
+        stream_ids: Vec<String>,
+        mut track: AudioTrack,
+    ) -> Result<()> {
+        let cxx_track = track.take_cxx()?;
+        self.cxx_pc.add_audio_track(cxx_track, stream_ids);
         Ok(())
     }
 
