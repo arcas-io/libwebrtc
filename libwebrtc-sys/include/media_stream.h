@@ -1,6 +1,6 @@
 #pragma once
-#include "rust/cxx.h"
 #include "api/media_stream_interface.h"
+#include "rust/cxx.h"
 
 class ArcasMediaStream
 {

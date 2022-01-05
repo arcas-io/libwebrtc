@@ -1,7 +1,7 @@
 #pragma once
-#include "rust/cxx.h"
 #include "libwebrtc-sys/include/rust_shared.h"
 #include "libwebrtc-sys/include/video_codec.h"
+#include "rust/cxx.h"
 
 class ArcasEncodedImageCallback
 {

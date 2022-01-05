@@ -1,6 +1,6 @@
 #pragma once
-#include "libwebrtc-sys/include/alias.h"
 #include "api/video_codecs/video_encoder.h"
+#include "libwebrtc-sys/include/alias.h"
 
 class ArcasVideoEncoderRateControlParameters
 {

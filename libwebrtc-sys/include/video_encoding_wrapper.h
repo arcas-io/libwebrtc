@@ -1,10 +1,10 @@
 #pragma once
-#include "rust/cxx.h"
+#include "libwebrtc-sys/include/reactive_video_encoder_wrapper.h"
 #include "libwebrtc-sys/include/rust_shared.h"
-#include "libwebrtc-sys/include/video_frame.h"
 #include "libwebrtc-sys/include/video_codec.h"
 #include "libwebrtc-sys/include/video_encoder.h"
-#include "libwebrtc-sys/include/reactive_video_encoder_wrapper.h"
+#include "libwebrtc-sys/include/video_frame.h"
+#include "rust/cxx.h"
 
 template <>
 struct rust::IsRelocatable<ArcasRustEncodedImageCallbackHandler> : std::true_type

@@ -1,7 +1,7 @@
 #pragma once
 #include "api/video/color_space.h"
-#include "api/video/video_frame.h"
 #include "api/video/encoded_image.h"
+#include "api/video/video_frame.h"
 
 // Opaque to rust not to C++
 class ArcasOpaqueEncodedImageBuffer

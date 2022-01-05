@@ -1,10 +1,10 @@
 #pragma once
-#include "libwebrtc-sys/include/rust_shared.h"
-#include "rust/cxx.h"
-#include "libwebrtc-sys/include/video_codec.h"
 #include "libwebrtc-sys/include/alias.h"
-#include "libwebrtc-sys/include/video_encoder_rate_control_parameters.h"
 #include "libwebrtc-sys/include/encoded_image_factory.h"
+#include "libwebrtc-sys/include/rust_shared.h"
+#include "libwebrtc-sys/include/video_codec.h"
+#include "libwebrtc-sys/include/video_encoder_rate_control_parameters.h"
+#include "rust/cxx.h"
 
 using WebRTCVideoEncoder = webrtc::VideoEncoder;
 
