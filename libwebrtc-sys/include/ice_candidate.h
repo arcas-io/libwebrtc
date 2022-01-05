@@ -10,7 +10,10 @@ private:
     std::unique_ptr<webrtc::IceCandidateInterface> api;
 
 public:
-    ArcasICECandidate(std::unique_ptr<webrtc::IceCandidateInterface> api) : api(std::move(api)) {}
+    ArcasICECandidate(std::unique_ptr<webrtc::IceCandidateInterface> api)
+    : api(std::move(api))
+    {
+    }
 
     rust::String id() const
     {
@@ -41,7 +44,5 @@ public:
     }
 };
 
-ArcasCreateICECandidateResult create_arcas_ice_candidate(
-    rust::String sdp_mid,
-    uint32_t sdp_mline_index,
-    rust::String sdp);
+ArcasCreateICECandidateResult
+create_arcas_ice_candidate(rust::String sdp_mid, uint32_t sdp_mline_index, rust::String sdp);

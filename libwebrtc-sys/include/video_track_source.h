@@ -10,7 +10,8 @@ private:
     rtc::scoped_refptr<ArcasVideoTrackSourceInternal> api;
 
 public:
-    ArcasVideoTrackSource(rtc::scoped_refptr<ArcasVideoTrackSourceInternal> api) : api(api){};
+    ArcasVideoTrackSource(rtc::scoped_refptr<ArcasVideoTrackSourceInternal> api)
+    : api(api){};
     ~ArcasVideoTrackSource()
     {
         RTC_LOG(LS_VERBOSE) << "~ArcasVideoTrackSource";
@@ -21,7 +22,7 @@ public:
         return api;
     }
 
-    void push_frame(const webrtc::VideoFrame &frame) const
+    void push_frame(const webrtc::VideoFrame& frame) const
     {
         api->push_frame(frame);
     }
@@ -33,4 +34,5 @@ public:
 };
 
 std::unique_ptr<ArcasVideoTrackSource> create_arcas_video_track_source();
-std::unique_ptr<ArcasVideoFrameEncodedImageData> extract_arcas_video_frame_to_raw_frame_buffer(const webrtc::VideoFrame &frame);
+std::unique_ptr<ArcasVideoFrameEncodedImageData>
+extract_arcas_video_frame_to_raw_frame_buffer(const webrtc::VideoFrame& frame);

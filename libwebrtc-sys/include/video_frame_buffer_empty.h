@@ -6,9 +6,7 @@
 class ArcasVideoFrameBufferEmpty : public rtc::RefCountedBase, public webrtc::VideoFrameBuffer
 {
 public:
-    ArcasVideoFrameBufferEmpty()
-    {
-    }
+    ArcasVideoFrameBufferEmpty() {}
 
     virtual void AddRef() const override
     {
@@ -41,7 +39,7 @@ public:
         return 100;
     }
 
-    const uint8_t *data() const
+    const uint8_t* data() const
     {
         return nullptr;
     }
@@ -64,7 +62,7 @@ public:
     // doesn't affect binary data at all. Another example is any I420A buffer.
     // TODO(https://crbug.com/webrtc/12021): Make this method non-virtual and
     // behave as the other GetXXX methods below.
-    const webrtc::I420BufferInterface *GetI420()
+    const webrtc::I420BufferInterface* GetI420()
     {
         RTC_LOG(LS_ERROR) << "Not implemented GetI420 \n";
         return nullptr;
@@ -91,8 +89,7 @@ public:
     // conversion for encoding with a software encoder. Returns nullptr if the
     // frame type is not supported, mapping is not possible, or if the kNative
     // frame has not implemented this method. Only callable if type() is kNative.
-    rtc::scoped_refptr<VideoFrameBuffer> GetMappedFrameBuffer(
-        rtc::ArrayView<Type> types) override
+    rtc::scoped_refptr<VideoFrameBuffer> GetMappedFrameBuffer(rtc::ArrayView<Type> types) override
     {
         RTC_LOG(LS_ERROR) << "Not implemented Get Mapped Frame Buffer \n";
         return nullptr;

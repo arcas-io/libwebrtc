@@ -10,7 +10,10 @@ private:
     webrtc::DecodedImageCallback* cb;
 
 public:
-    ArcasDecodedImageCallback() : cb(nullptr) {}
+    ArcasDecodedImageCallback()
+    : cb(nullptr)
+    {
+    }
 
     void SetCallback(webrtc::DecodedImageCallback* cb);
 
@@ -22,17 +25,16 @@ int32_t decoded_image_callback_on_decoded(ArcasDecodedImageCallback&, webrtc::Vi
 class ArcasVideoDecoder : public webrtc::VideoDecoder
 {
 public:
-    ArcasVideoDecoder(rust::Box<ArcasRustVideoDecoder> api) : api(std::move(api)) {}
+    ArcasVideoDecoder(rust::Box<ArcasRustVideoDecoder> api)
+    : api(std::move(api))
+    {
+    }
 
     virtual bool Configure(const webrtc::VideoDecoder::Settings&);
 
-    virtual int32_t Decode(
-        const webrtc::EncodedImage&,
-        bool,
-        int64_t);
+    virtual int32_t Decode(const webrtc::EncodedImage&, bool, int64_t);
 
-    virtual int32_t RegisterDecodeCompleteCallback(
-        webrtc::DecodedImageCallback*);
+    virtual int32_t RegisterDecodeCompleteCallback(webrtc::DecodedImageCallback*);
 
     virtual int32_t Release();
 
@@ -40,5 +42,5 @@ public:
 
 private:
     rust::Box<ArcasRustVideoDecoder> api;
-    ArcasDecodedImageCallback cb;
+    ArcasDecodedImageCallback        cb;
 };

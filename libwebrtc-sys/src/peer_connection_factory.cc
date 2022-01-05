@@ -7,24 +7,27 @@
 #include "rust/cxx.h"
 
 ArcasPeerConnectionFactory::ArcasPeerConnectionFactory(
-    rtc::scoped_refptr<ArcasAPIInternal> internal_api,
-    rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> api) : internal_api(internal_api), api(api)
+    rtc::scoped_refptr<ArcasAPIInternal>                       internal_api,
+    rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> api)
+: internal_api(internal_api)
+, api(api)
 {
     internal_api->AddRef();
 };
 
-std::unique_ptr<webrtc::PeerConnectionInterface::RTCConfiguration> create_rtc_configuration(ArcasPeerConnectionConfig config)
+std::unique_ptr<webrtc::PeerConnectionInterface::RTCConfiguration>
+create_rtc_configuration(ArcasPeerConnectionConfig config)
 {
     auto rtc = std::make_unique<webrtc::PeerConnectionInterface::RTCConfiguration>();
     webrtc::PeerConnectionInterface::IceServers servers;
 
     rtc->sdp_semantics = config.sdp_semantics;
-    rtc->servers = servers;
+    rtc->servers       = servers;
 
     for (auto server_config : config.ice_servers)
     {
         webrtc::PeerConnectionInterface::IceServer rtc_ice_server;
-        std::vector<std::string> rtc_urls;
+        std::vector<std::string>                   rtc_urls;
 
         for (auto url : server_config.urls)
         {
@@ -32,7 +35,7 @@ std::unique_ptr<webrtc::PeerConnectionInterface::RTCConfiguration> create_rtc_co
             rtc_urls.push_back(rtc_url);
         }
 
-        rtc_ice_server.urls = rtc_urls;
+        rtc_ice_server.urls     = rtc_urls;
         rtc_ice_server.username = std::string(server_config.username.c_str());
         rtc_ice_server.password = std::string(server_config.password.c_str());
         servers.push_back(rtc_ice_server);

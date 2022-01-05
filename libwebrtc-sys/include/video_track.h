@@ -9,7 +9,8 @@ private:
     rtc::scoped_refptr<webrtc::VideoTrackInterface> api;
 
 public:
-    ArcasVideoTrack(rtc::scoped_refptr<webrtc::VideoTrackInterface> api) : api(api){};
+    ArcasVideoTrack(rtc::scoped_refptr<webrtc::VideoTrackInterface> api)
+    : api(api){};
     ~ArcasVideoTrack()
     {
         RTC_LOG(LS_VERBOSE) << "~ArcasVideoTrack";

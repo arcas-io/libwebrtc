@@ -4,14 +4,18 @@
 #include "libwebrtc-sys/include/video_codec.h"
 #include "rtc_base/ref_counted_object.h"
 
-class ArcasVideoFrameEncodedImageDataInternal : public rtc::RefCountedBase, public webrtc::VideoFrameBuffer
+class ArcasVideoFrameEncodedImageDataInternal : public rtc::RefCountedBase,
+                                                public webrtc::VideoFrameBuffer
 {
 private:
-    webrtc::EncodedImage _encodedImage;
+    webrtc::EncodedImage      _encodedImage;
     webrtc::CodecSpecificInfo _codecSpecificInfo;
 
 public:
-    ArcasVideoFrameEncodedImageDataInternal(const webrtc::EncodedImage &encodedImage, const webrtc::CodecSpecificInfo &codecSpecificInfo) : _encodedImage(encodedImage), _codecSpecificInfo(codecSpecificInfo)
+    ArcasVideoFrameEncodedImageDataInternal(const webrtc::EncodedImage&      encodedImage,
+                                            const webrtc::CodecSpecificInfo& codecSpecificInfo)
+    : _encodedImage(encodedImage)
+    , _codecSpecificInfo(codecSpecificInfo)
     {
     }
 
@@ -30,12 +34,12 @@ public:
         return _codecSpecificInfo;
     }
 
-    const webrtc::EncodedImage &encoded_image_ref() const
+    const webrtc::EncodedImage& encoded_image_ref() const
     {
         return _encodedImage;
     }
 
-    const webrtc::CodecSpecificInfo &codec_specific_info_ref() const
+    const webrtc::CodecSpecificInfo& codec_specific_info_ref() const
     {
         return _codecSpecificInfo;
     }
@@ -75,7 +79,7 @@ public:
         return _encodedImage.size();
     }
 
-    const uint8_t *data() const
+    const uint8_t* data() const
     {
         return _encodedImage.data();
     }
@@ -98,7 +102,7 @@ public:
     // doesn't affect binary data at all. Another example is any I420A buffer.
     // TODO(https://crbug.com/webrtc/12021): Make this method non-virtual and
     // behave as the other GetXXX methods below.
-    const webrtc::I420BufferInterface *GetI420()
+    const webrtc::I420BufferInterface* GetI420()
     {
         RTC_LOG(LS_ERROR) << "Not implemented GetI420 \n";
         return nullptr;
@@ -125,8 +129,7 @@ public:
     // conversion for encoding with a software encoder. Returns nullptr if the
     // frame type is not supported, mapping is not possible, or if the kNative
     // frame has not implemented this method. Only callable if type() is kNative.
-    rtc::scoped_refptr<VideoFrameBuffer> GetMappedFrameBuffer(
-        rtc::ArrayView<Type> types) override
+    rtc::scoped_refptr<VideoFrameBuffer> GetMappedFrameBuffer(rtc::ArrayView<Type> types) override
     {
         RTC_LOG(LS_ERROR) << "Not implemented Get Mapped Frame Buffer \n";
         return nullptr;
@@ -140,7 +143,10 @@ private:
 
 public:
     // NOTE: This is a horrible hack/cast here we use this ptr to ArcasVideoFrameEncodedImageDataInternal supertype.
-    ArcasVideoFrameEncodedImageData(rtc::scoped_refptr<webrtc::VideoFrameBuffer> api) : api_(api) {}
+    ArcasVideoFrameEncodedImageData(rtc::scoped_refptr<webrtc::VideoFrameBuffer> api)
+    : api_(api)
+    {
+    }
     ~ArcasVideoFrameEncodedImageData()
     {
         RTC_LOG(LS_INFO) << "~ArcasVideoFrameEncodedImageData";
@@ -157,33 +163,33 @@ public:
 
     uint32_t size() const
     {
-        return static_cast<ArcasVideoFrameEncodedImageDataInternal *>(api_.get())->size();
+        return static_cast<ArcasVideoFrameEncodedImageDataInternal*>(api_.get())->size();
     }
 
-    const uint8_t *data() const
+    const uint8_t* data() const
     {
-        return static_cast<ArcasVideoFrameEncodedImageDataInternal *>(api_.get())->data();
+        return static_cast<ArcasVideoFrameEncodedImageDataInternal*>(api_.get())->data();
     }
 
-    const webrtc::EncodedImage &encoded_image_ref() const
+    const webrtc::EncodedImage& encoded_image_ref() const
     {
-        auto ptr = static_cast<ArcasVideoFrameEncodedImageDataInternal *>(api_.get());
+        auto ptr = static_cast<ArcasVideoFrameEncodedImageDataInternal*>(api_.get());
         return ptr->encoded_image_ref();
     }
 
-    const webrtc::CodecSpecificInfo &codec_specific_info_ref() const
+    const webrtc::CodecSpecificInfo& codec_specific_info_ref() const
     {
-        auto ptr = static_cast<ArcasVideoFrameEncodedImageDataInternal *>(api_.get());
+        auto ptr = static_cast<ArcasVideoFrameEncodedImageDataInternal*>(api_.get());
         return ptr->codec_specific_info_ref();
     }
 
     std::unique_ptr<ArcasCodecSpecificInfo> arcas_codec_specific_info() const
     {
-        auto ptr = static_cast<ArcasVideoFrameEncodedImageDataInternal *>(api_.get());
+        auto ptr = static_cast<ArcasVideoFrameEncodedImageDataInternal*>(api_.get());
         return std::move(ptr->arcas_codec_specific_info());
     }
 
-    const rtc::scoped_refptr<webrtc::VideoFrameBuffer> &current_ref() const
+    const rtc::scoped_refptr<webrtc::VideoFrameBuffer>& current_ref() const
     {
         return api_;
     }
@@ -200,7 +206,8 @@ public:
 
     std::unique_ptr<ArcasVideoFrameEncodedImageData> clone() const
     {
-        return std::unique_ptr<ArcasVideoFrameEncodedImageData>(new ArcasVideoFrameEncodedImageData(api_));
+        return std::unique_ptr<ArcasVideoFrameEncodedImageData>(
+            new ArcasVideoFrameEncodedImageData(api_));
     }
 };
 
@@ -210,7 +217,10 @@ private:
     rtc::scoped_refptr<webrtc::VideoFrameBuffer> api_;
 
 public:
-    ArcasVideoFrameRawImageData(rtc::scoped_refptr<webrtc::VideoFrameBuffer> api) : api_(api) {}
+    ArcasVideoFrameRawImageData(rtc::scoped_refptr<webrtc::VideoFrameBuffer> api)
+    : api_(api)
+    {
+    }
     ~ArcasVideoFrameRawImageData()
     {
         RTC_LOG(LS_INFO) << "~ArcasVideoFrameEncodedImageData";
@@ -225,7 +235,7 @@ public:
         return api_->height();
     }
 
-    const rtc::scoped_refptr<webrtc::VideoFrameBuffer> &current_ref() const
+    const rtc::scoped_refptr<webrtc::VideoFrameBuffer>& current_ref() const
     {
         return api_;
     }
@@ -236,8 +246,8 @@ public:
     }
 };
 
-std::unique_ptr<ArcasVideoFrameEncodedImageData> create_arcas_video_frame_buffer_from_encoded_image(const webrtc::EncodedImage &encodedImage, const ArcasCodecSpecificInfo &codec_info);
-std::unique_ptr<ArcasVideoFrameRawImageData> create_arcas_video_frame_buffer_from_I420(
-    int32_t width,
-    int32_t height,
-    const uint8_t *data);
+std::unique_ptr<ArcasVideoFrameEncodedImageData>
+create_arcas_video_frame_buffer_from_encoded_image(const webrtc::EncodedImage&   encodedImage,
+                                                   const ArcasCodecSpecificInfo& codec_info);
+std::unique_ptr<ArcasVideoFrameRawImageData>
+create_arcas_video_frame_buffer_from_I420(int32_t width, int32_t height, const uint8_t* data);

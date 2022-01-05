@@ -4,7 +4,8 @@
 #include "libwebrtc-sys/include/rust_shared.h"
 #include "rust/cxx.h"
 
-class ArcasRTCStatsCollectorCallback : public webrtc::RTCStatsCollectorCallback, public rtc::RefCountedBase
+class ArcasRTCStatsCollectorCallback : public webrtc::RTCStatsCollectorCallback,
+                                       public rtc::RefCountedBase
 {
 private:
     rust::Box<ArcasRustRTCStatsCollectorCallback> cb;

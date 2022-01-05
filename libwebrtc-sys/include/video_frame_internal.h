@@ -8,9 +8,10 @@ private:
 
 public:
     ArcasVideoFrameInternal(std::unique_ptr<ArcasVideoFrameEncodedImageData> buffer,
-                            webrtc::VideoRotation rotation,
-                            int64_t timestamp_us)
-        : webrtc::VideoFrame(buffer->ref(), rotation, timestamp_us), buffer_(std::move(buffer))
+                            webrtc::VideoRotation                            rotation,
+                            int64_t                                          timestamp_us)
+    : webrtc::VideoFrame(buffer->ref(), rotation, timestamp_us)
+    , buffer_(std::move(buffer))
     {
     }
 

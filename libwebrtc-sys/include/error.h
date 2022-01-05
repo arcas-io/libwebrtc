@@ -4,13 +4,16 @@
 
 class ArcasRTCError
 {
-
 private:
     webrtc::RTCError error_;
-    rust::String message_;
+    rust::String     message_;
 
 public:
-    ArcasRTCError(webrtc::RTCError error) : error_(error), message_(error.message()) {}
+    ArcasRTCError(webrtc::RTCError error)
+    : error_(error)
+    , message_(error.message())
+    {
+    }
 
     bool ok() const
     {

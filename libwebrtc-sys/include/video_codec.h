@@ -11,9 +11,18 @@ class ArcasSpatialLayerInternal
 {
 public:
     webrtc::SpatialLayer value;
-    ArcasSpatialLayerInternal() : value() {}
-    ArcasSpatialLayerInternal(const webrtc::SpatialLayer value) : value(value) {}
-    ArcasSpatialLayerInternal(const webrtc::SpatialLayer *value) : value(*value) {}
+    ArcasSpatialLayerInternal()
+    : value()
+    {
+    }
+    ArcasSpatialLayerInternal(const webrtc::SpatialLayer value)
+    : value(value)
+    {
+    }
+    ArcasSpatialLayerInternal(const webrtc::SpatialLayer* value)
+    : value(*value)
+    {
+    }
 };
 
 class ArcasSpatialLayer
@@ -22,10 +31,12 @@ private:
     std::unique_ptr<ArcasSpatialLayerInternal> spatial_layer;
 
 public:
-    ArcasSpatialLayer(const webrtc::SpatialLayer &layer) : spatial_layer(std::make_unique<ArcasSpatialLayerInternal>(layer))
+    ArcasSpatialLayer(const webrtc::SpatialLayer& layer)
+    : spatial_layer(std::make_unique<ArcasSpatialLayerInternal>(layer))
     {
     }
-    ArcasSpatialLayer() : spatial_layer(std::make_unique<ArcasSpatialLayerInternal>())
+    ArcasSpatialLayer()
+    : spatial_layer(std::make_unique<ArcasSpatialLayerInternal>())
     {
     }
 
@@ -129,11 +140,20 @@ class ArcasVideoCodecInternal
 {
 public:
     webrtc::VideoCodec codec;
-    ArcasVideoCodecInternal() : codec() {}
-    ArcasVideoCodecInternal(const webrtc::VideoCodec &codec) : codec(codec) {}
-    ArcasVideoCodecInternal(const webrtc::VideoCodec *codec) : codec(*codec) {}
+    ArcasVideoCodecInternal()
+    : codec()
+    {
+    }
+    ArcasVideoCodecInternal(const webrtc::VideoCodec& codec)
+    : codec(codec)
+    {
+    }
+    ArcasVideoCodecInternal(const webrtc::VideoCodec* codec)
+    : codec(*codec)
+    {
+    }
 
-    const webrtc::VideoCodec *as_ptr() const
+    const webrtc::VideoCodec* as_ptr() const
     {
         return &codec;
     }
@@ -150,9 +170,18 @@ private:
     std::unique_ptr<ArcasVideoCodecInternal> codec_;
 
 public:
-    ArcasVideoCodec() : codec_(std::make_unique<ArcasVideoCodecInternal>()) {}
-    ArcasVideoCodec(const webrtc::VideoCodec &codec) : codec_(std::make_unique<ArcasVideoCodecInternal>(codec)) {}
-    ArcasVideoCodec(const webrtc::VideoCodec *codec) : codec_(std::make_unique<ArcasVideoCodecInternal>(codec)) {}
+    ArcasVideoCodec()
+    : codec_(std::make_unique<ArcasVideoCodecInternal>())
+    {
+    }
+    ArcasVideoCodec(const webrtc::VideoCodec& codec)
+    : codec_(std::make_unique<ArcasVideoCodecInternal>(codec))
+    {
+    }
+    ArcasVideoCodec(const webrtc::VideoCodec* codec)
+    : codec_(std::make_unique<ArcasVideoCodecInternal>(codec))
+    {
+    }
 
     rust::String get_scalability_mode() const
     {
@@ -258,7 +287,7 @@ public:
         codec_->codec.numberOfSimulcastStreams = number_of_simulcast_streams;
     }
 
-    void set_simulcast_stream_at(uint8_t index, const ArcasSpatialLayer &layer) const
+    void set_simulcast_stream_at(uint8_t index, const ArcasSpatialLayer& layer) const
     {
         if (index < webrtc::kMaxSimulcastStreams)
         {
@@ -270,7 +299,7 @@ public:
         }
     }
 
-    void set_spatial_layer_at(uint8_t index, const ArcasSpatialLayer &layer) const
+    void set_spatial_layer_at(uint8_t index, const ArcasSpatialLayer& layer) const
     {
         if (index < webrtc::kMaxSpatialLayers)
         {
@@ -402,7 +431,7 @@ public:
         codec_->codec.H264()->numberOfTemporalLayers = number_of_temporal_layers;
     }
 
-    const webrtc::VideoCodec *as_ptr() const
+    const webrtc::VideoCodec* as_ptr() const
     {
         return codec_->as_ptr();
     }
@@ -420,20 +449,14 @@ public:
     std::unique_ptr<std::vector<ArcasSpatialLayer>> spatial_layers() const
     {
         auto result = std::make_unique<std::vector<ArcasSpatialLayer>>();
-        for (auto &layer : codec_->codec.spatialLayers)
-        {
-            result->push_back(layer);
-        }
+        for (auto& layer : codec_->codec.spatialLayers) { result->push_back(layer); }
         return result;
     }
 
     std::unique_ptr<std::vector<ArcasSpatialLayer>> simulcast_streams() const
     {
         auto result = std::make_unique<std::vector<ArcasSpatialLayer>>();
-        for (auto &layer : codec_->codec.simulcastStream)
-        {
-            result->push_back(layer);
-        }
+        for (auto& layer : codec_->codec.simulcastStream) { result->push_back(layer); }
         return result;
     }
 
@@ -445,30 +468,31 @@ public:
     rust::String id()
     {
         std::stringstream output;
-        auto type_output = CodecTypeToPayloadString(codec_->codec.codecType);
-        auto width = codec_->codec.width;
-        auto height = codec_->codec.height;
-        auto max_bitrate = codec_->codec.maxBitrate;
-        auto min_bitrate = codec_->codec.minBitrate;
-        auto start_bitrate = codec_->codec.startBitrate;
-        auto max_framerate = codec_->codec.maxFramerate;
-        auto simulcast_streams = codec_->codec.numberOfSimulcastStreams;
-        auto mode = codec_->codec.mode == webrtc::VideoCodecMode::kRealtimeVideo ? "realtime" : "screen";
-        auto keyframe_interval = 0;
+        auto              type_output       = CodecTypeToPayloadString(codec_->codec.codecType);
+        auto              width             = codec_->codec.width;
+        auto              height            = codec_->codec.height;
+        auto              max_bitrate       = codec_->codec.maxBitrate;
+        auto              min_bitrate       = codec_->codec.minBitrate;
+        auto              start_bitrate     = codec_->codec.startBitrate;
+        auto              max_framerate     = codec_->codec.maxFramerate;
+        auto              simulcast_streams = codec_->codec.numberOfSimulcastStreams;
+        auto              mode =
+            codec_->codec.mode == webrtc::VideoCodecMode::kRealtimeVideo ? "realtime" : "screen";
+        auto keyframe_interval         = 0;
         auto number_of_temporal_layers = 0;
 
         switch (codec_->codec.codecType)
         {
         case webrtc::VideoCodecType::kVideoCodecVP8:
-            keyframe_interval = codec_->codec.VP8()->keyFrameInterval;
+            keyframe_interval         = codec_->codec.VP8()->keyFrameInterval;
             number_of_temporal_layers = codec_->codec.VP8()->numberOfTemporalLayers;
             break;
         case webrtc::VideoCodecType::kVideoCodecVP9:
-            keyframe_interval = codec_->codec.VP9()->keyFrameInterval;
+            keyframe_interval         = codec_->codec.VP9()->keyFrameInterval;
             number_of_temporal_layers = codec_->codec.VP9()->numberOfTemporalLayers;
             break;
         case webrtc::VideoCodecType::kVideoCodecH264:
-            keyframe_interval = codec_->codec.H264()->keyFrameInterval;
+            keyframe_interval         = codec_->codec.H264()->keyFrameInterval;
             number_of_temporal_layers = codec_->codec.H264()->numberOfTemporalLayers;
             break;
         default:
@@ -476,21 +500,19 @@ public:
             break;
         }
 
-        output << "type=" << type_output
-               << "&width=" << width << "&height=" << height
+        output << "type=" << type_output << "&width=" << width << "&height=" << height
                << "&max_bitrate=" << max_bitrate << "&min_bitrate=" << min_bitrate
-               << "&start_bitrate=" << start_bitrate
-               << "&max_framerate=" << max_framerate
-               << "&simulcast_streams=" << simulcast_streams
-               << "&mode=" << mode << "&keyframe_interval=" << keyframe_interval
+               << "&start_bitrate=" << start_bitrate << "&max_framerate=" << max_framerate
+               << "&simulcast_streams=" << simulcast_streams << "&mode=" << mode
+               << "&keyframe_interval=" << keyframe_interval
                << "&number_of_temporal_layers=" << number_of_temporal_layers;
 
         return rust::String(output.str().c_str());
     }
 };
 
-std::unique_ptr<ArcasVideoCodec> create_arcas_video_codec_from_cxx(const webrtc::VideoCodec *codec);
+std::unique_ptr<ArcasVideoCodec> create_arcas_video_codec_from_cxx(const webrtc::VideoCodec* codec);
 std::shared_ptr<ArcasVideoCodec> create_arcas_video_codec();
-std::shared_ptr<ArcasSpatialLayer> create_arcas_spatial_layer();
+std::shared_ptr<ArcasSpatialLayer>              create_arcas_spatial_layer();
 std::unique_ptr<std::vector<ArcasSpatialLayer>> gen_unique_vector_spatial_layers();
-std::shared_ptr<ArcasVideoCodec> gen_shared_video_codec();
+std::shared_ptr<ArcasVideoCodec>                gen_shared_video_codec();

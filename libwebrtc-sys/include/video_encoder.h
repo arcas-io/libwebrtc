@@ -27,16 +27,13 @@ private:
 
 public:
     ArcasVideoEncoder(rust::Box<ArcasRustVideoEncoder> api)
-        : api(std::move(api))
+    : api(std::move(api))
     {
     }
 
-    ~ArcasVideoEncoder()
-    {
-    }
+    ~ArcasVideoEncoder() {}
 
-    void SetFecControllerOverride(
-        webrtc::FecControllerOverride *fec_controller_override) override
+    void SetFecControllerOverride(webrtc::FecControllerOverride* fec_controller_override) override
     {
         // TODO: Implement bindings.
     }
@@ -59,17 +56,16 @@ public:
     // TODO(bugs.webrtc.org/10720): After updating downstream projects and posting
     // an announcement to discuss-webrtc, remove the three-parameters variant
     // and make the two-parameters variant pure-virtual.
-    int InitEncode(const webrtc::VideoCodec *codec_settings,
-                   int number_of_cores,
-                   size_t max_payload_size) override;
+    int InitEncode(const webrtc::VideoCodec* codec_settings,
+                   int                       number_of_cores,
+                   size_t                    max_payload_size) override;
     // Register an encode complete callback object.
     //
     // Input:
     //          - callback         : Callback object which handles encoded images.
     //
     // Return value                : WEBRTC_VIDEO_CODEC_OK if OK, < 0 otherwise.
-    int32_t RegisterEncodeCompleteCallback(
-        webrtc::EncodedImageCallback *callback) override;
+    int32_t RegisterEncodeCompleteCallback(webrtc::EncodedImageCallback* callback) override;
 
     // Free encoder memory.
     // Return value                : WEBRTC_VIDEO_CODEC_OK if OK, < 0 otherwise.
@@ -87,13 +83,13 @@ public:
     //                                  WEBRTC_VIDEO_CODEC_ERR_PARAMETER
     //                                  WEBRTC_VIDEO_CODEC_MEMORY
     //                                  WEBRTC_VIDEO_CODEC_ERROR
-    int32_t Encode(const webrtc::VideoFrame &frame,
-                   const std::vector<webrtc::VideoFrameType> *frame_types) override;
+    int32_t Encode(const webrtc::VideoFrame&                  frame,
+                   const std::vector<webrtc::VideoFrameType>* frame_types) override;
 
     // Sets rate control parameters: bitrate, framerate, etc. These settings are
     // instantaneous (i.e. not moving averages) and should apply from now until
     // the next call to SetRates().
-    void SetRates(const RateControlParameters &parameters) override;
+    void SetRates(const RateControlParameters& parameters) override;
 
     // Inform the encoder when the packet loss rate changes.
     //
@@ -106,7 +102,7 @@ public:
     void OnRttUpdate(int64_t rtt_ms) override;
 
     // Called when a loss notification is received.
-    void OnLossNotification(const LossNotification &loss_notification) override;
+    void OnLossNotification(const LossNotification& loss_notification) override;
 
     // Returns meta-data about the encoder, such as implementation name.
     // The output of this method may change during runtime. For instance if a
@@ -116,5 +112,6 @@ public:
 };
 
 std::unique_ptr<ArcasCxxVideoBitrateAllocation> create_video_bitrate_allocation();
-std::shared_ptr<ArcasVideoEncoderRateControlParameters> create_arcas_video_encoder_rate_control_parameters(
-    const ArcasCxxVideoBitrateAllocation &bitrate, double framerate_fps);
+std::shared_ptr<ArcasVideoEncoderRateControlParameters>
+create_arcas_video_encoder_rate_control_parameters(const ArcasCxxVideoBitrateAllocation& bitrate,
+                                                   double framerate_fps);

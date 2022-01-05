@@ -2,7 +2,8 @@
 #include "libwebrtc-sys/src/session_description.rs.h"
 
 ArcasSessionDescription::ArcasSessionDescription(
-    std::unique_ptr<webrtc::SessionDescriptionInterface> api) : api(std::move(api)){};
+    std::unique_ptr<webrtc::SessionDescriptionInterface> api)
+: api(std::move(api)){};
 
 rust::String ArcasSessionDescription::to_string() const
 {
@@ -27,22 +28,23 @@ std::unique_ptr<webrtc::SessionDescriptionInterface> ArcasSessionDescription::cl
     return api->Clone();
 }
 
-ArcasCreateSessionDescriptionResult create_arcas_session_description(webrtc::SdpType type, rust::String sdp)
+ArcasCreateSessionDescriptionResult create_arcas_session_description(webrtc::SdpType type,
+                                                                     rust::String    sdp)
 {
-    webrtc::SdpParseError error;
+    webrtc::SdpParseError               error;
     ArcasCreateSessionDescriptionResult result;
 
     auto api = webrtc::CreateSessionDescription(type, sdp.c_str(), &error);
     if (error.line.size() > 0)
     {
-        result.ok = false;
-        result.error.line = rust::String(error.line.c_str());
+        result.ok                = false;
+        result.error.line        = rust::String(error.line.c_str());
         result.error.description = rust::String(error.description.c_str());
         return result;
     }
     else
     {
-        result.ok = true;
+        result.ok      = true;
         result.session = std::make_unique<ArcasSessionDescription>(std::move(api));
         return result;
     }

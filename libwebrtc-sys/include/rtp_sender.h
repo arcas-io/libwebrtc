@@ -8,16 +8,17 @@ protected:
     rtc::scoped_refptr<webrtc::RtpSenderInterface> api;
 
 public:
-    ArcasRTPSender(rtc::scoped_refptr<webrtc::RtpSenderInterface> api) : api(api){};
+    ArcasRTPSender(rtc::scoped_refptr<webrtc::RtpSenderInterface> api)
+    : api(api){};
 };
 
 class ArcasRTPVideoSender : public ArcasRTPSender
 {
-
 public:
-    ArcasRTPVideoSender(rtc::scoped_refptr<webrtc::RtpSenderInterface> api) : ArcasRTPSender(api){};
+    ArcasRTPVideoSender(rtc::scoped_refptr<webrtc::RtpSenderInterface> api)
+    : ArcasRTPSender(api){};
 
-    bool set_track(const ArcasVideoTrack &track) const
+    bool set_track(const ArcasVideoTrack& track) const
     {
         return api->SetTrack(track.ref());
     }
@@ -25,9 +26,9 @@ public:
 
 class ArcasRTPAudioSender : public ArcasRTPSender
 {
-
 public:
-    ArcasRTPAudioSender(rtc::scoped_refptr<webrtc::RtpSenderInterface> api) : ArcasRTPSender(api){};
+    ArcasRTPAudioSender(rtc::scoped_refptr<webrtc::RtpSenderInterface> api)
+    : ArcasRTPSender(api){};
 };
 
 std::unique_ptr<ArcasRTPAudioSender> gen_unique_rtp_audio_sender();
