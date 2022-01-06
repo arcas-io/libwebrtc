@@ -148,8 +148,6 @@ public:
 
         cricket::MediaEngineDependencies media_deps;
         media_deps.task_queue_factory = dependencies.task_queue_factory.get();
-        media_deps.audio_encoder_factory = webrtc::CreateBuiltinAudioEncoderFactory();
-        media_deps.audio_decoder_factory = webrtc::CreateBuiltinAudioDecoderFactory();
         if (config->video_encoder_factory != nullptr)
         {
             media_deps.video_encoder_factory = std::move(config->video_encoder_factory);
@@ -176,7 +174,8 @@ public:
         {
             media_deps.audio_encoder_factory = webrtc::CreateBuiltinAudioEncoderFactory();
         }
-        // media_deps.audio_processing = webrtc::AudioProcessingBuilder().Create();
+        media_deps.audio_decoder_factory = webrtc::CreateBuiltinAudioDecoderFactory();
+        /* media_deps.audio_processing = webrtc::AudioProcessingBuilder().Create(); */
         media_deps.audio_processing = nullptr;
         media_deps.audio_mixer = webrtc::AudioMixerImpl::Create();
         media_deps.adm = adm;

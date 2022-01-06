@@ -1,6 +1,6 @@
 #include "libwebrtc-sys/include/rtc_buffer.h"
 
-BufferUint8::BufferUint8(rtc::Buffer* buffer): buffer(buffer) {}
+BufferUint8::BufferUint8(rtc::BufferT<uint8_t>* buffer): buffer(buffer) {}
 
 rtc::Buffer* BufferUint8::GetBuffer() const {
     return buffer;

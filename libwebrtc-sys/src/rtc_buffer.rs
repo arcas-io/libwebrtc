@@ -1,3 +1,5 @@
+use cxx::UniquePtr;
+
 #[cxx::bridge]
 pub mod ffi {
     unsafe extern "C++" {

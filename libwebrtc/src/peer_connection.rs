@@ -47,6 +47,7 @@ impl PeerConnectionStats {
 
 use crate::{
     audio_track::AudioTrack,
+    audio_track_source::AudioTrackSource,
     error::{aracs_rtc_error_to_err, Result, WebRTCError},
     ice_candidate::ICECandidate,
     ok_or_return,
@@ -136,6 +137,12 @@ impl PeerConnectionFactory {
         let source_ref = source.cxx_ref()?;
         let track = self.cxx_factory.create_video_track(id, source_ref);
         Ok(VideoTrack::new(track))
+    }
+
+    pub fn create_audio_track(&self, id: String, source: &AudioTrackSource) -> Result<AudioTrack> {
+        let source_ref = source.cxx_ref()?;
+        let track = self.cxx_factory.create_audio_track(id, source_ref);
+        Ok(AudioTrack::new(track))
     }
 
     pub fn create_peer_connection(&self, config: PeerConnectionConfig) -> Result<PeerConnection> {

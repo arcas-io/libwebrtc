@@ -25,3 +25,5 @@ class ArcasAudioTrackSource {
 };
 
 std::shared_ptr<ArcasAudioTrackSource> create_audio_track_source();
+
+std::shared_ptr<ArcasAudioTrackSource> gen_shared_audio_track_source();

@@ -22,6 +22,7 @@ impl SharedAudioEncoder {
         target_bitrate: i32,
         rx: Receiver<Bytes>,
     ) -> Self {
+        println!("encoder created with payload type: {}", payload_type);
         Self {
             _id: id,
             _payload_type: payload_type,
@@ -62,8 +63,8 @@ impl AudioEncoderImpl for SharedAudioEncoder {
                     encoded_timestamp: rtp_timestamp,
                     encoder_type: ArcasCxxAudioCodecType::kOpus,
                     payload_type: self._payload_type,
-                    send_even_if_empty: false,
-                    speech: true,
+                    send_even_if_empty: true,
+                    speech: false,
                 }
             }
             Err(_) => ArcasAudioEncodedInfoLeaf {
@@ -86,11 +87,11 @@ impl AudioEncoderImpl for SharedAudioEncoder {
     }
 
     unsafe fn num_10ms_frames_in_next_packet(&self) -> usize {
-        1
+        self.sample_rate_hz() as usize / 100
     }
 
     unsafe fn max_10ms_frames_in_a_packet(&self) -> usize {
-        self._max_10ms_frames_in_a_packet
+        self.sample_rate_hz() as usize / 100
     }
 
     unsafe fn get_target_bitrate(&self) -> i32 {

@@ -1,3 +1,5 @@
+use cxx::SharedPtr;
+
 #[cxx::bridge]
 pub mod ffi {
 
@@ -14,11 +16,14 @@ pub mod ffi {
             number_of_channels: usize,
         );
 
-        fn push_raw_s16_be(
+        fn push_raw_s16be(
             self: &ArcasAudioTrackSource,
             audio_data: Vec<u8>,
-            number_of_channels: u32,
+            sample_rate: i32,
+            number_of_channels: usize,
             number_of_frames: usize,
         );
+
+        fn gen_shared_audio_track_source() -> SharedPtr<ArcasAudioTrackSource>;
     }
 }

@@ -5,7 +5,7 @@
 
 class BufferUint8 {
     public:
-    BufferUint8(rtc::Buffer*);
+    BufferUint8(rtc::BufferT<uint8_t>*);
 
     rtc::Buffer* GetBuffer() const;
     void append_data(rust::Slice<const uint8_t>);
@@ -13,3 +13,5 @@ class BufferUint8 {
     private:
     rtc::Buffer* buffer;
 };
+
+std::unique_ptr<BufferUint8> gen_unique_rtc_buffer_u8();

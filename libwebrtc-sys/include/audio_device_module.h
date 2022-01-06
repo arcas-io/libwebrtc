@@ -45,23 +45,23 @@ public:
                               char name[webrtc::kAdmMaxDeviceNameSize],
                               char guid[webrtc::kAdmMaxGuidSize])
     {
-        return -1;
+        return 0;
     };
     int32_t RecordingDeviceName(uint16_t index,
                                 char name[webrtc::kAdmMaxDeviceNameSize],
                                 char guid[webrtc::kAdmMaxGuidSize])
     {
-        return -1;
+        return 0;
     };
 
     // Device selection
     int32_t SetPlayoutDevice(uint16_t index)
     {
-        return -1;
+        return 0;
     };
     int32_t SetPlayoutDevice(webrtc::AudioDeviceModule::WindowsDeviceType device)
     {
-        return -1;
+        return 0;
     };
     int32_t SetRecordingDevice(uint16_t index)
     {
@@ -83,25 +83,25 @@ public:
     };
     bool PlayoutIsInitialized() const
     {
-        return -1;
+        return true;
     };
     int32_t RecordingIsAvailable(bool* available)
     {
-        return -1;
+        return 0;
     };
     int32_t InitRecording()
     {
-        return -1;
+        return 0;
     };
     bool RecordingIsInitialized() const
     {
-        return -1;
+        return true;
     };
 
     // Audio transport control
     int32_t StartPlayout()
     {
-        return -1;
+        return 0;
     };
     int32_t StopPlayout()
     {
@@ -109,19 +109,19 @@ public:
     };
     bool Playing() const
     {
-        return -1;
+        return true;
     };
     int32_t StartRecording()
     {
-        return -1;
+        return 0;
     };
     int32_t StopRecording()
     {
-        return -1;
+        return 0;
     };
     bool Recording() const
     {
-        return -1;
+        return true;
     };
 
     // Audio mixer initialization
@@ -217,15 +217,15 @@ public:
     // Stereo support
     int32_t StereoPlayoutIsAvailable(bool* available) const
     {
-        return -1;
+        return 1;
     };
     int32_t SetStereoPlayout(bool enable)
     {
-        return -1;
+        return 0;
     };
     int32_t StereoPlayout(bool* enabled) const
     {
-        return -1;
+        return 0;
     };
     int32_t StereoRecordingIsAvailable(bool* available) const
     {
@@ -243,7 +243,7 @@ public:
     // Playout delay
     int32_t PlayoutDelay(uint16_t* delayMS) const
     {
-        return -1;
+        return 0;
     };
 
     // Only supported on Android.

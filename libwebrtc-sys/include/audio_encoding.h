@@ -21,6 +21,10 @@ public:
     void Reset() override;
     absl::optional<std::pair<webrtc::TimeDelta, webrtc::TimeDelta>> GetFrameLengthRange() const override;
     int GetTargetBitrate() const override;
+    EncodedInfo Encode(
+        uint32_t rtp_timestamp,
+        rtc::ArrayView<const int16_t> audio,
+        rtc::Buffer *encoded);
 
 protected:
     EncodedInfo EncodeImpl(

@@ -33,12 +33,22 @@ absl::optional<std::pair<webrtc::TimeDelta, webrtc::TimeDelta>> ArcasAudioEncode
     return absl::optional<std::pair<webrtc::TimeDelta, webrtc::TimeDelta>>();
 }
 
+void ArcasAudioEncoder::Reset() {}
+
+EncodedInfo ArcasAudioEncoder::Encode(
+    uint32_t rtp_timestamp,
+    rtc::ArrayView<const int16_t> audio_data,
+    rtc::Buffer *encoded)
+{
+    return EncodeImpl(rtp_timestamp, audio_data, encoded);
+}
+
 EncodedInfo ArcasAudioEncoder::EncodeImpl(
     uint32_t rtp_timestamp,
     rtc::ArrayView<const int16_t> audio_data,
     rtc::Buffer *encoded)
 {
-    auto encode_buffer = std::make_unique<BufferUint8>(BufferUint8(encoded));
+    auto encode_buffer = std::make_unique<BufferUint8>(encoded);
     auto ffi_result = api->encode_impl(rtp_timestamp, audio_data.data(), audio_data.size(), std::move(encode_buffer));
     auto result = EncodedInfo();
 
@@ -145,7 +155,7 @@ std::unique_ptr<WebRTCAudioEncoder> ArcasAudioEncoderFactory::MakeAudioEncoder(
     return api->make_audio_encoder(payload_type, fmt);
 }
 
-ArcasAudioEncoderFactory::ArcasAudioEncoderFactory(rust::Box<ArcasRustAudioEncoderFactory> api): api(std::move(api)) {}
+ArcasAudioEncoderFactory::ArcasAudioEncoderFactory(rust::Box<ArcasRustAudioEncoderFactory> api) : api(std::move(api)) {}
 
 std::unique_ptr<ArcasAudioEncoder> create_audio_encoder(rust::Box<ArcasRustAudioEncoder> api)
 {
