@@ -25,7 +25,7 @@ class ArcasVideoEncoderSettings
 {
 private:
     const webrtc::VideoEncoder::Capabilities capabilities_;
-    const webrtc::VideoEncoder::Settings     settings_;
+    const webrtc::VideoEncoder::Settings settings_;
 
 public:
     ArcasVideoEncoderSettings(bool loss_notification, int number_of_cores, size_t max_payload_size)

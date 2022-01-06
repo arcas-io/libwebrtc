@@ -15,7 +15,7 @@ class ArcasPeerConnectionFactory
 {
 private:
     // Held to ensure we don't need to keep references alive in rust.
-    rtc::scoped_refptr<ArcasAPIInternal>                       internal_api;
+    rtc::scoped_refptr<ArcasAPIInternal> internal_api;
     rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> api;
 
 public:
@@ -24,7 +24,7 @@ public:
 
     std::shared_ptr<ArcasPeerConnection> create_peer_connection(
         std::unique_ptr<webrtc::PeerConnectionInterface::RTCConfiguration> config,
-        ArcasPeerConnectionObserver*                                       observer) const
+        ArcasPeerConnectionObserver* observer) const
     {
         webrtc::PeerConnectionDependencies deps(observer);
         auto result = api->CreatePeerConnectionOrError(*config, std::move(deps));

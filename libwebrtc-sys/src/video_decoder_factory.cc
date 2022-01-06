@@ -11,7 +11,7 @@ std::vector<webrtc::SdpVideoFormat> ArcasVideoDecoderFactory::GetSupportedFormat
 
 webrtc::VideoDecoderFactory::CodecSupport
 ArcasVideoDecoderFactory::QueryCodecSupport(const webrtc::SdpVideoFormat& format,
-                                            bool                          reference_scaling) const
+                                            bool reference_scaling) const
 {
     auto out = api->query_codec_support(format, reference_scaling);
     return webrtc::VideoDecoderFactory::CodecSupport{

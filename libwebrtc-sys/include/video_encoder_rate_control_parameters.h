@@ -13,13 +13,13 @@ public:
     {
     }
     ArcasVideoEncoderRateControlParameters(const ArcasCxxVideoBitrateAllocation& bitrate,
-                                           double                                framerate_fps)
+                                           double framerate_fps)
     : api(webrtc::VideoEncoder::RateControlParameters(bitrate, framerate_fps))
     {
     }
     ArcasVideoEncoderRateControlParameters(const ArcasCxxVideoBitrateAllocation& bitrate,
-                                           double                                framerate_fps,
-                                           std::unique_ptr<webrtc::DataRate>     data_rate)
+                                           double framerate_fps,
+                                           std::unique_ptr<webrtc::DataRate> data_rate)
     : api(webrtc::VideoEncoder::RateControlParameters(bitrate, framerate_fps, *data_rate))
     {
     }

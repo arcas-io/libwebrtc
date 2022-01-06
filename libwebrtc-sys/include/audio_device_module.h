@@ -42,14 +42,14 @@ public:
         return -1;
     };
     int32_t PlayoutDeviceName(uint16_t index,
-                              char     name[webrtc::kAdmMaxDeviceNameSize],
-                              char     guid[webrtc::kAdmMaxGuidSize])
+                              char name[webrtc::kAdmMaxDeviceNameSize],
+                              char guid[webrtc::kAdmMaxGuidSize])
     {
         return -1;
     };
     int32_t RecordingDeviceName(uint16_t index,
-                                char     name[webrtc::kAdmMaxDeviceNameSize],
-                                char     guid[webrtc::kAdmMaxGuidSize])
+                                char name[webrtc::kAdmMaxDeviceNameSize],
+                                char guid[webrtc::kAdmMaxGuidSize])
     {
         return -1;
     };

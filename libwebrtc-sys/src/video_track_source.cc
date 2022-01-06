@@ -15,7 +15,7 @@ extract_arcas_video_frame_to_raw_frame_buffer(const webrtc::VideoFrame& frame)
 }
 
 std::shared_ptr<ArcasVideoFrameEncodedImageData>
-create_arcas_encoded_image(const webrtc::EncodedImage&      encoded_image,
+create_arcas_encoded_image(const webrtc::EncodedImage& encoded_image,
                            const webrtc::CodecSpecificInfo& codec_specific_info)
 {
     auto internal =

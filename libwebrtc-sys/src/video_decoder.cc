@@ -17,8 +17,8 @@ bool ArcasVideoDecoder::Configure(const webrtc::VideoDecoder::Settings& settings
 }
 
 int32_t ArcasVideoDecoder::Decode(const webrtc::EncodedImage& image,
-                                  bool                        missing_frames,
-                                  int64_t                     render_times_ms)
+                                  bool missing_frames,
+                                  int64_t render_times_ms)
 {
     return api->decode(image, missing_frames, render_times_ms, cb);
 }

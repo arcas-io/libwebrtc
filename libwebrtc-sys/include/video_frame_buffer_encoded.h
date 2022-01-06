@@ -8,11 +8,11 @@ class ArcasVideoFrameEncodedImageDataInternal : public rtc::RefCountedBase,
                                                 public webrtc::VideoFrameBuffer
 {
 private:
-    webrtc::EncodedImage      _encodedImage;
+    webrtc::EncodedImage _encodedImage;
     webrtc::CodecSpecificInfo _codecSpecificInfo;
 
 public:
-    ArcasVideoFrameEncodedImageDataInternal(const webrtc::EncodedImage&      encodedImage,
+    ArcasVideoFrameEncodedImageDataInternal(const webrtc::EncodedImage& encodedImage,
                                             const webrtc::CodecSpecificInfo& codecSpecificInfo)
     : _encodedImage(encodedImage)
     , _codecSpecificInfo(codecSpecificInfo)
@@ -247,7 +247,7 @@ public:
 };
 
 std::unique_ptr<ArcasVideoFrameEncodedImageData>
-create_arcas_video_frame_buffer_from_encoded_image(const webrtc::EncodedImage&   encodedImage,
+create_arcas_video_frame_buffer_from_encoded_image(const webrtc::EncodedImage& encodedImage,
                                                    const ArcasCodecSpecificInfo& codec_info);
 std::unique_ptr<ArcasVideoFrameRawImageData>
 create_arcas_video_frame_buffer_from_I420(int32_t width, int32_t height, const uint8_t* data);

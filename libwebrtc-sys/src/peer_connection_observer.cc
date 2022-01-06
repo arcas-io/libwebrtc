@@ -78,7 +78,7 @@ void ArcasPeerConnectionObserver::OnIceCandidate(const webrtc::IceCandidateInter
 
 void ArcasPeerConnectionObserver::OnIceCandidateError(const std::string& host_candidate,
                                                       const std::string& url,
-                                                      int                error_code,
+                                                      int error_code,
                                                       const std::string& error_text)
 {
     observer->on_ice_candidate_error(rust::String(host_candidate.c_str()),
@@ -89,9 +89,9 @@ void ArcasPeerConnectionObserver::OnIceCandidateError(const std::string& host_ca
 
 // See https://w2c.github.io/webrtc-pc/#event-icecandidateerror
 void ArcasPeerConnectionObserver::OnIceCandidateError(const std::string& address,
-                                                      int                port,
+                                                      int port,
                                                       const std::string& url,
-                                                      int                error_code,
+                                                      int error_code,
                                                       const std::string& error_text)
 {
     observer->on_ice_candidate_error_address_port(rust::String(address.c_str()),
@@ -129,7 +129,7 @@ void ArcasPeerConnectionObserver::OnIceSelectedCandidatePairChanged(
 };
 
 void ArcasPeerConnectionObserver::OnAddTrack(
-    rtc::scoped_refptr<webrtc::RtpReceiverInterface>                     receiver,
+    rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver,
     const std::vector<rtc::scoped_refptr<webrtc::MediaStreamInterface>>& streams)
 {
     auto rust = std::make_unique<ArcasRTPReceiver>(receiver);

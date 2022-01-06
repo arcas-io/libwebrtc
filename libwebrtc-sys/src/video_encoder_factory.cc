@@ -22,7 +22,7 @@ ArcasVideoEncoderFactory::QueryVideoEncoder(const webrtc::SdpVideoFormat& format
 
 webrtc::VideoEncoderFactory::CodecSupport
 ArcasVideoEncoderFactory::QueryCodecSupport(const webrtc::SdpVideoFormat& format,
-                                            absl::optional<std::string>   scalability_mode) const
+                                            absl::optional<std::string> scalability_mode) const
 {
     rust::Vec<rust::String> rust_mode;
 
@@ -75,7 +75,7 @@ absl::optional<webrtc::SdpVideoFormat>
 ArcasVideoEncoderSelector::OnAvailableBitrate(const webrtc::DataRate& rate)
 {
     absl::optional<webrtc::SdpVideoFormat> result;
-    auto                                   rust_result = api[0].on_available_bitrate(rate);
+    auto rust_result = api[0].on_available_bitrate(rate);
 
     if (rust_result->size() > 0)
     {
@@ -88,7 +88,7 @@ ArcasVideoEncoderSelector::OnAvailableBitrate(const webrtc::DataRate& rate)
 absl::optional<webrtc::SdpVideoFormat> ArcasVideoEncoderSelector::OnEncoderBroken()
 {
     absl::optional<webrtc::SdpVideoFormat> result;
-    auto                                   rust_result = api[0].on_encoder_broken();
+    auto rust_result = api[0].on_encoder_broken();
 
     if (rust_result->size() > 0)
     {

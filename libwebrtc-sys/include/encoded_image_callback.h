@@ -16,8 +16,8 @@ public:
         RTC_LOG(LS_INFO) << "ArcasEncodedImageCallback::ArcasEncodedImageCallback ptr=" << api;
     }
     ArcasEncodedImageCallbackResult
-         on_encoded_image(const webrtc::EncodedImage&   image,
-                          const ArcasCodecSpecificInfo* codec_specific_info) const;
+    on_encoded_image(const webrtc::EncodedImage& image,
+                     const ArcasCodecSpecificInfo* codec_specific_info) const;
     void on_dropped_frame(webrtc::EncodedImageCallback::DropReason reason)
     {
         api->OnDroppedFrame(reason);

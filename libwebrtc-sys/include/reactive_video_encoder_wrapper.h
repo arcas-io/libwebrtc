@@ -20,8 +20,8 @@ public:
     }
 
     int init_encode(const ArcasCxxVideoCodec* codec,
-                    int32_t                   number_of_cores,
-                    size_t                    max_payload_size) const
+                    int32_t number_of_cores,
+                    size_t max_payload_size) const
     {
         webrtc::VideoEncoder::Settings settings(webrtc::VideoEncoder::Capabilities(true),
                                                 number_of_cores,
@@ -34,7 +34,7 @@ public:
         return video_encoder_->Release();
     }
 
-    int32_t encode(const webrtc::VideoFrame&                  frame,
+    int32_t encode(const webrtc::VideoFrame& frame,
                    const std::vector<webrtc::VideoFrameType>* frame_types) const
     {
         return video_encoder_->Encode(frame, frame_types);

@@ -29,9 +29,9 @@ std::unique_ptr<webrtc::SessionDescriptionInterface> ArcasSessionDescription::cl
 }
 
 ArcasCreateSessionDescriptionResult create_arcas_session_description(webrtc::SdpType type,
-                                                                     rust::String    sdp)
+                                                                     rust::String sdp)
 {
-    webrtc::SdpParseError               error;
+    webrtc::SdpParseError error;
     ArcasCreateSessionDescriptionResult result;
 
     auto api = webrtc::CreateSessionDescription(type, sdp.c_str(), &error);

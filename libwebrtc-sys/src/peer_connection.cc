@@ -11,7 +11,7 @@ void ArcasPeerConnection::create_offer(
     rust::Box<ArcasRustCreateSessionDescriptionObserver> observer) const
 {
     webrtc::PeerConnectionInterface::RTCOfferAnswerOptions options;
-    auto                                                   ref_counted =
+    auto ref_counted =
         rtc::make_ref_counted<ArcasCreateSessionDescriptionObserver>(std::move(observer));
     api->CreateOffer(ref_counted, options);
 }
@@ -21,14 +21,14 @@ void ArcasPeerConnection::create_answer(
 {
     // TODO: This probably has to live longer elsewhere.
     webrtc::PeerConnectionInterface::RTCOfferAnswerOptions options;
-    auto                                                   ref_counted =
+    auto ref_counted =
         rtc::make_ref_counted<ArcasCreateSessionDescriptionObserver>(std::move(observer));
     api->CreateAnswer(ref_counted, options);
 }
 
 void ArcasPeerConnection::set_local_description(
     rust::Box<ArcasRustSetSessionDescriptionObserver> observer,
-    std::unique_ptr<ArcasSessionDescription>          sdp) const
+    std::unique_ptr<ArcasSessionDescription> sdp) const
 {
     auto ref_counted = rtc::make_ref_counted<ArcasSetDescriptionObserver>(std::move(observer));
     api->SetLocalDescription(std::move(sdp->clone_sdp()), ref_counted);
@@ -36,7 +36,7 @@ void ArcasPeerConnection::set_local_description(
 
 void ArcasPeerConnection::set_remote_description(
     rust::Box<ArcasRustSetSessionDescriptionObserver> observer,
-    std::unique_ptr<ArcasSessionDescription>          sdp) const
+    std::unique_ptr<ArcasSessionDescription> sdp) const
 {
     auto ref_counted = rtc::make_ref_counted<ArcasSetDescriptionObserver>(std::move(observer));
     api->SetRemoteDescription(std::move(sdp->clone_sdp()), ref_counted);
@@ -57,7 +57,7 @@ std::unique_ptr<ArcasRTPVideoTransceiver> ArcasPeerConnection::add_video_transce
 
 std::unique_ptr<ArcasRTPVideoTransceiver>
 ArcasPeerConnection::add_video_transceiver_with_track(std::unique_ptr<ArcasVideoTrack> track,
-                                                      ArcasTransceiverInit             init) const
+                                                      ArcasTransceiverInit init) const
 {
     webrtc::RtpTransceiverInit transceiver_init;
     transceiver_init.direction = init.direction;
@@ -100,7 +100,7 @@ void ArcasPeerConnection::get_stats(rust::Box<ArcasRustRTCStatsCollectorCallback
 
 void ArcasPeerConnection::add_ice_candidate(std::unique_ptr<ArcasICECandidate> candidate) const
 {
-    std::string           sdp_out;
+    std::string sdp_out;
     webrtc::SdpParseError error;
     // XXX: Do *not* make further calls into candidate after this.
     auto jsep = candidate->take();
@@ -122,7 +122,7 @@ void ArcasPeerConnection::add_ice_candidate(std::unique_ptr<ArcasICECandidate> c
 
 std::unique_ptr<std::vector<ArcasRTPTransceiver>> ArcasPeerConnection::get_transceivers() const
 {
-    auto                             transceivers = api->GetTransceivers();
+    auto transceivers = api->GetTransceivers();
     std::vector<ArcasRTPTransceiver> result;
     for (auto txrx : transceivers) { result.push_back(ArcasRTPTransceiver(txrx)); }
     return std::make_unique<std::vector<ArcasRTPTransceiver>>(std::move(result));

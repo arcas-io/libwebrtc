@@ -57,8 +57,8 @@ public:
     // an announcement to discuss-webrtc, remove the three-parameters variant
     // and make the two-parameters variant pure-virtual.
     int InitEncode(const webrtc::VideoCodec* codec_settings,
-                   int                       number_of_cores,
-                   size_t                    max_payload_size) override;
+                   int number_of_cores,
+                   size_t max_payload_size) override;
     // Register an encode complete callback object.
     //
     // Input:
@@ -83,7 +83,7 @@ public:
     //                                  WEBRTC_VIDEO_CODEC_ERR_PARAMETER
     //                                  WEBRTC_VIDEO_CODEC_MEMORY
     //                                  WEBRTC_VIDEO_CODEC_ERROR
-    int32_t Encode(const webrtc::VideoFrame&                  frame,
+    int32_t Encode(const webrtc::VideoFrame& frame,
                    const std::vector<webrtc::VideoFrameType>* frame_types) override;
 
     // Sets rate control parameters: bitrate, framerate, etc. These settings are

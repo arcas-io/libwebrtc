@@ -25,6 +25,6 @@ public:
     : ArcasRTPReceiver(api){};
 };
 
-std::unique_ptr<ArcasRTPReceiver>      gen_unique_rtp_receiver();
+std::unique_ptr<ArcasRTPReceiver> gen_unique_rtp_receiver();
 std::unique_ptr<ArcasRTPAudioReceiver> gen_unique_rtp_audio_receiver();
 std::unique_ptr<ArcasRTPVideoReceiver> gen_unique_rtp_video_receiver();

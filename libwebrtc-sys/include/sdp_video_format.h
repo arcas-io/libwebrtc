@@ -4,8 +4,8 @@
 #include "rust/cxx.h"
 
 rust::Vec<ArcasRustDict> sdp_video_format_get_parameters(const webrtc::SdpVideoFormat& format);
-const std::string&       sdp_video_format_get_name(const webrtc::SdpVideoFormat& format);
-rust::String             sdp_video_format_to_string(const webrtc::SdpVideoFormat& format);
+const std::string& sdp_video_format_get_name(const webrtc::SdpVideoFormat& format);
+rust::String sdp_video_format_to_string(const webrtc::SdpVideoFormat& format);
 
 // Helper utilities to return C++ types back into rust with shared structs.
 

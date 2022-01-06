@@ -4,7 +4,7 @@
 ArcasCreateICECandidateResult
 create_arcas_ice_candidate(rust::String sdp_mid, uint32_t sdp_mline_index, rust::String sdp)
 {
-    webrtc::SdpParseError         error;
+    webrtc::SdpParseError error;
     ArcasCreateICECandidateResult result;
 
     auto candidate =

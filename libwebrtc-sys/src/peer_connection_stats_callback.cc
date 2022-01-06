@@ -16,8 +16,8 @@ void ArcasRTCStatsCollectorCallback::OnStatsDelivered(
     auto inbound_stream_stats = report->GetStatsOfType<webrtc::RTCInboundRTPStreamStats>();
     auto outbound_stream_stats = report->GetStatsOfType<webrtc::RTCOutboundRTPStreamStats>();
 
-    rust::Vec<ArcasVideoSenderStats>   out_video;
-    rust::Vec<ArcasAudioSenderStats>   out_audio;
+    rust::Vec<ArcasVideoSenderStats> out_video;
+    rust::Vec<ArcasAudioSenderStats> out_audio;
     rust::Vec<ArcasVideoReceiverStats> in_video;
     rust::Vec<ArcasAudioReceiverStats> in_audio;
 

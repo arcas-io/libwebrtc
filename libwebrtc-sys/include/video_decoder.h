@@ -42,5 +42,5 @@ public:
 
 private:
     rust::Box<ArcasRustVideoDecoder> api;
-    ArcasDecodedImageCallback        cb;
+    ArcasDecodedImageCallback cb;
 };

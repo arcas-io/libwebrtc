@@ -27,7 +27,7 @@ void ArcasReactiveVideoEncoderWrapper::on_loss_notification(
 ArcasVideoEncoderInfo ArcasReactiveVideoEncoderWrapper::get_encoder_info() const
 {
     ArcasVideoEncoderScalingSettings scaling_settings;
-    auto                             info = video_encoder_->GetEncoderInfo();
+    auto info = video_encoder_->GetEncoderInfo();
 
     // XXX: we're unable to convert kOff into the struct here. We relay zero values in those cases.
     scaling_settings.min_pixels = info.scaling_settings.min_pixels_per_frame;

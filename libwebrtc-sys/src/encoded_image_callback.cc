@@ -2,7 +2,7 @@
 #include "libwebrtc-sys/src/shared_bridge.rs.h"
 
 ArcasEncodedImageCallbackResult
-ArcasEncodedImageCallback::on_encoded_image(const webrtc::EncodedImage&   image,
+ArcasEncodedImageCallback::on_encoded_image(const webrtc::EncodedImage& image,
                                             const ArcasCodecSpecificInfo* codec_specific_info) const
 {
     auto result = api->OnEncodedImage(image, codec_specific_info->as_ptr());

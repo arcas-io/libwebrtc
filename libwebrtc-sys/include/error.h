@@ -6,7 +6,7 @@ class ArcasRTCError
 {
 private:
     webrtc::RTCError error_;
-    rust::String     message_;
+    rust::String message_;
 
 public:
     ArcasRTCError(webrtc::RTCError error)

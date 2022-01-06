@@ -62,7 +62,7 @@ public:
     // subject to change without notice.
     webrtc::VideoEncoderFactory::CodecSupport
     QueryCodecSupport(const webrtc::SdpVideoFormat& format,
-                      absl::optional<std::string>   scalability_mode) const override;
+                      absl::optional<std::string> scalability_mode) const override;
 
     // Creates a VideoEncoder for the specified format.
     std::unique_ptr<webrtc::VideoEncoder>

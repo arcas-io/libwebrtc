@@ -56,14 +56,14 @@ public:
 class ArcasVideoEncoderWrapper : public webrtc::EncodedImageCallback
 {
 private:
-    std::unique_ptr<webrtc::VideoEncoder>           video_encoder_;
+    std::unique_ptr<webrtc::VideoEncoder> video_encoder_;
     rust::Box<ArcasRustEncodedImageCallbackHandler> frame_handler_;
 
 public:
-    ArcasVideoEncoderWrapper(std::unique_ptr<webrtc::VideoEncoder>           video_encoder,
+    ArcasVideoEncoderWrapper(std::unique_ptr<webrtc::VideoEncoder> video_encoder,
                              rust::Box<ArcasRustEncodedImageCallbackHandler> frame_handler);
 
-    Result OnEncodedImage(const webrtc::EncodedImage&      encoded_image,
+    Result OnEncodedImage(const webrtc::EncodedImage& encoded_image,
                           const webrtc::CodecSpecificInfo* codec_specific_info) override;
 
     void OnDroppedFrame(webrtc::EncodedImageCallback::DropReason reason) override;
@@ -74,8 +74,8 @@ public:
     }
 
     int cxx_init_encode(const ArcasCxxVideoCodec* codec,
-                        int32_t                   number_of_cores,
-                        size_t                    max_payload_size) const
+                        int32_t number_of_cores,
+                        size_t max_payload_size) const
     {
         webrtc::VideoEncoder::Settings settings(webrtc::VideoEncoder::Capabilities(true),
                                                 number_of_cores,
@@ -88,13 +88,13 @@ public:
         return video_encoder_->Release();
     }
 
-    int32_t cxx_encode(const webrtc::VideoFrame&                  frame,
+    int32_t cxx_encode(const webrtc::VideoFrame& frame,
                        const std::vector<webrtc::VideoFrameType>* frame_types) const
     {
         return video_encoder_->Encode(frame, frame_types);
     }
 
-    int32_t encode(const webrtc::VideoFrame&             frame,
+    int32_t encode(const webrtc::VideoFrame& frame,
                    const ArcasVideoFrameTypesCollection& frame_types) const
     {
         return video_encoder_->Encode(frame, frame_types.as_ptr());
@@ -157,7 +157,7 @@ public:
     }
 
     std::unique_ptr<ArcasVideoEncoderWrapper>
-    create_encoder(const ArcasSDPVideoFormatWrapper&               format,
+    create_encoder(const ArcasSDPVideoFormatWrapper& format,
                    rust::Box<ArcasRustEncodedImageCallbackHandler> frame_handler) const
     {
         auto copy = format.get_copy();
@@ -181,7 +181,7 @@ std::unique_ptr<ArcasVideoEncoderFactoryWrapper> create_arcas_video_encoder_fact
 std::unique_ptr<ArcasCxxVideoEncoderEncoderInfo>
 get_video_encoder_encoder_info(const webrtc::VideoEncoder& encoder);
 
-std::unique_ptr<ArcasVideoEncoderWrapper>   gen_unique_video_encoder_wrapper();
+std::unique_ptr<ArcasVideoEncoderWrapper> gen_unique_video_encoder_wrapper();
 std::unique_ptr<ArcasSDPVideoFormatWrapper> gen_unique_sdp_video_format_wrapper();
 std::unique_ptr<std::vector<ArcasSDPVideoFormatWrapper>>
 gen_unique_vector_sdp_video_format_wrapper();

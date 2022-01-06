@@ -47,9 +47,9 @@ public:
     }
 
     std::unique_ptr<webrtc::EncodedImage>
-    set_encoded_image_buffer(const webrtc::VideoFrame&             video_frame,
+    set_encoded_image_buffer(const webrtc::VideoFrame& video_frame,
                              std::unique_ptr<webrtc::EncodedImage> image,
-                             const ArcasOpaqueEncodedImageBuffer&  buffer) const
+                             const ArcasOpaqueEncodedImageBuffer& buffer) const
     {
         const webrtc::ColorSpace kColorSpace(webrtc::ColorSpace::PrimaryID::kBT709,
                                              webrtc::ColorSpace::TransferID::kBT709,

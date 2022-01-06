@@ -51,14 +51,14 @@ public:
 
     void OnIceCandidateError(const std::string& host_candidate,
                              const std::string& url,
-                             int                error_code,
+                             int error_code,
                              const std::string& error_text);
 
     // See https://w2c.github.io/webrtc-pc/#event-icecandidateerror
     void OnIceCandidateError(const std::string& address,
-                             int                port,
+                             int port,
                              const std::string& url,
-                             int                error_code,
+                             int error_code,
                              const std::string& error_text);
 
     void OnIceCandidatesRemoved(const std::vector<cricket::Candidate>& candidates);
@@ -67,7 +67,7 @@ public:
 
     void OnIceSelectedCandidatePairChanged(const cricket::CandidatePairChangeEvent& event);
 
-    void OnAddTrack(rtc::scoped_refptr<webrtc::RtpReceiverInterface>                     receiver,
+    void OnAddTrack(rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver,
                     const std::vector<rtc::scoped_refptr<webrtc::MediaStreamInterface>>& streams);
 
     void OnTrack(rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver);

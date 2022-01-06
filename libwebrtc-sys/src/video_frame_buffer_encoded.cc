@@ -2,7 +2,7 @@
 #include "api/video/i420_buffer.h"
 
 std::unique_ptr<ArcasVideoFrameEncodedImageData>
-create_arcas_video_frame_buffer_from_encoded_image(const webrtc::EncodedImage&   encodedImage,
+create_arcas_video_frame_buffer_from_encoded_image(const webrtc::EncodedImage& encodedImage,
                                                    const ArcasCodecSpecificInfo& codec_info)
 {
     auto info = codec_info.get_copy();
@@ -17,8 +17,8 @@ create_arcas_video_frame_buffer_from_I420(int32_t width, int32_t height, const u
     auto stride_y = width;
     auto stride_u = width / 2;
     auto stride_v = width / 2;
-    int  y_offset = 0, u_offset = stride_y * height;
-    int  v_offset = u_offset + stride_u * (height / 2);
+    int y_offset = 0, u_offset = stride_y * height;
+    int v_offset = u_offset + stride_u * (height / 2);
     auto frame_buffer = webrtc::I420Buffer::Copy(width,
                                                  height,
                                                  data + y_offset,

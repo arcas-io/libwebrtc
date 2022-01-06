@@ -27,7 +27,7 @@ std::shared_ptr<ArcasVideoEncoderSettings> create_arcas_video_encoder_settings(
 }
 
 ArcasVideoEncoderWrapper::ArcasVideoEncoderWrapper(
-    std::unique_ptr<webrtc::VideoEncoder>           video_encoder,
+    std::unique_ptr<webrtc::VideoEncoder> video_encoder,
     rust::Box<ArcasRustEncodedImageCallbackHandler> frame_handler)
 : video_encoder_(std::move(video_encoder))
 , frame_handler_(std::move(frame_handler))
@@ -44,7 +44,7 @@ void ArcasVideoEncoderWrapper::OnDroppedFrame(webrtc::EncodedImageCallback::Drop
 }
 
 webrtc::EncodedImageCallback::Result
-ArcasVideoEncoderWrapper::OnEncodedImage(const webrtc::EncodedImage&      encoded_image,
+ArcasVideoEncoderWrapper::OnEncodedImage(const webrtc::EncodedImage& encoded_image,
                                          const webrtc::CodecSpecificInfo* codec_specific_info)
 {
     auto current_encoded_image = std::make_unique<webrtc::EncodedImage>(encoded_image);
@@ -79,7 +79,7 @@ void ArcasVideoEncoderWrapper::on_loss_notification(ArcasVideoEncoderLossNotific
 
 ArcasVideoEncoderInfo ArcasVideoEncoderWrapper::get_encoder_info() const
 {
-    auto                             info = video_encoder_->GetEncoderInfo();
+    auto info = video_encoder_->GetEncoderInfo();
     ArcasVideoEncoderScalingSettings scaling_settings;
 
     // XXX: we're unable to convert kOff into the struct here. We relay zero values in those cases.

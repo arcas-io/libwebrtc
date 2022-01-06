@@ -7,7 +7,7 @@
 #include "rust/cxx.h"
 
 ArcasPeerConnectionFactory::ArcasPeerConnectionFactory(
-    rtc::scoped_refptr<ArcasAPIInternal>                       internal_api,
+    rtc::scoped_refptr<ArcasAPIInternal> internal_api,
     rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> api)
 : internal_api(internal_api)
 , api(api)
@@ -27,7 +27,7 @@ create_rtc_configuration(ArcasPeerConnectionConfig config)
     for (auto server_config : config.ice_servers)
     {
         webrtc::PeerConnectionInterface::IceServer rtc_ice_server;
-        std::vector<std::string>                   rtc_urls;
+        std::vector<std::string> rtc_urls;
 
         for (auto url : server_config.urls)
         {

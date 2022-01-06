@@ -3,8 +3,8 @@
 #include "libwebrtc-sys/src/video_encoding.rs.h"
 
 int32_t ArcasVideoEncoder::InitEncode(const webrtc::VideoCodec* codec_settings,
-                                      int                       number_of_cores,
-                                      size_t                    max_payload_size)
+                                      int number_of_cores,
+                                      size_t max_payload_size)
 {
     return api->init_encode(codec_settings, number_of_cores, max_payload_size);
 };
@@ -39,7 +39,7 @@ int32_t ArcasVideoEncoder::Release()
 //                                  WEBRTC_VIDEO_CODEC_ERR_PARAMETER
 //                                  WEBRTC_VIDEO_CODEC_MEMORY
 //                                  WEBRTC_VIDEO_CODEC_ERROR
-int32_t ArcasVideoEncoder::Encode(const webrtc::VideoFrame&                  frame,
+int32_t ArcasVideoEncoder::Encode(const webrtc::VideoFrame& frame,
                                   const std::vector<webrtc::VideoFrameType>* frame_types)
 {
     return api->encode(frame, frame_types);
@@ -104,7 +104,7 @@ void ArcasVideoEncoder::OnLossNotification(const LossNotification& loss_notifica
 webrtc::VideoEncoder::EncoderInfo ArcasVideoEncoder::GetEncoderInfo() const
 {
     webrtc::VideoEncoder::EncoderInfo info;
-    auto                              rust_info = api->get_encoder_info();
+    auto rust_info = api->get_encoder_info();
 
     if (rust_info.scaling_settings.kOff)
     {

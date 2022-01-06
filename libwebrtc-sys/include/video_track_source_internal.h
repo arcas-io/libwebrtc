@@ -50,7 +50,7 @@ public:
     }
 
     void AddOrUpdateSink(rtc::VideoSinkInterface<webrtc::VideoFrame>* sink,
-                         const rtc::VideoSinkWants&                   wants) override
+                         const rtc::VideoSinkWants& wants) override
     {
         RTC_LOG(LS_VERBOSE) << "AddOrUpdateSink for track source internal";
         broadcaster.AddOrUpdateSink(sink, wants);
