@@ -37,14 +37,14 @@ ArcasCreateSessionDescriptionResult create_arcas_session_description(webrtc::Sdp
     auto api = webrtc::CreateSessionDescription(type, sdp.c_str(), &error);
     if (error.line.size() > 0)
     {
-        result.ok                = false;
-        result.error.line        = rust::String(error.line.c_str());
+        result.ok = false;
+        result.error.line = rust::String(error.line.c_str());
         result.error.description = rust::String(error.description.c_str());
         return result;
     }
     else
     {
-        result.ok      = true;
+        result.ok = true;
         result.session = std::make_unique<ArcasSessionDescription>(std::move(api));
         return result;
     }

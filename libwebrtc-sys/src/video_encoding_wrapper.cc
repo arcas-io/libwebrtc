@@ -61,7 +61,7 @@ void ArcasVideoEncoderWrapper::on_loss_notification(ArcasVideoEncoderLossNotific
 {
     webrtc::VideoEncoder::LossNotification cxx_loss_notification;
     cxx_loss_notification.timestamp_of_last_decodable = loss.timestamp_of_last_decodable;
-    cxx_loss_notification.timestamp_of_last_received  = loss.timestamp_of_last_received;
+    cxx_loss_notification.timestamp_of_last_received = loss.timestamp_of_last_received;
 
     if (loss.dependencies_of_last_received_decodable.size() > 0)
     {
@@ -134,18 +134,18 @@ ArcasVideoEncoderInfo ArcasVideoEncoderWrapper::get_encoder_info() const
     }
 
     auto output = ArcasVideoEncoderInfo{
-        .scaling_settings                        = scaling_settings,
-        .requested_resolution_alignment          = info.requested_resolution_alignment,
+        .scaling_settings = scaling_settings,
+        .requested_resolution_alignment = info.requested_resolution_alignment,
         .apply_alignment_to_all_simulcast_layers = info.apply_alignment_to_all_simulcast_layers,
-        .supports_native_handle                  = info.supports_native_handle,
-        .implementation_name                     = rust::String(info.implementation_name.c_str()),
-        .has_trusted_rate_controller             = info.has_trusted_rate_controller,
-        .is_hardware_accelerated                 = info.is_hardware_accelerated,
-        .has_internal_source                     = info.has_internal_source,
-        .fps_allocation                          = fps_allocation,
-        .supports_simulcast                      = info.supports_simulcast,
-        .preferred_pixel_formats                 = preferred_pixel_formats,
-        .is_qp_trusted                           = is_qp_trusted,
+        .supports_native_handle = info.supports_native_handle,
+        .implementation_name = rust::String(info.implementation_name.c_str()),
+        .has_trusted_rate_controller = info.has_trusted_rate_controller,
+        .is_hardware_accelerated = info.is_hardware_accelerated,
+        .has_internal_source = info.has_internal_source,
+        .fps_allocation = fps_allocation,
+        .supports_simulcast = info.supports_simulcast,
+        .preferred_pixel_formats = preferred_pixel_formats,
+        .is_qp_trusted = is_qp_trusted,
     };
     return output;
 }

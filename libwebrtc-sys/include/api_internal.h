@@ -71,10 +71,10 @@ public:
     rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> create_factory() const
     {
         webrtc::PeerConnectionFactoryDependencies dependencies;
-        dependencies.network_thread     = network_thread.get();
-        dependencies.signaling_thread   = signaling_thread.get();
-        dependencies.worker_thread      = worker_thread.get();
-        dependencies.call_factory       = webrtc::CreateCallFactory();
+        dependencies.network_thread = network_thread.get();
+        dependencies.signaling_thread = signaling_thread.get();
+        dependencies.worker_thread = worker_thread.get();
+        dependencies.call_factory = webrtc::CreateCallFactory();
         dependencies.task_queue_factory = webrtc::CreateDefaultTaskQueueFactory();
         dependencies.event_log_factory =
             std::make_unique<webrtc::RtcEventLogFactory>(dependencies.task_queue_factory.get());
@@ -83,7 +83,7 @@ public:
         auto adm = rtc::make_ref_counted<ArcasAudioDeviceModule>();
 
         cricket::MediaEngineDependencies media_deps;
-        media_deps.task_queue_factory    = dependencies.task_queue_factory.get();
+        media_deps.task_queue_factory = dependencies.task_queue_factory.get();
         media_deps.audio_encoder_factory = webrtc::CreateBuiltinAudioEncoderFactory();
         media_deps.audio_decoder_factory = webrtc::CreateBuiltinAudioDecoderFactory();
         media_deps.video_encoder_factory = webrtc::CreateBuiltinVideoEncoderFactory();
@@ -91,8 +91,8 @@ public:
         // Audio processing is turned off as an optimization. This avoids
         // initializing EchoCancellation3 which is modestly expensive.
         media_deps.audio_processing = nullptr;
-        media_deps.audio_mixer      = webrtc::AudioMixerImpl::Create();
-        media_deps.adm              = adm;
+        media_deps.audio_mixer = webrtc::AudioMixerImpl::Create();
+        media_deps.adm = adm;
 
         dependencies.media_engine = cricket::CreateMediaEngine(std::move(media_deps));
 
@@ -104,10 +104,10 @@ public:
         std::unique_ptr<ArcasVideoEncoderFactory> video_encoder_factory) const
     {
         webrtc::PeerConnectionFactoryDependencies dependencies;
-        dependencies.network_thread     = network_thread.get();
-        dependencies.signaling_thread   = signaling_thread.get();
-        dependencies.worker_thread      = worker_thread.get();
-        dependencies.call_factory       = webrtc::CreateCallFactory();
+        dependencies.network_thread = network_thread.get();
+        dependencies.signaling_thread = signaling_thread.get();
+        dependencies.worker_thread = worker_thread.get();
+        dependencies.call_factory = webrtc::CreateCallFactory();
         dependencies.task_queue_factory = webrtc::CreateDefaultTaskQueueFactory();
         dependencies.event_log_factory =
             std::make_unique<webrtc::RtcEventLogFactory>(dependencies.task_queue_factory.get());
@@ -116,15 +116,15 @@ public:
         auto adm = rtc::make_ref_counted<ArcasAudioDeviceModule>();
 
         cricket::MediaEngineDependencies media_deps;
-        media_deps.task_queue_factory    = dependencies.task_queue_factory.get();
+        media_deps.task_queue_factory = dependencies.task_queue_factory.get();
         media_deps.audio_encoder_factory = webrtc::CreateBuiltinAudioEncoderFactory();
         media_deps.audio_decoder_factory = webrtc::CreateBuiltinAudioDecoderFactory();
         media_deps.video_encoder_factory = std::move(video_encoder_factory);
         media_deps.video_decoder_factory = webrtc::CreateBuiltinVideoDecoderFactory();
         // media_deps.audio_processing = webrtc::AudioProcessingBuilder().Create();
         media_deps.audio_processing = nullptr;
-        media_deps.audio_mixer      = webrtc::AudioMixerImpl::Create();
-        media_deps.adm              = adm;
+        media_deps.audio_mixer = webrtc::AudioMixerImpl::Create();
+        media_deps.adm = adm;
 
         dependencies.media_engine = cricket::CreateMediaEngine(std::move(media_deps));
 
@@ -135,10 +135,10 @@ public:
     create_factory_with_config(std::unique_ptr<ArcasPeerConnectionFactoryConfig> config)
     {
         webrtc::PeerConnectionFactoryDependencies dependencies;
-        dependencies.network_thread     = network_thread.get();
-        dependencies.signaling_thread   = signaling_thread.get();
-        dependencies.worker_thread      = worker_thread.get();
-        dependencies.call_factory       = webrtc::CreateCallFactory();
+        dependencies.network_thread = network_thread.get();
+        dependencies.signaling_thread = signaling_thread.get();
+        dependencies.worker_thread = worker_thread.get();
+        dependencies.call_factory = webrtc::CreateCallFactory();
         dependencies.task_queue_factory = webrtc::CreateDefaultTaskQueueFactory();
         dependencies.event_log_factory =
             std::make_unique<webrtc::RtcEventLogFactory>(dependencies.task_queue_factory.get());
@@ -147,7 +147,7 @@ public:
         auto adm = rtc::make_ref_counted<ArcasAudioDeviceModule>();
 
         cricket::MediaEngineDependencies media_deps;
-        media_deps.task_queue_factory    = dependencies.task_queue_factory.get();
+        media_deps.task_queue_factory = dependencies.task_queue_factory.get();
         media_deps.audio_encoder_factory = webrtc::CreateBuiltinAudioEncoderFactory();
         media_deps.audio_decoder_factory = webrtc::CreateBuiltinAudioDecoderFactory();
         if (config->video_encoder_factory != nullptr)
@@ -169,8 +169,8 @@ public:
         }
         // media_deps.audio_processing = webrtc::AudioProcessingBuilder().Create();
         media_deps.audio_processing = nullptr;
-        media_deps.audio_mixer      = webrtc::AudioMixerImpl::Create();
-        media_deps.adm              = adm;
+        media_deps.audio_mixer = webrtc::AudioMixerImpl::Create();
+        media_deps.adm = adm;
 
         dependencies.media_engine = cricket::CreateMediaEngine(std::move(media_deps));
 

@@ -22,7 +22,7 @@ create_rtc_configuration(ArcasPeerConnectionConfig config)
     webrtc::PeerConnectionInterface::IceServers servers;
 
     rtc->sdp_semantics = config.sdp_semantics;
-    rtc->servers       = servers;
+    rtc->servers = servers;
 
     for (auto server_config : config.ice_servers)
     {
@@ -35,7 +35,7 @@ create_rtc_configuration(ArcasPeerConnectionConfig config)
             rtc_urls.push_back(rtc_url);
         }
 
-        rtc_ice_server.urls     = rtc_urls;
+        rtc_ice_server.urls = rtc_urls;
         rtc_ice_server.username = std::string(server_config.username.c_str());
         rtc_ice_server.password = std::string(server_config.password.c_str());
         servers.push_back(rtc_ice_server);

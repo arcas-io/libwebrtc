@@ -8,7 +8,7 @@ rust::Vec<ArcasRustDict> sdp_video_format_get_parameters(const webrtc::SdpVideoF
     for (auto param : format.parameters)
     {
         ArcasRustDict dict;
-        dict.key   = rust::String(param.first.c_str());
+        dict.key = rust::String(param.first.c_str());
         dict.value = rust::String(param.second.c_str());
         list.push_back(dict);
     }

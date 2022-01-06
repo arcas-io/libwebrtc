@@ -33,7 +33,7 @@ ArcasVideoEncoderFactory::QueryCodecSupport(const webrtc::SdpVideoFormat& format
 
     auto out = api->query_codec_support(format, rust_mode);
     return webrtc::VideoEncoderFactory::CodecSupport{
-        .is_supported       = out.is_supported,
+        .is_supported = out.is_supported,
         .is_power_efficient = out.is_power_efficient,
     };
 }
@@ -107,14 +107,14 @@ create_arcas_video_encoder_factory(rust::Box<ArcasRustVideoEncoderFactory> api)
 ArcasVideoEncodingErrCode get_arcas_video_encoding_err_codes()
 {
     return ArcasVideoEncodingErrCode{
-        .VIDEO_CODEC_OK_REQUEST_KEYFRAME      = WEBRTC_VIDEO_CODEC_OK_REQUEST_KEYFRAME,
-        .VIDEO_CODEC_NO_OUTPUT                = WEBRTC_VIDEO_CODEC_NO_OUTPUT,
-        .VIDEO_CODEC_OK                       = WEBRTC_VIDEO_CODEC_OK,
-        .VIDEO_CODEC_ERROR                    = WEBRTC_VIDEO_CODEC_ERROR,
-        .VIDEO_CODEC_MEMORY                   = WEBRTC_VIDEO_CODEC_MEMORY,
-        .VIDEO_CODEC_ERR_PARAMETER            = WEBRTC_VIDEO_CODEC_ERR_PARAMETER,
-        .VIDEO_CODEC_UNINITIALIZED            = WEBRTC_VIDEO_CODEC_UNINITIALIZED,
-        .VIDEO_CODEC_FALLBACK_SOFTWARE        = WEBRTC_VIDEO_CODEC_FALLBACK_SOFTWARE,
+        .VIDEO_CODEC_OK_REQUEST_KEYFRAME = WEBRTC_VIDEO_CODEC_OK_REQUEST_KEYFRAME,
+        .VIDEO_CODEC_NO_OUTPUT = WEBRTC_VIDEO_CODEC_NO_OUTPUT,
+        .VIDEO_CODEC_OK = WEBRTC_VIDEO_CODEC_OK,
+        .VIDEO_CODEC_ERROR = WEBRTC_VIDEO_CODEC_ERROR,
+        .VIDEO_CODEC_MEMORY = WEBRTC_VIDEO_CODEC_MEMORY,
+        .VIDEO_CODEC_ERR_PARAMETER = WEBRTC_VIDEO_CODEC_ERR_PARAMETER,
+        .VIDEO_CODEC_UNINITIALIZED = WEBRTC_VIDEO_CODEC_UNINITIALIZED,
+        .VIDEO_CODEC_FALLBACK_SOFTWARE = WEBRTC_VIDEO_CODEC_FALLBACK_SOFTWARE,
         .VIDEO_CODEC_TARGET_BITRATE_OVERSHOOT = WEBRTC_VIDEO_CODEC_TARGET_BITRATE_OVERSHOOT,
         .VIDEO_CODEC_ERR_SIMULCAST_PARAMETERS_NOT_SUPPORTED =
             WEBRTC_VIDEO_CODEC_ERR_SIMULCAST_PARAMETERS_NOT_SUPPORTED,

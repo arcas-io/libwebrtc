@@ -139,7 +139,7 @@ public:
     std::unique_ptr<std::vector<ArcasSDPVideoFormatWrapper>> get_supported_formats() const
     {
         auto formats = video_encoding_factory_->GetSupportedFormats();
-        auto output  = std::make_unique<std::vector<ArcasSDPVideoFormatWrapper>>();
+        auto output = std::make_unique<std::vector<ArcasSDPVideoFormatWrapper>>();
         for (auto format : formats)
         {
             ArcasSDPVideoFormatWrapper rust_output(format);
@@ -151,7 +151,7 @@ public:
     std::unique_ptr<std::vector<webrtc::SdpVideoFormat>> cxx_get_supported_formats() const
     {
         auto formats = video_encoding_factory_->GetSupportedFormats();
-        auto output  = std::make_unique<std::vector<webrtc::SdpVideoFormat>>();
+        auto output = std::make_unique<std::vector<webrtc::SdpVideoFormat>>();
         for (auto format : formats) { output->push_back(format); }
         return output;
     }

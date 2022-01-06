@@ -15,14 +15,14 @@ create_arcas_ice_candidate(rust::String sdp_mid, uint32_t sdp_mline_index, rust:
 
     if (error.line.size() > 0)
     {
-        result.ok                = false;
-        result.error.line        = rust::String(error.line.c_str());
+        result.ok = false;
+        result.error.line = rust::String(error.line.c_str());
         result.error.description = rust::String(error.description.c_str());
         return result;
     }
     else
     {
-        result.ok        = true;
+        result.ok = true;
         result.candidate = std::make_unique<ArcasICECandidate>(std::move(api));
         return result;
     }

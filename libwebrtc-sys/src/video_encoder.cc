@@ -122,11 +122,11 @@ webrtc::VideoEncoder::EncoderInfo ArcasVideoEncoder::GetEncoderInfo() const
     info.requested_resolution_alignment = rust_info.requested_resolution_alignment;
     info.apply_alignment_to_all_simulcast_layers =
         rust_info.apply_alignment_to_all_simulcast_layers;
-    info.supports_native_handle      = rust_info.supports_native_handle;
-    info.implementation_name         = std::string(rust_info.implementation_name.c_str());
+    info.supports_native_handle = rust_info.supports_native_handle;
+    info.implementation_name = std::string(rust_info.implementation_name.c_str());
     info.has_trusted_rate_controller = rust_info.has_trusted_rate_controller;
-    info.is_hardware_accelerated     = rust_info.is_hardware_accelerated;
-    info.has_internal_source         = rust_info.has_internal_source;
+    info.is_hardware_accelerated = rust_info.is_hardware_accelerated;
+    info.has_internal_source = rust_info.has_internal_source;
 
     // FPS allocation code is turned off for now. The below implementation crashes.
     //
@@ -164,7 +164,7 @@ webrtc::VideoEncoder::EncoderInfo ArcasVideoEncoder::GetEncoderInfo() const
     }
 
     info.resolution_bitrate_limits = resolution_bitrate_limits;
-    info.supports_simulcast        = rust_info.supports_simulcast;
+    info.supports_simulcast = rust_info.supports_simulcast;
 
     absl::InlinedVector<webrtc::VideoFrameBuffer::Type, webrtc::kMaxPreferredPixelFormats>
         preferred_pixel_formats;

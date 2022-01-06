@@ -69,7 +69,7 @@ public:
     header_extensions_to_offer() const
     {
         auto list = api->HeaderExtensionsToOffer();
-        auto out  = std::make_unique<std::vector<ArcasRTPHeaderExtensionCapability>>();
+        auto out = std::make_unique<std::vector<ArcasRTPHeaderExtensionCapability>>();
 
         for (auto item : list)
         {
@@ -83,7 +83,7 @@ public:
     header_extensions_to_negotiated() const
     {
         auto list = api->HeaderExtensionsNegotiated();
-        auto out  = std::make_unique<std::vector<ArcasRTPHeaderExtensionCapability>>();
+        auto out = std::make_unique<std::vector<ArcasRTPHeaderExtensionCapability>>();
 
         for (auto item : list)
         {
@@ -96,7 +96,7 @@ public:
     std::unique_ptr<std::vector<ArcasRTPCodecCapability>> codec_preferences() const
     {
         auto list = api->codec_preferences();
-        auto out  = std::make_unique<std::vector<ArcasRTPCodecCapability>>();
+        auto out = std::make_unique<std::vector<ArcasRTPCodecCapability>>();
 
         for (auto item : list)
         {

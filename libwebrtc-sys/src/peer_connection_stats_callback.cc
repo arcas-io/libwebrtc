@@ -13,7 +13,7 @@ ArcasRTCStatsCollectorCallback::ArcasRTCStatsCollectorCallback(
 void ArcasRTCStatsCollectorCallback::OnStatsDelivered(
     const rtc::scoped_refptr<const webrtc::RTCStatsReport>& report)
 {
-    auto inbound_stream_stats  = report->GetStatsOfType<webrtc::RTCInboundRTPStreamStats>();
+    auto inbound_stream_stats = report->GetStatsOfType<webrtc::RTCInboundRTPStreamStats>();
     auto outbound_stream_stats = report->GetStatsOfType<webrtc::RTCOutboundRTPStreamStats>();
 
     rust::Vec<ArcasVideoSenderStats>   out_video;
@@ -28,17 +28,17 @@ void ArcasRTCStatsCollectorCallback::OnStatsDelivered(
         if (*stat->kind == "video")
         {
             ArcasVideoReceiverStats recv = {0};
-            recv.ssrc                    = stat->ssrc.ValueOrDefault(0);
-            recv.frame_height            = stat->frame_height.ValueOrDefault(0);
-            recv.frame_width             = stat->frame_width.ValueOrDefault(0);
-            recv.bytes_received          = stat->bytes_received.ValueOrDefault(0);
-            recv.frames_decoded          = stat->frames_decoded.ValueOrDefault(0);
-            recv.keyframes_decoded       = stat->key_frames_decoded.ValueOrDefault(0);
-            recv.frames_dropped          = stat->frames_dropped.ValueOrDefault(0);
-            recv.packets_lost            = stat->packets_lost.ValueOrDefault(0);
-            recv.packets_received        = stat->packets_received.ValueOrDefault(0);
-            recv.packets_repaired        = stat->packets_repaired.ValueOrDefault(0);
-            recv.total_decode_time       = stat->total_decode_time.ValueOrDefault(0.0f);
+            recv.ssrc = stat->ssrc.ValueOrDefault(0);
+            recv.frame_height = stat->frame_height.ValueOrDefault(0);
+            recv.frame_width = stat->frame_width.ValueOrDefault(0);
+            recv.bytes_received = stat->bytes_received.ValueOrDefault(0);
+            recv.frames_decoded = stat->frames_decoded.ValueOrDefault(0);
+            recv.keyframes_decoded = stat->key_frames_decoded.ValueOrDefault(0);
+            recv.frames_dropped = stat->frames_dropped.ValueOrDefault(0);
+            recv.packets_lost = stat->packets_lost.ValueOrDefault(0);
+            recv.packets_received = stat->packets_received.ValueOrDefault(0);
+            recv.packets_repaired = stat->packets_repaired.ValueOrDefault(0);
+            recv.total_decode_time = stat->total_decode_time.ValueOrDefault(0.0f);
 
             in_video.push_back(recv);
         }
@@ -47,13 +47,13 @@ void ArcasRTCStatsCollectorCallback::OnStatsDelivered(
         else if (*stat->kind == "audio")
         {
             ArcasAudioReceiverStats receiver = {0};
-            receiver.ssrc                    = stat->ssrc.ValueOrDefault(0);
-            receiver.packets_received        = stat->packets_received.ValueOrDefault(0);
-            receiver.packets_lost            = stat->packets_lost.ValueOrDefault(0);
-            receiver.bytes_received          = stat->bytes_received.ValueOrDefault(0);
-            receiver.jitter                  = stat->jitter.ValueOrDefault(0.0);
-            receiver.frames_decoded          = stat->frames_decoded.ValueOrDefault(0);
-            receiver.total_decode_time       = stat->total_decode_time.ValueOrDefault(0.0);
+            receiver.ssrc = stat->ssrc.ValueOrDefault(0);
+            receiver.packets_received = stat->packets_received.ValueOrDefault(0);
+            receiver.packets_lost = stat->packets_lost.ValueOrDefault(0);
+            receiver.bytes_received = stat->bytes_received.ValueOrDefault(0);
+            receiver.jitter = stat->jitter.ValueOrDefault(0.0);
+            receiver.frames_decoded = stat->frames_decoded.ValueOrDefault(0);
+            receiver.total_decode_time = stat->total_decode_time.ValueOrDefault(0.0);
 
             if (stat->track_id.is_defined())
             {
@@ -76,21 +76,21 @@ void ArcasRTCStatsCollectorCallback::OnStatsDelivered(
         // record outbound video stats
         if (*stat->kind == "video")
         {
-            ArcasVideoSenderStats send      = {0};
-            send.ssrc                       = stat->ssrc.ValueOrDefault(0);
-            send.packets_sent               = stat->packets_sent.ValueOrDefault(0);
-            send.bytes_sent                 = stat->bytes_sent.ValueOrDefault(0);
-            send.frames_encoded             = stat->frames_encoded.ValueOrDefault(0);
-            send.key_frames_encoded         = stat->key_frames_encoded.ValueOrDefault(0);
-            send.total_encode_time          = stat->total_encode_time.ValueOrDefault(0.0);
-            send.frame_width                = stat->frame_width.ValueOrDefault(0);
-            send.frame_height               = stat->frame_height.ValueOrDefault(0);
+            ArcasVideoSenderStats send = {0};
+            send.ssrc = stat->ssrc.ValueOrDefault(0);
+            send.packets_sent = stat->packets_sent.ValueOrDefault(0);
+            send.bytes_sent = stat->bytes_sent.ValueOrDefault(0);
+            send.frames_encoded = stat->frames_encoded.ValueOrDefault(0);
+            send.key_frames_encoded = stat->key_frames_encoded.ValueOrDefault(0);
+            send.total_encode_time = stat->total_encode_time.ValueOrDefault(0.0);
+            send.frame_width = stat->frame_width.ValueOrDefault(0);
+            send.frame_height = stat->frame_height.ValueOrDefault(0);
             send.retransmitted_packets_sent = stat->retransmitted_packets_sent.ValueOrDefault(0);
-            send.retransmitted_bytes_sent   = stat->retransmitted_bytes_sent.ValueOrDefault(0);
-            send.total_packet_send_delay    = stat->total_packet_send_delay.ValueOrDefault(0.0);
-            send.nack_count                 = stat->nack_count.ValueOrDefault(0);
-            send.fir_count                  = stat->fir_count.ValueOrDefault(0);
-            send.pli_count                  = stat->pli_count.ValueOrDefault(0);
+            send.retransmitted_bytes_sent = stat->retransmitted_bytes_sent.ValueOrDefault(0);
+            send.total_packet_send_delay = stat->total_packet_send_delay.ValueOrDefault(0.0);
+            send.nack_count = stat->nack_count.ValueOrDefault(0);
+            send.fir_count = stat->fir_count.ValueOrDefault(0);
+            send.pli_count = stat->pli_count.ValueOrDefault(0);
 
             if (stat->quality_limitation_reason.is_defined())
             {
@@ -117,8 +117,8 @@ void ArcasRTCStatsCollectorCallback::OnStatsDelivered(
                     report->GetAs<webrtc::RTCRemoteInboundRtpStreamStats>(*stat->remote_id);
                 if (remote_stat)
                 {
-                    send.remote_packets_lost    = remote_stat->packets_lost.ValueOrDefault(0);
-                    send.remote_jitter          = remote_stat->jitter.ValueOrDefault(0.0);
+                    send.remote_packets_lost = remote_stat->packets_lost.ValueOrDefault(0);
+                    send.remote_jitter = remote_stat->jitter.ValueOrDefault(0.0);
                     send.remote_round_trip_time = remote_stat->round_trip_time.ValueOrDefault(0.0);
                 }
             }
@@ -129,9 +129,9 @@ void ArcasRTCStatsCollectorCallback::OnStatsDelivered(
         else if (*stat->kind == "audio")
         {
             ArcasAudioSenderStats send = {0};
-            send.ssrc                  = stat->ssrc.ValueOrDefault(0);
-            send.packets_sent          = stat->packets_sent.ValueOrDefault(0);
-            send.bytes_sent            = stat->bytes_sent.ValueOrDefault(0);
+            send.ssrc = stat->ssrc.ValueOrDefault(0);
+            send.packets_sent = stat->packets_sent.ValueOrDefault(0);
+            send.bytes_sent = stat->bytes_sent.ValueOrDefault(0);
 
             if (stat->remote_id.is_defined())
             {
@@ -139,8 +139,8 @@ void ArcasRTCStatsCollectorCallback::OnStatsDelivered(
                     report->GetAs<webrtc::RTCRemoteInboundRtpStreamStats>(*stat->remote_id);
                 if (remote_stat)
                 {
-                    send.remote_packets_lost    = remote_stat->packets_lost.ValueOrDefault(0);
-                    send.remote_jitter          = remote_stat->jitter.ValueOrDefault(0.0);
+                    send.remote_packets_lost = remote_stat->packets_lost.ValueOrDefault(0);
+                    send.remote_jitter = remote_stat->jitter.ValueOrDefault(0.0);
                     send.remote_round_trip_time = remote_stat->round_trip_time.ValueOrDefault(0.0);
                 }
             }

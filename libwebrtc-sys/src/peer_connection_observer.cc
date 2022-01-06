@@ -72,7 +72,7 @@ void ArcasPeerConnectionObserver::OnIceCandidate(const webrtc::IceCandidateInter
     auto new_candidate = webrtc::CreateIceCandidate(candidate->sdp_mid(),
                                                     candidate->sdp_mline_index(),
                                                     candidate->candidate());
-    auto rust          = std::make_unique<ArcasICECandidate>(std::move(new_candidate));
+    auto rust = std::make_unique<ArcasICECandidate>(std::move(new_candidate));
     observer->on_ice_candidate(std::move(rust));
 }
 
@@ -120,10 +120,10 @@ void ArcasPeerConnectionObserver::OnIceSelectedCandidatePairChanged(
     const cricket::CandidatePairChangeEvent& event)
 {
     ArcasCandidatePairChangeEvent rust;
-    rust.selected_remote_id    = rust::String(event.selected_candidate_pair.remote.id().c_str());
-    rust.selected_local_id     = rust::String(event.selected_candidate_pair.local.id().c_str());
+    rust.selected_remote_id = rust::String(event.selected_candidate_pair.remote.id().c_str());
+    rust.selected_local_id = rust::String(event.selected_candidate_pair.local.id().c_str());
     rust.last_data_received_ms = event.last_data_received_ms;
-    rust.reason                = rust::String(event.reason.c_str());
+    rust.reason = rust::String(event.reason.c_str());
     rust.estimated_disconnected_time_ms = event.estimated_disconnected_time_ms;
     observer->on_ice_selected_candidate_pair_change(rust);
 };

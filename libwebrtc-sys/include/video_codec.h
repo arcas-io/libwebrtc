@@ -468,31 +468,31 @@ public:
     rust::String id()
     {
         std::stringstream output;
-        auto              type_output       = CodecTypeToPayloadString(codec_->codec.codecType);
-        auto              width             = codec_->codec.width;
-        auto              height            = codec_->codec.height;
-        auto              max_bitrate       = codec_->codec.maxBitrate;
-        auto              min_bitrate       = codec_->codec.minBitrate;
-        auto              start_bitrate     = codec_->codec.startBitrate;
-        auto              max_framerate     = codec_->codec.maxFramerate;
+        auto              type_output = CodecTypeToPayloadString(codec_->codec.codecType);
+        auto              width = codec_->codec.width;
+        auto              height = codec_->codec.height;
+        auto              max_bitrate = codec_->codec.maxBitrate;
+        auto              min_bitrate = codec_->codec.minBitrate;
+        auto              start_bitrate = codec_->codec.startBitrate;
+        auto              max_framerate = codec_->codec.maxFramerate;
         auto              simulcast_streams = codec_->codec.numberOfSimulcastStreams;
         auto              mode =
             codec_->codec.mode == webrtc::VideoCodecMode::kRealtimeVideo ? "realtime" : "screen";
-        auto keyframe_interval         = 0;
+        auto keyframe_interval = 0;
         auto number_of_temporal_layers = 0;
 
         switch (codec_->codec.codecType)
         {
         case webrtc::VideoCodecType::kVideoCodecVP8:
-            keyframe_interval         = codec_->codec.VP8()->keyFrameInterval;
+            keyframe_interval = codec_->codec.VP8()->keyFrameInterval;
             number_of_temporal_layers = codec_->codec.VP8()->numberOfTemporalLayers;
             break;
         case webrtc::VideoCodecType::kVideoCodecVP9:
-            keyframe_interval         = codec_->codec.VP9()->keyFrameInterval;
+            keyframe_interval = codec_->codec.VP9()->keyFrameInterval;
             number_of_temporal_layers = codec_->codec.VP9()->numberOfTemporalLayers;
             break;
         case webrtc::VideoCodecType::kVideoCodecH264:
-            keyframe_interval         = codec_->codec.H264()->keyFrameInterval;
+            keyframe_interval = codec_->codec.H264()->keyFrameInterval;
             number_of_temporal_layers = codec_->codec.H264()->numberOfTemporalLayers;
             break;
         default:

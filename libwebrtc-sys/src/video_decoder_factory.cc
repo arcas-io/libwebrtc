@@ -15,7 +15,7 @@ ArcasVideoDecoderFactory::QueryCodecSupport(const webrtc::SdpVideoFormat& format
 {
     auto out = api->query_codec_support(format, reference_scaling);
     return webrtc::VideoDecoderFactory::CodecSupport{
-        .is_supported       = out.is_supported,
+        .is_supported = out.is_supported,
         .is_power_efficient = out.is_power_efficient,
     };
 }

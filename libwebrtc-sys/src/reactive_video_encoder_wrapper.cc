@@ -19,7 +19,7 @@ void ArcasReactiveVideoEncoderWrapper::on_loss_notification(
     }
 
     notification.timestamp_of_last_decodable = loss.timestamp_of_last_decodable;
-    notification.timestamp_of_last_received  = loss.timestamp_of_last_received;
+    notification.timestamp_of_last_received = loss.timestamp_of_last_received;
 
     video_encoder_->OnLossNotification(notification);
 }
@@ -82,17 +82,17 @@ ArcasVideoEncoderInfo ArcasReactiveVideoEncoderWrapper::get_encoder_info() const
     }
 
     return ArcasVideoEncoderInfo{
-        .scaling_settings                        = scaling_settings,
-        .requested_resolution_alignment          = info.requested_resolution_alignment,
+        .scaling_settings = scaling_settings,
+        .requested_resolution_alignment = info.requested_resolution_alignment,
         .apply_alignment_to_all_simulcast_layers = info.apply_alignment_to_all_simulcast_layers,
-        .supports_native_handle                  = info.supports_native_handle,
-        .implementation_name                     = rust::String(info.implementation_name.c_str()),
-        .has_trusted_rate_controller             = info.has_trusted_rate_controller,
-        .is_hardware_accelerated                 = info.is_hardware_accelerated,
-        .has_internal_source                     = info.has_internal_source,
-        .fps_allocation                          = fps_allocation,
-        .supports_simulcast                      = info.supports_simulcast,
-        .preferred_pixel_formats                 = preferred_pixel_formats,
-        .is_qp_trusted                           = is_qp_trusted,
+        .supports_native_handle = info.supports_native_handle,
+        .implementation_name = rust::String(info.implementation_name.c_str()),
+        .has_trusted_rate_controller = info.has_trusted_rate_controller,
+        .is_hardware_accelerated = info.is_hardware_accelerated,
+        .has_internal_source = info.has_internal_source,
+        .fps_allocation = fps_allocation,
+        .supports_simulcast = info.supports_simulcast,
+        .preferred_pixel_formats = preferred_pixel_formats,
+        .is_qp_trusted = is_qp_trusted,
     };
 }

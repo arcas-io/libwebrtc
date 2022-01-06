@@ -7,8 +7,8 @@ ArcasEncodedImageCallback::on_encoded_image(const webrtc::EncodedImage&   image,
 {
     auto result = api->OnEncodedImage(image, codec_specific_info->as_ptr());
     return ArcasEncodedImageCallbackResult{
-        .error           = result.error,
-        .frame_id        = result.frame_id,
+        .error = result.error,
+        .frame_id = result.frame_id,
         .drop_next_frame = result.drop_next_frame,
     };
 }
