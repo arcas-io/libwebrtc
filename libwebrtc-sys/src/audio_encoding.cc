@@ -30,7 +30,8 @@ int ArcasAudioEncoder::GetTargetBitrate() const
 
 absl::optional<std::pair<webrtc::TimeDelta, webrtc::TimeDelta>> ArcasAudioEncoder::GetFrameLengthRange() const
 {
-    return absl::optional<std::pair<webrtc::TimeDelta, webrtc::TimeDelta>>();
+    return absl::optional<std::pair<webrtc::TimeDelta, webrtc::TimeDelta>>(
+        std::make_pair<webrtc::TimeDelta, webrtc::TimeDelta>(webrtc::TimeDelta::Millis(5), webrtc::TimeDelta::Millis(60)));
 }
 
 void ArcasAudioEncoder::Reset() {}

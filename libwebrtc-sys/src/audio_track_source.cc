@@ -35,7 +35,7 @@ void ArcasAudioTrackSource::push_zeroed_data(
     }
     api->PushData(
         data.data(),
-        2*number_of_channels,
+        16*number_of_channels,
         sample_rate,
         number_of_channels,
         sample_rate / 100

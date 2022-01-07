@@ -65,7 +65,7 @@ public:
     };
     int32_t SetRecordingDevice(uint16_t index)
     {
-        return -1;
+        return 0;
     };
     int32_t SetRecordingDevice(webrtc::AudioDeviceModule::WindowsDeviceType device)
     {
@@ -127,7 +127,7 @@ public:
     // Audio mixer initialization
     int32_t InitSpeaker()
     {
-        return -1;
+        return 0;
     };
     bool SpeakerIsInitialized() const
     {
@@ -135,7 +135,7 @@ public:
     };
     int32_t InitMicrophone()
     {
-        return -1;
+        return 0;
     };
     bool MicrophoneIsInitialized() const
     {

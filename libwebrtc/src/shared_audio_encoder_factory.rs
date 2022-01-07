@@ -126,6 +126,7 @@ mod tests {
         encoded_audio_frame_producer::GStreamerOpusAudioFrameProducer,
         factory::{Factory, FactoryConfig},
         peer_connection::{PeerConnectionConfig, SDPSemantic},
+        transceiver::{TransceiverDirection, TransceiverInit},
     };
 
     use super::SharedAudioEncoderFactory;
@@ -146,10 +147,10 @@ mod tests {
                 },
                 info: libwebrtc_sys::audio_encoding::ffi::ArcasAudioCodecInfo {
                     sample_rate: 8000,
-                    num_channels: 2,
-                    default_bitrate_bps: -1,
-                    min_bitrate_bps: -1,
-                    max_bitrate_bps: -1,
+                    num_channels: 1,
+                    default_bitrate_bps: 64000,
+                    min_bitrate_bps: 6000,
+                    max_bitrate_bps: 510000,
                     allow_comfort_noise: false,
                     supports_network_adaptation: false,
                 },
@@ -159,7 +160,7 @@ mod tests {
             .create_factory_with_config(FactoryConfig {
                 video_encoder_factory: None,
                 video_decoder_factory: None,
-                // audio_encoder_factory: Some(opus_enc_factory),
+                /* audio_encoder_factory: Some(opus_enc_factory), */
                 audio_encoder_factory: None,
             })
             .unwrap();
@@ -171,9 +172,7 @@ mod tests {
             })
             .unwrap();
 
-        println!("created factories");
-
-        let source = AudioTrackSource::new(2, 8000);
+        let source = AudioTrackSource::new(1, 8000);
         let source_writer = source.clone();
         spawn(async move {
             let mut interval = tokio::time::interval(tokio::time::Duration::from_millis(10));
@@ -194,10 +193,12 @@ mod tests {
             let audio_track = pc_factory
                 .create_audio_track("audio".to_owned(), &source)
                 .unwrap();
-            pc.add_audio_track(vec!["0".to_owned()], audio_track)
-                .await
-                .unwrap();
-            println!("added audio track");
+            pc.add_audio_transceiver(
+                TransceiverInit::new(vec!["0".to_owned()], TransceiverDirection::SendOnly),
+                audio_track,
+            )
+            .await
+            .unwrap();
         }
 
         let mut recvr = recvr_factory
@@ -208,7 +209,6 @@ mod tests {
             .unwrap();
 
         let offer = pc.create_offer().await.unwrap();
-        println!("{}", offer.to_string());
         let remote_offer = offer.copy_to_remote().unwrap();
         pc.set_local_description(offer).await.unwrap();
         recvr.set_remote_description(remote_offer).await.unwrap();
@@ -224,8 +224,6 @@ mod tests {
         let recvr_cand = recvr_ice.recv().await.unwrap();
         pc.add_ice_candidate(recvr_cand).await.unwrap();
         recvr.add_ice_candidate(pc_cand).await.unwrap();
-
-        println!("added candidates");
 
         let (done_tx, mut done_rx) = tokio::sync::mpsc::channel(1);
         tokio::spawn(async move {
@@ -248,7 +246,7 @@ mod tests {
                         }
                     }
                 }
-                tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
+                tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
             }
         });
         done_rx.recv().await.unwrap();
