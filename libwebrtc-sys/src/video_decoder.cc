@@ -1,31 +1,29 @@
 #include "libwebrtc-sys/src/shared_bridge.rs.h"
 #include "libwebrtc-sys/src/video_decoding.rs.h"
 
-void ArcasDecodedImageCallback::SetCallback(webrtc::DecodedImageCallback *cb)
+void ArcasDecodedImageCallback::SetCallback(webrtc::DecodedImageCallback* cb)
 {
     this->cb = cb;
 }
 
-int32_t ArcasDecodedImageCallback::decoded(webrtc::VideoFrame &frame) const
+int32_t ArcasDecodedImageCallback::decoded(webrtc::VideoFrame& frame) const
 {
     return this->cb ? this->cb->Decoded(frame) : 0;
 }
 
-bool ArcasVideoDecoder::Configure(const webrtc::VideoDecoder::Settings &settings)
+bool ArcasVideoDecoder::Configure(const webrtc::VideoDecoder::Settings& settings)
 {
     return true;
 }
 
-int32_t ArcasVideoDecoder::Decode(
-    const webrtc::EncodedImage &image,
-    bool missing_frames,
-    int64_t render_times_ms)
+int32_t ArcasVideoDecoder::Decode(const webrtc::EncodedImage& image,
+                                  bool missing_frames,
+                                  int64_t render_times_ms)
 {
     return api->decode(image, missing_frames, render_times_ms, cb);
 }
 
-int32_t ArcasVideoDecoder::RegisterDecodeCompleteCallback(
-    webrtc::DecodedImageCallback *cb)
+int32_t ArcasVideoDecoder::RegisterDecodeCompleteCallback(webrtc::DecodedImageCallback* cb)
 {
     this->cb.SetCallback(cb);
     return 0;

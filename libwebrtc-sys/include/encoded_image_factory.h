@@ -1,7 +1,7 @@
 #pragma once
 #include "api/video/color_space.h"
-#include "api/video/video_frame.h"
 #include "api/video/encoded_image.h"
+#include "api/video/video_frame.h"
 
 // Opaque to rust not to C++
 class ArcasOpaqueEncodedImageBuffer
@@ -10,8 +10,8 @@ private:
     rtc::scoped_refptr<webrtc::EncodedImageBuffer> api_;
 
 public:
-    ArcasOpaqueEncodedImageBuffer(
-        rtc::scoped_refptr<webrtc::EncodedImageBuffer> api) : api_(api)
+    ArcasOpaqueEncodedImageBuffer(rtc::scoped_refptr<webrtc::EncodedImageBuffer> api)
+    : api_(api)
     {
     }
 
@@ -20,7 +20,7 @@ public:
         return api_;
     }
 
-    const rtc::scoped_refptr<webrtc::EncodedImageBuffer> &current_ref() const
+    const rtc::scoped_refptr<webrtc::EncodedImageBuffer>& current_ref() const
     {
         return api_;
     }
@@ -34,7 +34,8 @@ public:
 class ArcasEncodedImageFactory
 {
 public:
-    std::shared_ptr<ArcasOpaqueEncodedImageBuffer> create_encoded_image_buffer(const uint8_t *data, size_t size) const
+    std::shared_ptr<ArcasOpaqueEncodedImageBuffer> create_encoded_image_buffer(const uint8_t* data,
+                                                                               size_t size) const
     {
         auto api = webrtc::EncodedImageBuffer::Create(data, size);
         return std::make_shared<ArcasOpaqueEncodedImageBuffer>(api);
@@ -45,14 +46,15 @@ public:
         return std::make_shared<ArcasOpaqueEncodedImageBuffer>(api);
     }
 
-    std::unique_ptr<webrtc::EncodedImage> set_encoded_image_buffer(
-        const webrtc::VideoFrame &video_frame,
-        std::unique_ptr<webrtc::EncodedImage> image,
-        const ArcasOpaqueEncodedImageBuffer &buffer) const
+    std::unique_ptr<webrtc::EncodedImage>
+    set_encoded_image_buffer(const webrtc::VideoFrame& video_frame,
+                             std::unique_ptr<webrtc::EncodedImage> image,
+                             const ArcasOpaqueEncodedImageBuffer& buffer) const
     {
-        const webrtc::ColorSpace kColorSpace(
-            webrtc::ColorSpace::PrimaryID::kBT709, webrtc::ColorSpace::TransferID::kBT709,
-            webrtc::ColorSpace::MatrixID::kBT709, webrtc::ColorSpace::RangeID::kFull);
+        const webrtc::ColorSpace kColorSpace(webrtc::ColorSpace::PrimaryID::kBT709,
+                                             webrtc::ColorSpace::TransferID::kBT709,
+                                             webrtc::ColorSpace::MatrixID::kBT709,
+                                             webrtc::ColorSpace::RangeID::kFull);
         image->_frameType = webrtc::VideoFrameType::kVideoFrameKey;
         image->SetColorSpace(kColorSpace);
         image->SetTimestamp(video_frame.timestamp());

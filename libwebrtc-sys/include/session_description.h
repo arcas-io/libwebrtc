@@ -1,6 +1,6 @@
 #pragma once
-#include "rust/cxx.h"
 #include "api/jsep_session_description.h"
+#include "rust/cxx.h"
 
 struct ArcasCreateSessionDescriptionResult;
 
@@ -18,4 +18,5 @@ public:
     std::unique_ptr<webrtc::SessionDescriptionInterface> clone_sdp() const;
 };
 
-ArcasCreateSessionDescriptionResult create_arcas_session_description(webrtc::SdpType type, rust::String sdp);
+ArcasCreateSessionDescriptionResult create_arcas_session_description(webrtc::SdpType type,
+                                                                     rust::String sdp);

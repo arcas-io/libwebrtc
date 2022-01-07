@@ -1,14 +1,17 @@
 #pragma once
-#include "api/video_codecs/video_decoder.h"
 #include "api/video_codecs/sdp_video_format.h"
+#include "api/video_codecs/video_decoder.h"
 #include "api/video_codecs/video_decoder_factory.h"
-#include "rust/cxx.h"
 #include "libwebrtc-sys/include/rust_shared.h"
+#include "rust/cxx.h"
 
 class ArcasVideoDecoderFactory : public webrtc::VideoDecoderFactory
 {
 public:
-    ArcasVideoDecoderFactory(rust::Box<ArcasRustVideoDecoderFactory> api) : api(std::move(api)) {}
+    ArcasVideoDecoderFactory(rust::Box<ArcasRustVideoDecoderFactory> api)
+    : api(std::move(api))
+    {
+    }
     // Returns a list of supported video formats in order of preference, to use
     // for signaling etc.
     virtual std::vector<webrtc::SdpVideoFormat> GetSupportedFormats() const;
@@ -23,19 +26,21 @@ public:
     // https://w3c.github.io/webrtc-svc/#scalabilitymodes* for a specification of
     // different scalabilty modes. NOTE: QueryCodecSupport is currently an
     // experimental feature that is subject to change without notice.
-    virtual webrtc::VideoDecoderFactory::CodecSupport QueryCodecSupport(const webrtc::SdpVideoFormat &format, bool reference_scaling) const;
+    virtual webrtc::VideoDecoderFactory::CodecSupport
+    QueryCodecSupport(const webrtc::SdpVideoFormat& format, bool reference_scaling) const;
 
     // Creates a VideoDecoder for the spArcasRustVideoDecoderecified format.
-    virtual std::unique_ptr<webrtc::VideoDecoder> CreateVideoDecoder(
-        const webrtc::SdpVideoFormat &format);
+    virtual std::unique_ptr<webrtc::VideoDecoder>
+    CreateVideoDecoder(const webrtc::SdpVideoFormat& format);
 
 private:
     rust::Box<ArcasRustVideoDecoderFactory> api;
 };
 
-std::unique_ptr<ArcasVideoDecoderFactory> create_arcas_video_decoder_factory(rust::Box<ArcasRustVideoDecoderFactory> proxy);
+std::unique_ptr<ArcasVideoDecoderFactory>
+create_arcas_video_decoder_factory(rust::Box<ArcasRustVideoDecoderFactory> proxy);
 
-template <>
+template<>
 struct rust::IsRelocatable<ArcasRustVideoDecoder> : std::true_type
 {
 };

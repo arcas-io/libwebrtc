@@ -1,7 +1,7 @@
+#include "libwebrtc-sys/include/video_decoder_factory.h"
+#include "libwebrtc-sys/include/video_decoder.h"
 #include "libwebrtc-sys/src/shared_bridge.rs.h"
 #include "libwebrtc-sys/src/video_decoding.rs.h"
-#include "libwebrtc-sys/include/video_decoder.h"
-#include "libwebrtc-sys/include/video_decoder_factory.h"
 
 std::vector<webrtc::SdpVideoFormat> ArcasVideoDecoderFactory::GetSupportedFormats() const
 {
@@ -9,9 +9,9 @@ std::vector<webrtc::SdpVideoFormat> ArcasVideoDecoderFactory::GetSupportedFormat
     return *result;
 }
 
-webrtc::VideoDecoderFactory::CodecSupport ArcasVideoDecoderFactory::QueryCodecSupport(
-    const webrtc::SdpVideoFormat &format,
-    bool reference_scaling) const
+webrtc::VideoDecoderFactory::CodecSupport
+ArcasVideoDecoderFactory::QueryCodecSupport(const webrtc::SdpVideoFormat& format,
+                                            bool reference_scaling) const
 {
     auto out = api->query_codec_support(format, reference_scaling);
     return webrtc::VideoDecoderFactory::CodecSupport{
@@ -20,14 +20,15 @@ webrtc::VideoDecoderFactory::CodecSupport ArcasVideoDecoderFactory::QueryCodecSu
     };
 }
 
-std::unique_ptr<webrtc::VideoDecoder> ArcasVideoDecoderFactory::CreateVideoDecoder(
-    const webrtc::SdpVideoFormat &format)
+std::unique_ptr<webrtc::VideoDecoder>
+ArcasVideoDecoderFactory::CreateVideoDecoder(const webrtc::SdpVideoFormat& format)
 {
     auto proxy = api->create_video_decoder(format);
     return std::make_unique<ArcasVideoDecoder>(std::move(proxy));
 }
 
-std::unique_ptr<ArcasVideoDecoderFactory> create_arcas_video_decoder_factory(rust::Box<ArcasRustVideoDecoderFactory> proxy)
+std::unique_ptr<ArcasVideoDecoderFactory>
+create_arcas_video_decoder_factory(rust::Box<ArcasRustVideoDecoderFactory> proxy)
 {
     return std::make_unique<ArcasVideoDecoderFactory>(std::move(proxy));
 }

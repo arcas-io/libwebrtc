@@ -7,13 +7,13 @@ public:
     ArcasAudioDeviceModule();
 
     // Retrieve the currently utilized audio layer
-    int32_t ActiveAudioLayer(webrtc::AudioDeviceModule::AudioLayer *audioLayer) const
+    int32_t ActiveAudioLayer(webrtc::AudioDeviceModule::AudioLayer* audioLayer) const
     {
         return -1;
     };
 
     // Full-duplex transportation of PCM audio
-    int32_t RegisterAudioCallback(webrtc::AudioTransport *audioCallback)
+    int32_t RegisterAudioCallback(webrtc::AudioTransport* audioCallback)
     {
         return -1;
     };
@@ -73,7 +73,7 @@ public:
     };
 
     // Audio transport initialization
-    int32_t PlayoutIsAvailable(bool *available)
+    int32_t PlayoutIsAvailable(bool* available)
     {
         return -1;
     };
@@ -85,7 +85,7 @@ public:
     {
         return -1;
     };
-    int32_t RecordingIsAvailable(bool *available)
+    int32_t RecordingIsAvailable(bool* available)
     {
         return -1;
     };
@@ -143,7 +143,7 @@ public:
     };
 
     // Speaker volume controls
-    int32_t SpeakerVolumeIsAvailable(bool *available)
+    int32_t SpeakerVolumeIsAvailable(bool* available)
     {
         return -1;
     };
@@ -151,21 +151,21 @@ public:
     {
         return -1;
     };
-    int32_t SpeakerVolume(uint32_t *volume) const
+    int32_t SpeakerVolume(uint32_t* volume) const
     {
         return -1;
     };
-    int32_t MaxSpeakerVolume(uint32_t *maxVolume) const
+    int32_t MaxSpeakerVolume(uint32_t* maxVolume) const
     {
         return -1;
     };
-    int32_t MinSpeakerVolume(uint32_t *minVolume) const
+    int32_t MinSpeakerVolume(uint32_t* minVolume) const
     {
         return -1;
     };
 
     // Microphone volume controls
-    int32_t MicrophoneVolumeIsAvailable(bool *available)
+    int32_t MicrophoneVolumeIsAvailable(bool* available)
     {
         return -1;
     };
@@ -173,21 +173,21 @@ public:
     {
         return -1;
     };
-    int32_t MicrophoneVolume(uint32_t *volume) const
+    int32_t MicrophoneVolume(uint32_t* volume) const
     {
         return -1;
     };
-    int32_t MaxMicrophoneVolume(uint32_t *maxVolume) const
+    int32_t MaxMicrophoneVolume(uint32_t* maxVolume) const
     {
         return -1;
     };
-    int32_t MinMicrophoneVolume(uint32_t *minVolume) const
+    int32_t MinMicrophoneVolume(uint32_t* minVolume) const
     {
         return -1;
     };
 
     // Speaker mute control
-    int32_t SpeakerMuteIsAvailable(bool *available)
+    int32_t SpeakerMuteIsAvailable(bool* available)
     {
         return -1;
     };
@@ -195,13 +195,13 @@ public:
     {
         return -1;
     };
-    int32_t SpeakerMute(bool *enabled) const
+    int32_t SpeakerMute(bool* enabled) const
     {
         return -1;
     };
 
     // Microphone mute control
-    int32_t MicrophoneMuteIsAvailable(bool *available)
+    int32_t MicrophoneMuteIsAvailable(bool* available)
     {
         return -1;
     };
@@ -209,13 +209,13 @@ public:
     {
         return -1;
     };
-    int32_t MicrophoneMute(bool *enabled) const
+    int32_t MicrophoneMute(bool* enabled) const
     {
         return -1;
     };
 
     // Stereo support
-    int32_t StereoPlayoutIsAvailable(bool *available) const
+    int32_t StereoPlayoutIsAvailable(bool* available) const
     {
         return -1;
     };
@@ -223,11 +223,11 @@ public:
     {
         return -1;
     };
-    int32_t StereoPlayout(bool *enabled) const
+    int32_t StereoPlayout(bool* enabled) const
     {
         return -1;
     };
-    int32_t StereoRecordingIsAvailable(bool *available) const
+    int32_t StereoRecordingIsAvailable(bool* available) const
     {
         return -1;
     };
@@ -235,13 +235,13 @@ public:
     {
         return -1;
     };
-    int32_t StereoRecording(bool *enabled) const
+    int32_t StereoRecording(bool* enabled) const
     {
         return -1;
     };
 
     // Playout delay
-    int32_t PlayoutDelay(uint16_t *delayMS) const
+    int32_t PlayoutDelay(uint16_t* delayMS) const
     {
         return -1;
     };
@@ -276,5 +276,8 @@ public:
 
     // Play underrun count. Only supported on Android.
     // TODO(alexnarest): Make it abstract after upstream projects support it.
-    int32_t GetPlayoutUnderrunCount() const { return -1; }
+    int32_t GetPlayoutUnderrunCount() const
+    {
+        return -1;
+    }
 };

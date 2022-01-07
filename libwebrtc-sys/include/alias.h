@@ -1,9 +1,9 @@
 #pragma once
-#include "api/peer_connection_interface.h"
 #include "api/media_types.h"
+#include "api/peer_connection_interface.h"
+#include "api/video/video_frame.h"
 #include "api/video_codecs/video_encoder.h"
 #include "api/video_codecs/video_encoder_factory.h"
-#include "api/video/video_frame.h"
 
 /**
  * @brief Naming Conventions
@@ -36,7 +36,8 @@ using ArcasCxxVideoBitrateAllocation = webrtc::VideoBitrateAllocation;
 using ArcasCxxEncodedImageCallbackResultError = webrtc::EncodedImageCallback::Result::Error;
 using ArcasCxxSdpVideoFormat = webrtc::SdpVideoFormat;
 using ArcasCxxDataRate = webrtc::DataRate;
-using ArcasCxxVideoEncoderOptionalSelectorPointer = std::unique_ptr<webrtc::VideoEncoderFactory::EncoderSelectorInterface>;
+using ArcasCxxVideoEncoderOptionalSelectorPointer =
+    std::unique_ptr<webrtc::VideoEncoderFactory::EncoderSelectorInterface>;
 using ArcasCxxEncodedImage = webrtc::EncodedImage;
 using ArcasCxxRefCountedEncodedImageBuffer = rtc::scoped_refptr<webrtc::EncodedImageBuffer>;
 using ArcasCxxVideoCodecType = webrtc::VideoCodecType;

@@ -1,6 +1,6 @@
 #pragma once
-#include "rtc_base/logging.h"
 #include "api/media_stream_interface.h"
+#include "rtc_base/logging.h"
 #include "rust/cxx.h"
 
 class ArcasVideoTrack
@@ -9,7 +9,8 @@ private:
     rtc::scoped_refptr<webrtc::VideoTrackInterface> api;
 
 public:
-    ArcasVideoTrack(rtc::scoped_refptr<webrtc::VideoTrackInterface> api) : api(api){};
+    ArcasVideoTrack(rtc::scoped_refptr<webrtc::VideoTrackInterface> api)
+    : api(api){};
     ~ArcasVideoTrack()
     {
         RTC_LOG(LS_VERBOSE) << "~ArcasVideoTrack";

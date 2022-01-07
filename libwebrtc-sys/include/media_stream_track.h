@@ -3,7 +3,6 @@
 
 class ArcasMediaStreamTrack
 {
-
     rtc::scoped_refptr<MediaStreamTrackInterface> ref()
     {
         return api;

@@ -1,16 +1,18 @@
 #pragma once
-#include "rust/cxx.h"
-#include "libwebrtc-sys/include/session_description.h"
 #include "api/peer_connection_interface.h"
 #include "libwebrtc-sys/include/rust_shared.h"
+#include "libwebrtc-sys/include/session_description.h"
+#include "rust/cxx.h"
 
-class ArcasCreateSessionDescriptionObserver : public webrtc::CreateSessionDescriptionObserver, public rtc::RefCountedBase
+class ArcasCreateSessionDescriptionObserver : public webrtc::CreateSessionDescriptionObserver,
+                                              public rtc::RefCountedBase
 {
 private:
     rust::Box<ArcasRustCreateSessionDescriptionObserver> observer;
 
 public:
-    ArcasCreateSessionDescriptionObserver(rust::Box<ArcasRustCreateSessionDescriptionObserver> observer);
+    ArcasCreateSessionDescriptionObserver(
+        rust::Box<ArcasRustCreateSessionDescriptionObserver> observer);
 
     ~ArcasCreateSessionDescriptionObserver()
     {
@@ -26,11 +28,13 @@ public:
         return rtc::RefCountedBase::Release();
     }
 
-    void OnSuccess(webrtc::SessionDescriptionInterface *desc) override;
+    void OnSuccess(webrtc::SessionDescriptionInterface* desc) override;
     void OnFailure(webrtc::RTCError error) override;
 };
 
-class ArcasSetDescriptionObserver : public webrtc::SetLocalDescriptionObserverInterface, public webrtc::SetRemoteDescriptionObserverInterface, public rtc::RefCountedBase
+class ArcasSetDescriptionObserver : public webrtc::SetLocalDescriptionObserverInterface,
+                                    public webrtc::SetRemoteDescriptionObserverInterface,
+                                    public rtc::RefCountedBase
 {
 private:
     rust::Box<ArcasRustSetSessionDescriptionObserver> observer;

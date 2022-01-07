@@ -6,7 +6,6 @@
 // implementing it is carefully managed.
 class ArcasRefCounted : public rtc::RefCountInterface
 {
-
     void AddRef() const {}
     rtc::RefCountReleaseStatus Release()
     {

@@ -1,8 +1,8 @@
+#include "libwebrtc-sys/include/video_encoder.h"
 #include "libwebrtc-sys/src/shared_bridge.rs.h"
 #include "libwebrtc-sys/src/video_encoding.rs.h"
-#include "libwebrtc-sys/include/video_encoder.h"
 
-int32_t ArcasVideoEncoder::InitEncode(const webrtc::VideoCodec *codec_settings,
+int32_t ArcasVideoEncoder::InitEncode(const webrtc::VideoCodec* codec_settings,
                                       int number_of_cores,
                                       size_t max_payload_size)
 {
@@ -14,8 +14,7 @@ int32_t ArcasVideoEncoder::InitEncode(const webrtc::VideoCodec *codec_settings,
 //          - callback         : Callback object which handles encoded images.
 //
 // Return value                : WEBRTC_VIDEO_CODEC_OK if OK, < 0 otherwise.
-int32_t ArcasVideoEncoder::RegisterEncodeCompleteCallback(
-    webrtc::EncodedImageCallback *callback)
+int32_t ArcasVideoEncoder::RegisterEncodeCompleteCallback(webrtc::EncodedImageCallback* callback)
 {
     auto rust = std::make_unique<ArcasEncodedImageCallback>(callback);
     return api->register_encode_complete_callback(std::move(rust));
@@ -40,8 +39,8 @@ int32_t ArcasVideoEncoder::Release()
 //                                  WEBRTC_VIDEO_CODEC_ERR_PARAMETER
 //                                  WEBRTC_VIDEO_CODEC_MEMORY
 //                                  WEBRTC_VIDEO_CODEC_ERROR
-int32_t ArcasVideoEncoder::Encode(const webrtc::VideoFrame &frame,
-                                  const std::vector<webrtc::VideoFrameType> *frame_types)
+int32_t ArcasVideoEncoder::Encode(const webrtc::VideoFrame& frame,
+                                  const std::vector<webrtc::VideoFrameType>* frame_types)
 {
     return api->encode(frame, frame_types);
 };
@@ -49,7 +48,7 @@ int32_t ArcasVideoEncoder::Encode(const webrtc::VideoFrame &frame,
 // Sets rate control parameters: bitrate, framerate, etc. These settings are
 // instantaneous (i.e. not moving averages) and should apply from now until
 // the next call to SetRates().
-void ArcasVideoEncoder::SetRates(const RateControlParameters &parameters)
+void ArcasVideoEncoder::SetRates(const RateControlParameters& parameters)
 {
     auto rust_param = std::make_unique<ArcasVideoEncoderRateControlParameters>(parameters);
     api->set_rates(std::move(rust_param));
@@ -72,16 +71,16 @@ void ArcasVideoEncoder::OnRttUpdate(int64_t rtt_ms)
 };
 
 // Called when a loss notification is received.
-void ArcasVideoEncoder::OnLossNotification(const LossNotification &loss_notification)
+void ArcasVideoEncoder::OnLossNotification(const LossNotification& loss_notification)
 {
-
     // We can't pass back an optional (or a bool in a vec) so we use a vector of u8.
     rust::Vec<uint8_t> rust_deps;
     rust::Vec<uint8_t> rust_decodable;
 
     if (loss_notification.dependencies_of_last_received_decodable.has_value())
     {
-        rust_deps.push_back(loss_notification.dependencies_of_last_received_decodable.value() ? 1 : 0);
+        rust_deps.push_back(loss_notification.dependencies_of_last_received_decodable.value() ? 1
+                                                                                              : 0);
     }
 
     if (loss_notification.last_received_decodable.has_value())
@@ -109,16 +108,20 @@ webrtc::VideoEncoder::EncoderInfo ArcasVideoEncoder::GetEncoderInfo() const
 
     if (rust_info.scaling_settings.kOff)
     {
-        info.scaling_settings = webrtc::VideoEncoder::ScalingSettings(webrtc::VideoEncoder::ScalingSettings::kOff);
+        info.scaling_settings =
+            webrtc::VideoEncoder::ScalingSettings(webrtc::VideoEncoder::ScalingSettings::kOff);
     }
     else
     {
-        webrtc::VideoEncoder::ScalingSettings scale_settings(rust_info.scaling_settings.low, rust_info.scaling_settings.high, rust_info.scaling_settings.min_pixels);
+        webrtc::VideoEncoder::ScalingSettings scale_settings(rust_info.scaling_settings.low,
+                                                             rust_info.scaling_settings.high,
+                                                             rust_info.scaling_settings.min_pixels);
         info.scaling_settings = scale_settings;
     }
 
     info.requested_resolution_alignment = rust_info.requested_resolution_alignment;
-    info.apply_alignment_to_all_simulcast_layers = rust_info.apply_alignment_to_all_simulcast_layers;
+    info.apply_alignment_to_all_simulcast_layers =
+        rust_info.apply_alignment_to_all_simulcast_layers;
     info.supports_native_handle = rust_info.supports_native_handle;
     info.implementation_name = std::string(rust_info.implementation_name.c_str());
     info.has_trusted_rate_controller = rust_info.has_trusted_rate_controller;
@@ -151,24 +154,25 @@ webrtc::VideoEncoder::EncoderInfo ArcasVideoEncoder::GetEncoderInfo() const
     // }
 
     std::vector<webrtc::VideoEncoder::ResolutionBitrateLimits> resolution_bitrate_limits;
-    for (auto &limit : rust_info.resolution_bitrate_limits)
+    for (auto& limit : rust_info.resolution_bitrate_limits)
     {
-        webrtc::VideoEncoder::ResolutionBitrateLimits new_limit(
-            limit.frame_size_pixels,
-            limit.min_start_bitrate_bps,
-            limit.min_bitrate_bps,
-            limit.max_bitrate_bps);
+        webrtc::VideoEncoder::ResolutionBitrateLimits new_limit(limit.frame_size_pixels,
+                                                                limit.min_start_bitrate_bps,
+                                                                limit.min_bitrate_bps,
+                                                                limit.max_bitrate_bps);
         resolution_bitrate_limits.push_back(new_limit);
     }
 
     info.resolution_bitrate_limits = resolution_bitrate_limits;
     info.supports_simulcast = rust_info.supports_simulcast;
 
-    absl::InlinedVector<webrtc::VideoFrameBuffer::Type, webrtc::kMaxPreferredPixelFormats> preferred_pixel_formats;
+    absl::InlinedVector<webrtc::VideoFrameBuffer::Type, webrtc::kMaxPreferredPixelFormats>
+        preferred_pixel_formats;
 
     for (auto pixel_format : rust_info.preferred_pixel_formats)
     {
-        preferred_pixel_formats.push_back(static_cast<webrtc::VideoFrameBuffer::Type>(pixel_format));
+        preferred_pixel_formats.push_back(
+            static_cast<webrtc::VideoFrameBuffer::Type>(pixel_format));
     }
 
     info.preferred_pixel_formats = preferred_pixel_formats;
@@ -181,8 +185,9 @@ webrtc::VideoEncoder::EncoderInfo ArcasVideoEncoder::GetEncoderInfo() const
     return info;
 };
 
-std::shared_ptr<ArcasVideoEncoderRateControlParameters> create_arcas_video_encoder_rate_control_parameters(
-    const ArcasCxxVideoBitrateAllocation &bitrate, double framerate_fps)
+std::shared_ptr<ArcasVideoEncoderRateControlParameters>
+create_arcas_video_encoder_rate_control_parameters(const ArcasCxxVideoBitrateAllocation& bitrate,
+                                                   double framerate_fps)
 {
     return std::make_shared<ArcasVideoEncoderRateControlParameters>(bitrate, framerate_fps);
 }

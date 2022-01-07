@@ -1,34 +1,36 @@
 #include "libwebrtc-sys/include/video_encoding_wrapper.h"
+#include "api/video_codecs/builtin_video_encoder_factory.h"
 #include "libwebrtc-sys/src/shared_bridge.rs.h"
+#include "libwebrtc-sys/src/video_encoder_factory_wrapper.rs.h"
 #include "libwebrtc-sys/src/video_encoding.rs.h"
 #include "libwebrtc-sys/src/video_frame_buffer.rs.h"
-#include "api/video_codecs/builtin_video_encoder_factory.h"
-#include "libwebrtc-sys/src/video_encoder_factory_wrapper.rs.h"
 #include <iostream>
 
 rust::Vec<ArcasRustDict> ArcasSDPVideoFormatWrapper::get_parameters() const
 {
-
     rust::Vec<ArcasRustDict> output;
     for (auto param : api_.parameters)
     {
-        ArcasRustDict output_item{rust::String(param.first.c_str()), rust::String(param.second.c_str())};
+        ArcasRustDict output_item{rust::String(param.first.c_str()),
+                                  rust::String(param.second.c_str())};
         output.push_back(output_item);
     }
     return output;
 }
 
 std::shared_ptr<ArcasVideoEncoderSettings> create_arcas_video_encoder_settings(
-    bool loss_notification,
-    int number_of_cores,
-    size_t max_payload_size)
+    bool loss_notification, int number_of_cores, size_t max_payload_size)
 {
-    return std::make_shared<ArcasVideoEncoderSettings>(loss_notification, number_of_cores, max_payload_size);
+    return std::make_shared<ArcasVideoEncoderSettings>(loss_notification,
+                                                       number_of_cores,
+                                                       max_payload_size);
 }
 
-ArcasVideoEncoderWrapper::ArcasVideoEncoderWrapper(std::unique_ptr<webrtc::VideoEncoder> video_encoder,
-                                                   rust::Box<ArcasRustEncodedImageCallbackHandler> frame_handler) : video_encoder_(std::move(video_encoder)),
-                                                                                                                    frame_handler_(std::move(frame_handler))
+ArcasVideoEncoderWrapper::ArcasVideoEncoderWrapper(
+    std::unique_ptr<webrtc::VideoEncoder> video_encoder,
+    rust::Box<ArcasRustEncodedImageCallbackHandler> frame_handler)
+: video_encoder_(std::move(video_encoder))
+, frame_handler_(std::move(frame_handler))
 {
     if (this->video_encoder_->RegisterEncodeCompleteCallback(this) != 0)
     {
@@ -41,17 +43,18 @@ void ArcasVideoEncoderWrapper::OnDroppedFrame(webrtc::EncodedImageCallback::Drop
     frame_handler_->trigger_dropped(reason);
 }
 
-webrtc::EncodedImageCallback::Result ArcasVideoEncoderWrapper::OnEncodedImage(
-    const webrtc::EncodedImage &encoded_image,
-    const webrtc::CodecSpecificInfo *codec_specific_info)
+webrtc::EncodedImageCallback::Result
+ArcasVideoEncoderWrapper::OnEncodedImage(const webrtc::EncodedImage& encoded_image,
+                                         const webrtc::CodecSpecificInfo* codec_specific_info)
 {
     auto current_encoded_image = std::make_unique<webrtc::EncodedImage>(encoded_image);
-    auto current_codec_specific_info = std::make_unique<ArcasCodecSpecificInfo>(*codec_specific_info);
+    auto current_codec_specific_info =
+        std::make_unique<ArcasCodecSpecificInfo>(*codec_specific_info);
 
-    frame_handler_->trigger_encoded_image(std::move(current_encoded_image), std::move(current_codec_specific_info));
+    frame_handler_->trigger_encoded_image(std::move(current_encoded_image),
+                                          std::move(current_codec_specific_info));
 
-    return webrtc::EncodedImageCallback::Result(
-        webrtc::EncodedImageCallback::Result::OK);
+    return webrtc::EncodedImageCallback::Result(webrtc::EncodedImageCallback::Result::OK);
 }
 
 void ArcasVideoEncoderWrapper::on_loss_notification(ArcasVideoEncoderLossNotification loss) const
@@ -62,7 +65,8 @@ void ArcasVideoEncoderWrapper::on_loss_notification(ArcasVideoEncoderLossNotific
 
     if (loss.dependencies_of_last_received_decodable.size() > 0)
     {
-        cxx_loss_notification.dependencies_of_last_received_decodable.emplace(loss.dependencies_of_last_received_decodable[0]);
+        cxx_loss_notification.dependencies_of_last_received_decodable.emplace(
+            loss.dependencies_of_last_received_decodable[0]);
     }
 
     if (loss.last_received_decodable.size() > 0)
@@ -83,9 +87,9 @@ ArcasVideoEncoderInfo ArcasVideoEncoderWrapper::get_encoder_info() const
 
     if (info.scaling_settings.thresholds.has_value())
     {
-        scaling_settings.thresholds.push_back(ArcasVideoEncoderQpThresholds{
-            info.scaling_settings.thresholds.value().low,
-            info.scaling_settings.thresholds.value().high});
+        scaling_settings.thresholds.push_back(
+            ArcasVideoEncoderQpThresholds{info.scaling_settings.thresholds.value().low,
+                                          info.scaling_settings.thresholds.value().high});
     }
 
     rust::Vec<ArcasVideoEncoderInfoFPSAllocation> fps_allocation;
@@ -107,10 +111,12 @@ ArcasVideoEncoderInfo ArcasVideoEncoderWrapper::get_encoder_info() const
     for (auto resolution_bitrate_limit : info.resolution_bitrate_limits)
     {
         ArcasVideoEncoderResolutionBitrateLimits rust_resolution_bitrate_limit;
-        rust_resolution_bitrate_limit.frame_size_pixels = resolution_bitrate_limit.frame_size_pixels;
+        rust_resolution_bitrate_limit.frame_size_pixels =
+            resolution_bitrate_limit.frame_size_pixels;
         rust_resolution_bitrate_limit.max_bitrate_bps = resolution_bitrate_limit.max_bitrate_bps;
         rust_resolution_bitrate_limit.min_bitrate_bps = resolution_bitrate_limit.min_bitrate_bps;
-        rust_resolution_bitrate_limit.min_start_bitrate_bps = resolution_bitrate_limit.min_start_bitrate_bps;
+        rust_resolution_bitrate_limit.min_start_bitrate_bps =
+            resolution_bitrate_limit.min_start_bitrate_bps;
         resolution_bitrate_limits.push_back(rust_resolution_bitrate_limit);
     }
 
@@ -150,7 +156,8 @@ std::unique_ptr<ArcasVideoEncoderFactoryWrapper> create_arcas_video_encoder_fact
     return std::make_unique<ArcasVideoEncoderFactoryWrapper>(std::move(factory));
 }
 
-std::unique_ptr<ArcasCxxVideoEncoderEncoderInfo> get_video_encoder_encoder_info(const webrtc::VideoEncoder &encoder)
+std::unique_ptr<ArcasCxxVideoEncoderEncoderInfo>
+get_video_encoder_encoder_info(const webrtc::VideoEncoder& encoder)
 {
     return std::make_unique<ArcasCxxVideoEncoderEncoderInfo>(encoder.GetEncoderInfo());
 }
