@@ -8,7 +8,10 @@ private:
     rtc::scoped_refptr<webrtc::AudioTrackInterface> api;
 
 public:
-    ArcasAudioTrack(rtc::scoped_refptr<webrtc::AudioTrackInterface> api) : api(api) {}
+    ArcasAudioTrack(rtc::scoped_refptr<webrtc::AudioTrackInterface> api)
+    : api(api)
+    {
+    }
 
     rtc::scoped_refptr<webrtc::AudioTrackInterface> ref()
     {

@@ -2,16 +2,18 @@
 #include "rtc_base/logging.h"
 
 /* ArcasAudioDeviceModule::ArcasAudioDeviceModule(webrtc::TaskQueueFactory* factory): audio_buffer_(factory) {} */
-ArcasAudioDeviceModule::ArcasAudioDeviceModule(webrtc::TaskQueueFactory *factory) {}
+ArcasAudioDeviceModule::ArcasAudioDeviceModule(webrtc::TaskQueueFactory* factory) {}
 
-ArcasAudioDeviceModule::~ArcasAudioDeviceModule() {
+ArcasAudioDeviceModule::~ArcasAudioDeviceModule()
+{
     StopPlayout();
 }
 
-int32_t ArcasAudioDeviceModule::RegisterAudioCallback(webrtc::AudioTransport *callback)
+int32_t ArcasAudioDeviceModule::RegisterAudioCallback(webrtc::AudioTransport* callback)
 {
     absl::MutexLock l(&lock_);
-    if (playing_) {
+    if (playing_)
+    {
         return -1;
     }
     audioCallback = callback;
@@ -28,10 +30,7 @@ int32_t ArcasAudioDeviceModule::StartPlayout()
     playout_thread_ = rtc::PlatformThread::SpawnJoinable(
         [this]
         {
-            while (PlayoutThread())
-            {
-                rtc::Thread::SleepMs(9);
-            }
+            while (PlayoutThread()) { rtc::Thread::SleepMs(9); }
         },
         "arcas_adm_playout",
         rtc::ThreadAttributes().SetPriority(rtc::ThreadPriority::kRealtime));
@@ -62,7 +61,8 @@ bool ArcasAudioDeviceModule::Playing() const
 int32_t ArcasAudioDeviceModule::PlayoutThread()
 {
     absl::MutexLock l(&lock_);
-    if (!playing_) {
+    if (!playing_)
+    {
         return false;
     }
     if (audioCallback != nullptr)
@@ -71,15 +71,14 @@ int32_t ArcasAudioDeviceModule::PlayoutThread()
         int64_t elapsed_time_ms = -1;
         int64_t ntp_time_ms = -1;
         size_t samples_out = 0;
-        audioCallback->NeedMorePlayData(
-            samples_per_channel,
-            2,
-            1,
-            8000,
-            sample_buf,
-            samples_out,
-            &elapsed_time_ms,
-            &ntp_time_ms);
+        audioCallback->NeedMorePlayData(samples_per_channel,
+                                        2,
+                                        1,
+                                        8000,
+                                        sample_buf,
+                                        samples_out,
+                                        &elapsed_time_ms,
+                                        &ntp_time_ms);
     }
     return true;
 }

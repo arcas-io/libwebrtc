@@ -3,14 +3,15 @@
 #include "rtc_base/buffer.h"
 #include "rust/cxx.h"
 
-class BufferUint8 {
-    public:
+class BufferUint8
+{
+public:
     BufferUint8(rtc::BufferT<uint8_t>*);
 
     rtc::Buffer* GetBuffer() const;
     void append_data(rust::Slice<const uint8_t>);
 
-    private:
+private:
     rtc::Buffer* buffer;
 };
 

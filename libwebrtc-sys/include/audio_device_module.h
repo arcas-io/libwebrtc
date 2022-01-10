@@ -1,15 +1,15 @@
 #pragma once
-#include "modules/audio_device/include/audio_device.h"
-#include "modules/audio_device/audio_device_buffer.h"
 #include "absl/synchronization/mutex.h"
 #include "api/task_queue/task_queue_factory.h"
+#include "modules/audio_device/audio_device_buffer.h"
+#include "modules/audio_device/include/audio_device.h"
 #include "rtc_base/platform_thread.h"
 #include "rtc_base/thread.h"
 
 class ArcasAudioDeviceModule : public webrtc::AudioDeviceModule
 {
 public:
-    ArcasAudioDeviceModule(webrtc::TaskQueueFactory *);
+    ArcasAudioDeviceModule(webrtc::TaskQueueFactory*);
     ~ArcasAudioDeviceModule();
 
 
@@ -90,7 +90,7 @@ public:
         return true;
     };
 
-    int32_t RecordingIsAvailable(bool *available)
+    int32_t RecordingIsAvailable(bool* available)
     {
         return 0;
     };
@@ -269,11 +269,14 @@ public:
 
     // Play underrun count. Only supported on Android.
     // TODO(alexnarest): Make it abstract after upstream projects support it.
-    int32_t GetPlayoutUnderrunCount() const { return -1; }
+    int32_t GetPlayoutUnderrunCount() const
+    {
+        return -1;
+    }
 
     // Audio transport control
     // Full-duplex transportation of PCM audio
-    int32_t RegisterAudioCallback(webrtc::AudioTransport *audioCallback);
+    int32_t RegisterAudioCallback(webrtc::AudioTransport* audioCallback);
     int32_t StartPlayout();
     int32_t StopPlayout();
     bool Playing() const;
