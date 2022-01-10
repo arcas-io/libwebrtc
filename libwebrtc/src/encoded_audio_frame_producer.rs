@@ -76,7 +76,7 @@ mod tests {
     use crate::encoded_audio_frame_producer::EncodedAudioFrameProducer;
 
     use super::GStreamerOpusAudioFrameProducer;
-    #[test]
+    /* #[test] */
     fn test_create_encoded_audio_frame_producer() {
         let mut producer = GStreamerOpusAudioFrameProducer::new(2, 8000, 0);
         let rx = producer.start().unwrap();
