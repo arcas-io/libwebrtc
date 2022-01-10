@@ -130,9 +130,8 @@ mod tests {
     };
 
     use super::SharedAudioEncoderFactory;
-    use tokio::spawn;
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn test_create_opus_encoder_factory() {
         set_arcas_log_level(LoggingSeverity::LS_ERROR);
         let arcas_factory = Factory::new();
@@ -161,7 +160,6 @@ mod tests {
                 video_encoder_factory: None,
                 video_decoder_factory: None,
                 audio_encoder_factory: Some(opus_enc_factory),
-                // audio_encoder_factory: None,
             })
             .unwrap();
         let recvr_factory = arcas_factory
@@ -174,10 +172,14 @@ mod tests {
 
         let source = AudioTrackSource::new(1, 8000);
         let source_writer = source.clone();
-        spawn(async move {
+        let (source_done_tx, mut source_done_rx) = tokio::sync::mpsc::channel::<()>(2);
+        tokio::task::spawn(async move {
             let mut interval = tokio::time::interval(tokio::time::Duration::from_millis(10));
             interval.tick().await;
             loop {
+                if source_done_rx.try_recv().is_ok() {
+                    return;
+                }
                 source_writer.push_10ms_zeroed_data();
                 interval.tick().await;
             }
@@ -208,24 +210,26 @@ mod tests {
             })
             .unwrap();
 
-        let offer = pc.create_offer().await.unwrap();
-        let remote_offer = offer.copy_to_remote().unwrap();
-        pc.set_local_description(offer).await.unwrap();
-        recvr.set_remote_description(remote_offer).await.unwrap();
-        let answer = recvr.create_answer().await.unwrap();
-        let remote_answer = answer.copy_to_remote().unwrap();
-        recvr.set_local_description(answer).await.unwrap();
-        pc.set_remote_description(remote_answer).await.unwrap();
+        {
+            let offer = pc.create_offer().await.unwrap();
+            let remote_offer = offer.copy_to_remote().unwrap();
+            pc.set_local_description(offer).await.unwrap();
+            recvr.set_remote_description(remote_offer).await.unwrap();
+            let answer = recvr.create_answer().await.unwrap();
+            let remote_answer = answer.copy_to_remote().unwrap();
+            recvr.set_local_description(answer).await.unwrap();
+            pc.set_remote_description(remote_answer).await.unwrap();
 
-        let mut pc_ice = pc.take_ice_candidate_rx().unwrap();
-        let mut recvr_ice = recvr.take_ice_candidate_rx().unwrap();
+            let mut pc_ice = pc.take_ice_candidate_rx().unwrap();
+            let mut recvr_ice = recvr.take_ice_candidate_rx().unwrap();
 
-        let pc_cand = pc_ice.recv().await.unwrap();
-        let recvr_cand = recvr_ice.recv().await.unwrap();
-        pc.add_ice_candidate(recvr_cand).await.unwrap();
-        recvr.add_ice_candidate(pc_cand).await.unwrap();
+            let pc_cand = pc_ice.recv().await.unwrap();
+            let recvr_cand = recvr_ice.recv().await.unwrap();
+            pc.add_ice_candidate(recvr_cand).await.unwrap();
+            recvr.add_ice_candidate(pc_cand).await.unwrap();
+        }
 
-        let (done_tx, mut done_rx) = tokio::sync::mpsc::channel(1);
+        let (done_tx, mut done_rx) = tokio::sync::mpsc::channel::<()>(10);
 
         tokio::spawn(async move {
             loop {
@@ -233,16 +237,17 @@ mod tests {
                 if !stats.audio_receiver_stats.is_empty() {
                     println!("{:?}", stats.audio_receiver_stats);
                     if let Some(audio_receiver_stats) = stats.audio_receiver_stats.get(0) {
-                        // println!("{:?}", audio_receiver_stats);
-                        if audio_receiver_stats.frames_decoded > 0 {
-                            done_tx.send(1).await.unwrap();
-                            break;
+                        if audio_receiver_stats.total_samples_duration > 1.0 {
+                            done_tx.send(()).await.unwrap();
+                            println!("sent done");
+                            return;
                         }
                     }
                 }
                 tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
             }
         });
-        done_rx.recv().await.unwrap();
+        done_rx.recv().await;
+        source_done_tx.send(()).await.unwrap();
     }
 }

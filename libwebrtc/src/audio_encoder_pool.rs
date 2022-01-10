@@ -32,7 +32,6 @@ impl AudioEncoderPool {
                 Ok(()) => {}
                 Err(SendTimeoutError::Disconnected(_)) => remove.push(*sender.key()),
                 Err(SendTimeoutError::Timeout(_)) => {}
-
             }
         });
         remove.iter().for_each(|id| {

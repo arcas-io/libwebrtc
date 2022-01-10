@@ -10,7 +10,8 @@ class ArcasAudioDeviceModule : public webrtc::AudioDeviceModule
 {
 public:
     ArcasAudioDeviceModule(webrtc::TaskQueueFactory *);
-    ~ArcasAudioDeviceModule() {};
+    ~ArcasAudioDeviceModule();
+
 
     // Retrieve the currently utilized audio layer
     int32_t ActiveAudioLayer(webrtc::AudioDeviceModule::AudioLayer* audioLayer) const
@@ -46,8 +47,8 @@ public:
                               char name[webrtc::kAdmMaxDeviceNameSize],
                               char guid[webrtc::kAdmMaxGuidSize])
     {
-        name = "arcas-test-audio";
-        guid = "0";
+        /* name = "arcas-test-audio"; */
+        /* guid = "0"; */
         return 0;
     };
     int32_t RecordingDeviceName(uint16_t index,

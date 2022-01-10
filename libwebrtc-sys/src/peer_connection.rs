@@ -55,9 +55,8 @@ pub mod ffi {
         pub packets_received: u32,
         pub packets_lost: i32,
         pub bytes_received: u64,
-        pub jitter: f64,
-        pub frames_decoded: u32,
-        pub total_decode_time: f64,
+        pub total_samples_received: u64,
+        pub total_samples_duration: f64,
         pub audio_level: f64,
         pub total_audio_energy: f64,
     }

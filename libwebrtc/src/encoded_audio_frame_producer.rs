@@ -38,7 +38,7 @@ impl EncodedAudioFrameProducer for GStreamerOpusAudioFrameProducer {
                 self.sample_rate_hz,
             ),
         )?;
-        let (cancel_tx, cancel_rx) = crossbeam_channel::bounded::<()>(0);
+        let (cancel_tx, cancel_rx) = crossbeam_channel::bounded::<()>(1);
         self.cancel_tx = Some(cancel_tx);
         thread::spawn(move || loop {
             select! {
