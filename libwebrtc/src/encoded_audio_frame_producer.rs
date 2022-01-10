@@ -30,14 +30,12 @@ impl GStreamerOpusAudioFrameProducer {
 impl EncodedAudioFrameProducer for GStreamerOpusAudioFrameProducer {
     fn start(&mut self) -> Result<Receiver<Bytes>> {
         let (tx, rx) = crossbeam_channel::unbounded::<Bytes>();
-        let samples_per_buffer = (self.channels as i32) * self.sample_rate_hz / 100;
         let encoded_rx = media_pipeline::create_and_start_appsink_pipeline(
             & format!(
-                "audiotestsrc wave={} ! audio/x-raw,format=S16LE,channels={},rate={},is-live=true,samplesperbuffer={} ! opusenc frame-size=10",
+                "audiotestsrc wave={} ! audio/x-raw,format=S16LE,channels={},rate={},is-live=true ! opusenc frame-size=10",
                 self.gstreamer_waveform,
                 self.channels,
                 self.sample_rate_hz,
-                samples_per_buffer,
             ),
         )?;
         let (cancel_tx, cancel_rx) = crossbeam_channel::bounded::<()>(0);

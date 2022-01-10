@@ -3,6 +3,7 @@
 #include "libwebrtc-sys/src/peer_connection.rs.h"
 #include "libwebrtc-sys/src/shared_bridge.rs.h"
 #include "rust/cxx.h"
+#include "rtc_base/logging.h"
 
 ArcasRTCStatsCollectorCallback::ArcasRTCStatsCollectorCallback(
     rust::Box<ArcasRustRTCStatsCollectorCallback> cb)
@@ -60,6 +61,8 @@ void ArcasRTCStatsCollectorCallback::OnStatsDelivered(
                 auto track_stat = report->GetAs<webrtc::RTCMediaStreamTrackStats>(*stat->track_id);
                 if (track_stat)
                 {
+                    RTC_LOG(LS_ERROR) << track_stat->total_samples_received.ValueOrDefault(0) << " " << track_stat->total_samples_duration.ValueOrDefault(0.0);
+                    receiver.frames_decoded = track_stat->frames_decoded.ValueOrDefault(0);
                     receiver.audio_level = track_stat->audio_level.ValueOrDefault(0.0);
                     receiver.total_audio_energy =
                         track_stat->total_audio_energy.ValueOrDefault(0.0);

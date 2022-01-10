@@ -80,7 +80,7 @@ public:
             std::make_unique<webrtc::RtcEventLogFactory>(dependencies.task_queue_factory.get());
         dependencies.trials = std::make_unique<ArcasFieldTrial>();
 
-        auto adm = rtc::make_ref_counted<ArcasAudioDeviceModule>();
+        auto adm = rtc::make_ref_counted<ArcasAudioDeviceModule>(dependencies.task_queue_factory.get());
 
         cricket::MediaEngineDependencies media_deps;
         media_deps.task_queue_factory = dependencies.task_queue_factory.get();
@@ -113,7 +113,7 @@ public:
             std::make_unique<webrtc::RtcEventLogFactory>(dependencies.task_queue_factory.get());
         dependencies.trials = std::make_unique<ArcasFieldTrial>();
 
-        auto adm = rtc::make_ref_counted<ArcasAudioDeviceModule>();
+        auto adm = rtc::make_ref_counted<ArcasAudioDeviceModule>(dependencies.task_queue_factory.get());
 
         cricket::MediaEngineDependencies media_deps;
         media_deps.task_queue_factory = dependencies.task_queue_factory.get();
@@ -144,7 +144,10 @@ public:
             std::make_unique<webrtc::RtcEventLogFactory>(dependencies.task_queue_factory.get());
         dependencies.trials = std::make_unique<ArcasFieldTrial>();
 
-        auto adm = rtc::make_ref_counted<ArcasAudioDeviceModule>();
+        auto adm = rtc::make_ref_counted<ArcasAudioDeviceModule>(dependencies.task_queue_factory.get());
+        /* auto adm = dependencies.worker_thread->Invoke<rtc::scoped_refptr<webrtc::AudioDeviceModule>>(RTC_FROM_HERE, [&]() { */
+        /*     return webrtc::AudioDeviceModule::Create(webrtc::AudioDeviceModule::kPlatformDefaultAudio, dependencies.task_queue_factory.get()); */
+        /* }); */
 
         cricket::MediaEngineDependencies media_deps;
         media_deps.task_queue_factory = dependencies.task_queue_factory.get();

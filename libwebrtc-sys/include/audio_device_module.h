@@ -1,22 +1,23 @@
 #pragma once
 #include "modules/audio_device/include/audio_device.h"
+#include "modules/audio_device/audio_device_buffer.h"
+#include "absl/synchronization/mutex.h"
+#include "api/task_queue/task_queue_factory.h"
+#include "rtc_base/platform_thread.h"
+#include "rtc_base/thread.h"
 
 class ArcasAudioDeviceModule : public webrtc::AudioDeviceModule
 {
 public:
-    ArcasAudioDeviceModule();
+    ArcasAudioDeviceModule(webrtc::TaskQueueFactory *);
+    ~ArcasAudioDeviceModule() {};
 
     // Retrieve the currently utilized audio layer
     int32_t ActiveAudioLayer(webrtc::AudioDeviceModule::AudioLayer* audioLayer) const
     {
-        return -1;
+        return webrtc::AudioDeviceModule::kDummyAudio;
     };
 
-    // Full-duplex transportation of PCM audio
-    int32_t RegisterAudioCallback(webrtc::AudioTransport* audioCallback)
-    {
-        return -1;
-    };
 
     // Main initialization and termination
     int32_t Init()
@@ -35,7 +36,7 @@ public:
     // Device enumeration
     int16_t PlayoutDevices()
     {
-        return -1;
+        return 1;
     };
     int16_t RecordingDevices()
     {
@@ -45,6 +46,8 @@ public:
                               char name[webrtc::kAdmMaxDeviceNameSize],
                               char guid[webrtc::kAdmMaxGuidSize])
     {
+        name = "arcas-test-audio";
+        guid = "0";
         return 0;
     };
     int32_t RecordingDeviceName(uint16_t index,
@@ -75,17 +78,18 @@ public:
     // Audio transport initialization
     int32_t PlayoutIsAvailable(bool* available)
     {
-        return -1;
+        return true;
     };
     int32_t InitPlayout()
     {
-        return -1;
+        return 0;
     };
     bool PlayoutIsInitialized() const
     {
         return true;
     };
-    int32_t RecordingIsAvailable(bool* available)
+
+    int32_t RecordingIsAvailable(bool *available)
     {
         return 0;
     };
@@ -98,19 +102,7 @@ public:
         return true;
     };
 
-    // Audio transport control
-    int32_t StartPlayout()
-    {
-        return 0;
-    };
-    int32_t StopPlayout()
-    {
-        return -1;
-    };
-    bool Playing() const
-    {
-        return true;
-    };
+
     int32_t StartRecording()
     {
         return 0;
@@ -121,7 +113,7 @@ public:
     };
     bool Recording() const
     {
-        return true;
+        return false;
     };
 
     // Audio mixer initialization
@@ -131,7 +123,7 @@ public:
     };
     bool SpeakerIsInitialized() const
     {
-        return -1;
+        return 0;
     };
     int32_t InitMicrophone()
     {
@@ -139,7 +131,7 @@ public:
     };
     bool MicrophoneIsInitialized() const
     {
-        return -1;
+        return 0;
     };
 
     // Speaker volume controls
@@ -217,7 +209,7 @@ public:
     // Stereo support
     int32_t StereoPlayoutIsAvailable(bool* available) const
     {
-        return 1;
+        return false;
     };
     int32_t SetStereoPlayout(bool enable)
     {
@@ -229,15 +221,15 @@ public:
     };
     int32_t StereoRecordingIsAvailable(bool* available) const
     {
-        return -1;
+        return 0;
     };
     int32_t SetStereoRecording(bool enable)
     {
-        return -1;
+        return 0;
     };
     int32_t StereoRecording(bool* enabled) const
     {
-        return -1;
+        return 0;
     };
 
     // Playout delay
@@ -276,8 +268,21 @@ public:
 
     // Play underrun count. Only supported on Android.
     // TODO(alexnarest): Make it abstract after upstream projects support it.
-    int32_t GetPlayoutUnderrunCount() const
-    {
-        return -1;
-    }
+    int32_t GetPlayoutUnderrunCount() const { return -1; }
+
+    // Audio transport control
+    // Full-duplex transportation of PCM audio
+    int32_t RegisterAudioCallback(webrtc::AudioTransport *audioCallback);
+    int32_t StartPlayout();
+    int32_t StopPlayout();
+    bool Playing() const;
+
+private:
+    absl::Mutex lock_;
+    rtc::PlatformThread playout_thread_;
+    webrtc::AudioTransport* audioCallback = nullptr;
+    bool playing_ = false;
+    // buffer to store decoded output
+    int16_t sample_buf[805];
+    int32_t PlayoutThread();
 };

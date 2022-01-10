@@ -134,7 +134,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_opus_encoder_factory() {
-        // set_arcas_log_level(LoggingSeverity::LS_INFO);
+        set_arcas_log_level(LoggingSeverity::LS_ERROR);
         let arcas_factory = Factory::new();
         let opus_enc_factory = Box::from(SharedAudioEncoderFactory::new(
             Some(Box::from(GStreamerOpusAudioFrameProducer::new(2, 8000, 0))),
@@ -160,8 +160,8 @@ mod tests {
             .create_factory_with_config(FactoryConfig {
                 video_encoder_factory: None,
                 video_decoder_factory: None,
-                /* audio_encoder_factory: Some(opus_enc_factory), */
-                audio_encoder_factory: None,
+                audio_encoder_factory: Some(opus_enc_factory),
+                // audio_encoder_factory: None,
             })
             .unwrap();
         let recvr_factory = arcas_factory
@@ -194,7 +194,7 @@ mod tests {
                 .create_audio_track("audio".to_owned(), &source)
                 .unwrap();
             pc.add_audio_transceiver(
-                TransceiverInit::new(vec!["0".to_owned()], TransceiverDirection::SendOnly),
+                TransceiverInit::new(vec!["1".to_owned()], TransceiverDirection::SendOnly),
                 audio_track,
             )
             .await
@@ -226,20 +226,14 @@ mod tests {
         recvr.add_ice_candidate(pc_cand).await.unwrap();
 
         let (done_tx, mut done_rx) = tokio::sync::mpsc::channel(1);
-        tokio::spawn(async move {
-            loop {
-                let stats = pc.get_stats().await.unwrap();
-                // println!("{:?}", stats.audio_sender_stats);
-                tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
-            }
-        });
 
         tokio::spawn(async move {
             loop {
                 let stats = recvr.get_stats().await.unwrap();
                 if !stats.audio_receiver_stats.is_empty() {
+                    println!("{:?}", stats.audio_receiver_stats);
                     if let Some(audio_receiver_stats) = stats.audio_receiver_stats.get(0) {
-                        println!("{:?}", audio_receiver_stats);
+                        // println!("{:?}", audio_receiver_stats);
                         if audio_receiver_stats.frames_decoded > 0 {
                             done_tx.send(1).await.unwrap();
                             break;

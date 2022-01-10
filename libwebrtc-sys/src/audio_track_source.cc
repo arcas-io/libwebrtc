@@ -25,13 +25,16 @@ void ArcasAudioTrackSource::push_zeroed_data(
     size_t number_of_channels
 ) const {
     std::vector<int16_t> data;
-    int total_samples = (sample_rate/100) * number_of_channels;
+    int total_samples = (sample_rate) * number_of_channels;
+    int t_idx = 0;
     for(int i=0; i < total_samples; i += number_of_channels) {
-        double t = (double) i / (double) sample_rate;
+        double t = (double) t_idx / (double) sample_rate;
         for(int j=0; j < number_of_channels; j++) {
-            double amplitude = 1 << 15;
-            data.push_back(amplitude * sin(2.0f*M_PI*440*t));
+            double amplitude = 1<<8;
+            data.push_back((int16_t)(amplitude * sin(2.0f*M_PI*440.0f*t)));
+            /* data.push_back(0); */
         }
+        t_idx++;
     }
     api->PushData(
         data.data(),
