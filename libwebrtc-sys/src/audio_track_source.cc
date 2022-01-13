@@ -20,7 +20,9 @@ void ArcasAudioTrackSource::push_raw_s16be(rust::Vec<uint8_t> audio_data,
     api->PushData(audio_data.data(), 16, sample_rate, number_of_channels, number_of_frames);
 }
 
-// pushes 10ms of zeroed data
+const double AUDIO_FREQUENCY = 440.0;
+const double AUDIO_AMPLITUDE = 32000.0;
+// pushes 10ms of 440 Hz sine wave data
 void ArcasAudioTrackSource::push_zeroed_data(int sample_rate, size_t number_of_channels) const
 {
     std::vector<int16_t> data;
@@ -31,9 +33,8 @@ void ArcasAudioTrackSource::push_zeroed_data(int sample_rate, size_t number_of_c
         double t = (double)t_idx / (double)sample_rate;
         for (int j = 0; j < number_of_channels; j++)
         {
-            double amplitude = 1 << 8;
-            data.push_back((int16_t)(amplitude * sin(2.0f * M_PI * 440.0f * t)));
-            /* data.push_back(0); */
+            int res = (int16_t)(AUDIO_AMPLITUDE * sin(2.0f * M_PI * AUDIO_FREQUENCY * t));
+            data.push_back(res);
         }
         t_idx++;
     }

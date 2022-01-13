@@ -160,6 +160,7 @@ mod tests {
                 video_encoder_factory: None,
                 video_decoder_factory: None,
                 audio_encoder_factory: Some(opus_enc_factory),
+                // audio_encoder_factory: None,
             })
             .unwrap();
         let recvr_factory = arcas_factory
@@ -239,7 +240,6 @@ mod tests {
                     if let Some(audio_receiver_stats) = stats.audio_receiver_stats.get(0) {
                         if audio_receiver_stats.total_samples_duration > 1.0 {
                             done_tx.send(()).await.unwrap();
-                            println!("sent done");
                             return;
                         }
                     }
