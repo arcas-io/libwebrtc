@@ -26,6 +26,9 @@ use crate::video_track::ffi::ArcasVideoTrack;
 use crate::video_track_source::ffi::ArcasVideoTrackSource;
 
 pub mod api;
+pub mod audio_encoding;
+pub mod audio_track;
+pub mod audio_track_source;
 pub mod codec_specific_info;
 pub mod data_channel;
 pub mod encoded_image_factory;
@@ -38,6 +41,7 @@ pub mod peer_connection;
 pub mod peer_connection_factory;
 pub mod peer_connection_observer;
 pub mod peerconnection_factory_config;
+pub mod rtc_buffer;
 pub mod rtp_parameters;
 pub mod rtp_receiver;
 pub mod rtp_sender;

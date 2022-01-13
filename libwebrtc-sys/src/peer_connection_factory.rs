@@ -25,6 +25,9 @@ pub mod ffi {
         type ArcasVideoTrack = crate::video_track::ffi::ArcasVideoTrack;
         type ArcasSDPSemantics = crate::shared_bridge::ffi::ArcasSDPSemantics;
 
+        type ArcasAudioTrackSource = crate::audio_track_source::ffi::ArcasAudioTrackSource;
+        type ArcasAudioTrack = crate::audio_track::ffi::ArcasAudioTrack;
+
         fn create_rtc_configuration(
             config: ArcasPeerConnectionConfig,
         ) -> UniquePtr<ArcasRTCConfiguration>;
@@ -50,5 +53,11 @@ pub mod ffi {
             id: String,
             source: &ArcasVideoTrackSource,
         ) -> UniquePtr<ArcasVideoTrack>;
+
+        fn create_audio_track(
+            self: &ArcasPeerConnectionFactory,
+            id: String,
+            source: &ArcasAudioTrackSource,
+        ) -> UniquePtr<ArcasAudioTrack>;
     }
 }

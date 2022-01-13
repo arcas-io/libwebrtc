@@ -80,7 +80,8 @@ public:
             std::make_unique<webrtc::RtcEventLogFactory>(dependencies.task_queue_factory.get());
         dependencies.trials = std::make_unique<ArcasFieldTrial>();
 
-        auto adm = rtc::make_ref_counted<ArcasAudioDeviceModule>();
+        auto adm =
+            rtc::make_ref_counted<ArcasAudioDeviceModule>(dependencies.task_queue_factory.get());
 
         cricket::MediaEngineDependencies media_deps;
         media_deps.task_queue_factory = dependencies.task_queue_factory.get();
@@ -113,7 +114,8 @@ public:
             std::make_unique<webrtc::RtcEventLogFactory>(dependencies.task_queue_factory.get());
         dependencies.trials = std::make_unique<ArcasFieldTrial>();
 
-        auto adm = rtc::make_ref_counted<ArcasAudioDeviceModule>();
+        auto adm =
+            rtc::make_ref_counted<ArcasAudioDeviceModule>(dependencies.task_queue_factory.get());
 
         cricket::MediaEngineDependencies media_deps;
         media_deps.task_queue_factory = dependencies.task_queue_factory.get();
@@ -144,12 +146,14 @@ public:
             std::make_unique<webrtc::RtcEventLogFactory>(dependencies.task_queue_factory.get());
         dependencies.trials = std::make_unique<ArcasFieldTrial>();
 
-        auto adm = rtc::make_ref_counted<ArcasAudioDeviceModule>();
+        auto adm =
+            rtc::make_ref_counted<ArcasAudioDeviceModule>(dependencies.task_queue_factory.get());
+        /* auto adm = dependencies.worker_thread->Invoke<rtc::scoped_refptr<webrtc::AudioDeviceModule>>(RTC_FROM_HERE, [&]() { */
+        /*     return webrtc::AudioDeviceModule::Create(webrtc::AudioDeviceModule::kPlatformDefaultAudio, dependencies.task_queue_factory.get()); */
+        /* }); */
 
         cricket::MediaEngineDependencies media_deps;
         media_deps.task_queue_factory = dependencies.task_queue_factory.get();
-        media_deps.audio_encoder_factory = webrtc::CreateBuiltinAudioEncoderFactory();
-        media_deps.audio_decoder_factory = webrtc::CreateBuiltinAudioDecoderFactory();
         if (config->video_encoder_factory != nullptr)
         {
             media_deps.video_encoder_factory = std::move(config->video_encoder_factory);
@@ -167,7 +171,17 @@ public:
         {
             media_deps.video_decoder_factory = webrtc::CreateBuiltinVideoDecoderFactory();
         }
-        // media_deps.audio_processing = webrtc::AudioProcessingBuilder().Create();
+
+        if (config->audio_encoder_factory.has_value())
+        {
+            media_deps.audio_encoder_factory = config->audio_encoder_factory.value();
+        }
+        else
+        {
+            media_deps.audio_encoder_factory = webrtc::CreateBuiltinAudioEncoderFactory();
+        }
+        media_deps.audio_decoder_factory = webrtc::CreateBuiltinAudioDecoderFactory();
+        /* media_deps.audio_processing = webrtc::AudioProcessingBuilder().Create(); */
         media_deps.audio_processing = nullptr;
         media_deps.audio_mixer = webrtc::AudioMixerImpl::Create();
         media_deps.adm = adm;

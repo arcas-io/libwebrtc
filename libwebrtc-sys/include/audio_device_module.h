@@ -1,22 +1,24 @@
 #pragma once
+#include "absl/synchronization/mutex.h"
+#include "api/task_queue/task_queue_factory.h"
+#include "modules/audio_device/audio_device_buffer.h"
 #include "modules/audio_device/include/audio_device.h"
+#include "rtc_base/platform_thread.h"
+#include "rtc_base/thread.h"
 
 class ArcasAudioDeviceModule : public webrtc::AudioDeviceModule
 {
 public:
-    ArcasAudioDeviceModule();
+    ArcasAudioDeviceModule(webrtc::TaskQueueFactory*);
+    ~ArcasAudioDeviceModule();
+
 
     // Retrieve the currently utilized audio layer
     int32_t ActiveAudioLayer(webrtc::AudioDeviceModule::AudioLayer* audioLayer) const
     {
-        return -1;
+        return webrtc::AudioDeviceModule::kDummyAudio;
     };
 
-    // Full-duplex transportation of PCM audio
-    int32_t RegisterAudioCallback(webrtc::AudioTransport* audioCallback)
-    {
-        return -1;
-    };
 
     // Main initialization and termination
     int32_t Init()
@@ -35,7 +37,7 @@ public:
     // Device enumeration
     int16_t PlayoutDevices()
     {
-        return -1;
+        return 1;
     };
     int16_t RecordingDevices()
     {
@@ -45,27 +47,29 @@ public:
                               char name[webrtc::kAdmMaxDeviceNameSize],
                               char guid[webrtc::kAdmMaxGuidSize])
     {
-        return -1;
+        /* name = "arcas-test-audio"; */
+        /* guid = "0"; */
+        return 0;
     };
     int32_t RecordingDeviceName(uint16_t index,
                                 char name[webrtc::kAdmMaxDeviceNameSize],
                                 char guid[webrtc::kAdmMaxGuidSize])
     {
-        return -1;
+        return 0;
     };
 
     // Device selection
     int32_t SetPlayoutDevice(uint16_t index)
     {
-        return -1;
+        return 0;
     };
     int32_t SetPlayoutDevice(webrtc::AudioDeviceModule::WindowsDeviceType device)
     {
-        return -1;
+        return 0;
     };
     int32_t SetRecordingDevice(uint16_t index)
     {
-        return -1;
+        return 0;
     };
     int32_t SetRecordingDevice(webrtc::AudioDeviceModule::WindowsDeviceType device)
     {
@@ -75,71 +79,60 @@ public:
     // Audio transport initialization
     int32_t PlayoutIsAvailable(bool* available)
     {
-        return -1;
+        return true;
     };
     int32_t InitPlayout()
     {
-        return -1;
+        return 0;
     };
     bool PlayoutIsInitialized() const
     {
-        return -1;
+        return true;
     };
+
     int32_t RecordingIsAvailable(bool* available)
     {
-        return -1;
+        return 0;
     };
     int32_t InitRecording()
     {
-        return -1;
+        return 0;
     };
     bool RecordingIsInitialized() const
     {
-        return -1;
+        return true;
     };
 
-    // Audio transport control
-    int32_t StartPlayout()
-    {
-        return -1;
-    };
-    int32_t StopPlayout()
-    {
-        return -1;
-    };
-    bool Playing() const
-    {
-        return -1;
-    };
+
     int32_t StartRecording()
     {
-        return -1;
+        return 0;
     };
     int32_t StopRecording()
     {
-        return -1;
+        return 0;
     };
     bool Recording() const
     {
-        return -1;
+        return false;
     };
 
     // Audio mixer initialization
     int32_t InitSpeaker()
     {
-        return -1;
+        return 0;
     };
     bool SpeakerIsInitialized() const
     {
-        return -1;
+        return 0;
     };
     int32_t InitMicrophone()
     {
-        return -1;
+        return 0;
     };
     bool MicrophoneIsInitialized() const
     {
-        return -1;
+        return 0;
     };
 
     // Speaker volume controls
@@ -217,33 +210,33 @@ public:
     // Stereo support
     int32_t StereoPlayoutIsAvailable(bool* available) const
     {
-        return -1;
+        return false;
     };
     int32_t SetStereoPlayout(bool enable)
     {
-        return -1;
+        return 0;
     };
     int32_t StereoPlayout(bool* enabled) const
     {
-        return -1;
+        return 0;
     };
     int32_t StereoRecordingIsAvailable(bool* available) const
     {
-        return -1;
+        return 0;
     };
     int32_t SetStereoRecording(bool enable)
     {
-        return -1;
+        return 0;
     };
     int32_t StereoRecording(bool* enabled) const
     {
-        return -1;
+        return 0;
     };
 
     // Playout delay
     int32_t PlayoutDelay(uint16_t* delayMS) const
     {
-        return -1;
+        return 0;
     };
 
     // Only supported on Android.
@@ -280,4 +273,20 @@ public:
     {
         return -1;
     }
+
+    // Audio transport control
+    // Full-duplex transportation of PCM audio
+    int32_t RegisterAudioCallback(webrtc::AudioTransport* audioCallback);
+    int32_t StartPlayout();
+    int32_t StopPlayout();
+    bool Playing() const;
+
+private:
+    absl::Mutex lock_;
+    rtc::PlatformThread playout_thread_;
+    webrtc::AudioTransport* audioCallback = nullptr;
+    bool playing_ = false;
+    // buffer to store decoded output
+    int16_t sample_buf[805];
+    int32_t PlayoutThread();
 };

@@ -55,9 +55,8 @@ pub mod ffi {
         pub packets_received: u32,
         pub packets_lost: i32,
         pub bytes_received: u64,
-        pub jitter: f64,
-        pub frames_decoded: u32,
-        pub total_decode_time: f64,
+        pub total_samples_received: u64,
+        pub total_samples_duration: f64,
         pub audio_level: f64,
         pub total_audio_energy: f64,
     }
@@ -92,6 +91,7 @@ pub mod ffi {
         type ArcasCxxRtpTransceiverDirection =
             crate::shared_bridge::ffi::ArcasCxxRtpTransceiverDirection;
         type ArcasRTCStatsCollectorCallback;
+        type ArcasAudioTrack = crate::audio_track::ffi::ArcasAudioTrack;
 
         fn gen_shared_peer_connection() -> SharedPtr<ArcasPeerConnection>;
 
@@ -125,12 +125,24 @@ pub mod ffi {
             init: ArcasTransceiverInit,
         ) -> UniquePtr<ArcasRTPVideoTransceiver>;
 
+        fn add_audio_transceiver_with_track(
+            self: &ArcasPeerConnection,
+            track: UniquePtr<ArcasAudioTrack>,
+            init: ArcasTransceiverInit,
+        ) -> UniquePtr<ArcasRTPAudioTransceiver>;
+
         fn add_audio_transceiver(self: &ArcasPeerConnection)
             -> UniquePtr<ArcasRTPAudioTransceiver>;
 
         fn add_video_track(
             self: &ArcasPeerConnection,
             track: UniquePtr<ArcasVideoTrack>,
+            stream_ids: Vec<String>,
+        );
+
+        fn add_audio_track(
+            self: &ArcasPeerConnection,
+            track: UniquePtr<ArcasAudioTrack>,
             stream_ids: Vec<String>,
         );
 

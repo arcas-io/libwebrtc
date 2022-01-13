@@ -79,6 +79,30 @@ ArcasPeerConnection::add_video_transceiver_with_track(std::unique_ptr<ArcasVideo
     return nullptr;
 }
 
+std::unique_ptr<ArcasRTPAudioTransceiver>
+ArcasPeerConnection::add_audio_transceiver_with_track(std::unique_ptr<ArcasAudioTrack> track,
+                                                      ArcasTransceiverInit init) const
+{
+    webrtc::RtpTransceiverInit transceiver_init;
+    transceiver_init.direction = init.direction;
+
+    for (auto stream_id : init.stream_ids)
+    {
+        transceiver_init.stream_ids.push_back(std::string(stream_id.c_str()));
+    }
+
+    RTC_LOG(LS_VERBOSE) << "ArcasPeerConnection::add_video_transceiver_with_track "
+                        << transceiver_init.stream_ids.size();
+    auto result = api->AddTransceiver(track->ref(), transceiver_init);
+    if (result.ok())
+    {
+        return std::make_unique<ArcasRTPAudioTransceiver>(result.MoveValue());
+    }
+
+    // TODO: Handle error cases.
+    return nullptr;
+}
+
 std::unique_ptr<ArcasRTPAudioTransceiver> ArcasPeerConnection::add_audio_transceiver() const
 {
     auto result = api->AddTransceiver(cricket::MEDIA_TYPE_AUDIO);

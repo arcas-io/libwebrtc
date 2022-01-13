@@ -46,6 +46,8 @@ impl PeerConnectionStats {
 }
 
 use crate::{
+    audio_track::AudioTrack,
+    audio_track_source::AudioTrackSource,
     error::{aracs_rtc_error_to_err, Result, WebRTCError},
     ice_candidate::ICECandidate,
     ok_or_return,
@@ -135,6 +137,12 @@ impl PeerConnectionFactory {
         let source_ref = source.cxx_ref()?;
         let track = self.cxx_factory.create_video_track(id, source_ref);
         Ok(VideoTrack::new(track))
+    }
+
+    pub fn create_audio_track(&self, id: String, source: &AudioTrackSource) -> Result<AudioTrack> {
+        let source_ref = source.cxx_ref()?;
+        let track = self.cxx_factory.create_audio_track(id, source_ref);
+        Ok(AudioTrack::new(track))
     }
 
     pub fn create_peer_connection(&self, config: PeerConnectionConfig) -> Result<PeerConnection> {
@@ -278,6 +286,19 @@ impl<'a> PeerConnection {
         Ok(VideoTransceiver::new(transceiver))
     }
 
+    pub async fn add_audio_transceiver(
+        &self,
+        init: TransceiverInit,
+        mut track: AudioTrack,
+    ) -> Result<AudioTransceiver> {
+        let cxx_track = track.take_cxx()?;
+        let cxx_init = init.take_cxx();
+        let transceiver = self
+            .cxx_pc
+            .add_audio_transceiver_with_track(cxx_track, cxx_init);
+        Ok(AudioTransceiver::new(transceiver))
+    }
+
     pub async fn add_video_track(
         &self,
         stream_ids: Vec<String>,
@@ -285,6 +306,16 @@ impl<'a> PeerConnection {
     ) -> Result<()> {
         let cxx_track = track.take_cxx()?;
         self.cxx_pc.add_video_track(cxx_track, stream_ids);
+        Ok(())
+    }
+
+    pub async fn add_audio_track(
+        &self,
+        stream_ids: Vec<String>,
+        mut track: AudioTrack,
+    ) -> Result<()> {
+        let cxx_track = track.take_cxx()?;
+        self.cxx_pc.add_audio_track(cxx_track, stream_ids);
         Ok(())
     }
 
@@ -499,6 +530,7 @@ mod tests {
         let config = FactoryConfig {
             video_encoder_factory,
             video_decoder_factory,
+            audio_encoder_factory: None,
         };
         let api = Factory::new();
         let pc_factory = api.create_factory_with_config(config).unwrap();

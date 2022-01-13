@@ -367,6 +367,17 @@ pub mod ffi {
         fn get_encoder_info(self: &VideoEncoderProxy) -> ArcasVideoEncoderInfo;
 
     }
+
+    unsafe extern "C++" {
+        include!("include/peerconnection_factory_config.h");
+        type ArcasPeerConnectionFactoryConfig =
+            crate::peerconnection_factory_config::ffi::ArcasPeerConnectionFactoryConfig;
+
+        fn set_video_encoder_factory(
+            self: Pin<&mut ArcasPeerConnectionFactoryConfig>,
+            factory: Box<VideoEncoderFactoryProxy>,
+        );
+    }
 }
 
 pub trait VideoEncoderImpl {

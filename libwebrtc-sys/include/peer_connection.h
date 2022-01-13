@@ -1,5 +1,6 @@
 #pragma once
 #include "api/create_peerconnection_factory.h"
+#include "libwebrtc-sys/include/audio_track.h"
 #include "libwebrtc-sys/include/ice_candidate.h"
 #include "libwebrtc-sys/include/peer_connection_observer.h"
 #include "libwebrtc-sys/include/peer_connection_session_observers.h"
@@ -43,6 +44,9 @@ public:
     std::unique_ptr<ArcasRTPVideoTransceiver>
     add_video_transceiver_with_track(std::unique_ptr<ArcasVideoTrack> track,
                                      ArcasTransceiverInit init) const;
+    std::unique_ptr<ArcasRTPAudioTransceiver>
+    add_audio_transceiver_with_track(std::unique_ptr<ArcasAudioTrack> track,
+                                     ArcasTransceiverInit init) const;
     void close() const
     {
         api->Close();
@@ -57,6 +61,15 @@ public:
 
         auto ptr = track->ref();
         api->AddTrack(ptr, stream_ids);
+    }
+
+    void add_audio_track(std::unique_ptr<ArcasAudioTrack> track,
+                         rust::Vec<rust::String> rust_stream_ids) const
+    {
+        std::vector<std::string> stream_ids;
+
+        for (auto item : rust_stream_ids) { stream_ids.push_back(item.c_str()); }
+        api->AddTrack(track->ref(), stream_ids);
     }
 
     void get_stats(rust::Box<ArcasRustRTCStatsCollectorCallback> cb) const;
