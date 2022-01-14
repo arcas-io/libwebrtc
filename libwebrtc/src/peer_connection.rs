@@ -14,7 +14,7 @@ use libwebrtc_sys::{
 use parking_lot::Mutex;
 use tokio::sync::mpsc::{channel, Receiver};
 
-const STATS_BUFFER_SIZE: usize = 100;
+pub const STATS_BUFFER_SIZE: usize = 100;
 
 pub type VideoSenderStats = ArcasVideoSenderStats;
 pub type VideoReceiverStats = ArcasVideoReceiverStats;

@@ -23,6 +23,9 @@ public:
     ArcasPeerConnectionFactory(rtc::scoped_refptr<ArcasAPIInternal> internal_api,
                                rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> api);
 
+    /**
+     * @pre observer is not null
+     */
     std::shared_ptr<ArcasPeerConnection> create_peer_connection(
         std::unique_ptr<webrtc::PeerConnectionInterface::RTCConfiguration> config,
         ArcasPeerConnectionObserver* observer) const
@@ -35,7 +38,18 @@ public:
             RTC_LOG(LS_ERROR) << "Error creating peer connection: " << result.error().message();
             return nullptr;
         }
+        auto under_ptr = result.value().get();
         auto out = std::make_shared<ArcasPeerConnection>(api, std::move(result.MoveValue()));
+        if (observer && under_ptr)
+        {
+            observer->observe(*under_ptr);
+        }
+        else
+        {
+            RTC_LOG(LS_ERROR)
+                << "The peer connection observer passed into create a peer connection should not "
+                   "be null, nor should the shared connection api which was just created.";
+        }
         return out;
     }
     std::unique_ptr<ArcasVideoTrack>

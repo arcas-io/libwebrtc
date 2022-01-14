@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="VcsDirectoryMappings">
+    <mapping directory="$PROJECT_DIR$/../.." vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/webrtc/libwebrtc/include/build" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/webrtc/libwebrtc/include/buildtools" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/webrtc/libwebrtc/include/buildtools/clang_format/script" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/webrtc/libwebrtc/include/buildtools/third_party/libc++/trunk" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/webrtc/libwebrtc/include/buildtools/third_party/libc++abi/trunk" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/webrtc/libwebrtc/include/buildtools/third_party/libunwind/trunk" vcs="Git" />
+  </component>
+</project>

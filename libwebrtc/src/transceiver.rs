@@ -1,10 +1,13 @@
+use crate::peer_connection::{PeerConnectionStats, STATS_BUFFER_SIZE};
+use crate::{error::WebRTCError, media_type::MediaType, ok_or_return, rx_recv_async_or_err};
 use cxx::UniquePtr;
 use libwebrtc_sys::ffi::{
     ArcasCxxRtpTransceiverDirection, ArcasRTPAudioTransceiver, ArcasRTPTransceiverDirection,
-    ArcasRTPVideoTransceiver, ArcasTransceiverInit,
+    ArcasRTPVideoTransceiver, ArcasTransceiverInit, ArcasVideoSenderStats,
 };
-
-use crate::{error::WebRTCError, media_type::MediaType};
+use libwebrtc_sys::ArcasRustRTCStatsCollectorCallback;
+use std::ptr::null;
+use tokio::sync::mpsc::{channel, Receiver};
 
 #[derive(Debug, Clone)]
 pub enum TransceiverDirection {
@@ -123,6 +126,27 @@ impl VideoTransceiver {
         } else {
             Err(WebRTCError::FailedToSetDirection)
         }
+    }
+
+    pub async fn get_stats(&self) -> Result<PeerConnectionStats, WebRTCError> {
+        let (tx, mut rx) = channel(STATS_BUFFER_SIZE);
+        self.cxx_transceiver
+            .get_stats(Box::new(ArcasRustRTCStatsCollectorCallback::new(Box::new(
+                move |video_receiver_stats,
+                      audio_receiver_stats,
+                      video_sender_stats,
+                      audio_sender_stats| {
+                    let stats = PeerConnectionStats {
+                        video_sender_stats,
+                        video_receiver_stats,
+                        audio_sender_stats,
+                        audio_receiver_stats,
+                    };
+                    ok_or_return!(tx.blocking_send(stats));
+                },
+            ))));
+
+        Ok(rx_recv_async_or_err!(rx)?)
     }
 }
 

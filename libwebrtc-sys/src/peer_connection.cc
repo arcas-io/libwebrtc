@@ -48,7 +48,7 @@ std::unique_ptr<ArcasRTPVideoTransceiver> ArcasPeerConnection::add_video_transce
 
     if (result.ok())
     {
-        return std::make_unique<ArcasRTPVideoTransceiver>(result.MoveValue());
+        return std::make_unique<ArcasRTPVideoTransceiver>(*api, result.MoveValue());
     }
 
     // TODO: Handle error cases.
@@ -72,7 +72,7 @@ ArcasPeerConnection::add_video_transceiver_with_track(std::unique_ptr<ArcasVideo
     auto result = api->AddTransceiver(track->ref(), transceiver_init);
     if (result.ok())
     {
-        return std::make_unique<ArcasRTPVideoTransceiver>(result.MoveValue());
+        return std::make_unique<ArcasRTPVideoTransceiver>(*api, result.MoveValue());
     }
 
     // TODO: Handle error cases.
@@ -96,12 +96,13 @@ ArcasPeerConnection::add_audio_transceiver_with_track(std::unique_ptr<ArcasAudio
     auto result = api->AddTransceiver(track->ref(), transceiver_init);
     if (result.ok())
     {
-        return std::make_unique<ArcasRTPAudioTransceiver>(result.MoveValue());
+        return std::make_unique<ArcasRTPAudioTransceiver>(*api, result.MoveValue());
     }
 
     // TODO: Handle error cases.
     return nullptr;
 }
+
 
 std::unique_ptr<ArcasRTPAudioTransceiver> ArcasPeerConnection::add_audio_transceiver() const
 {
@@ -109,7 +110,7 @@ std::unique_ptr<ArcasRTPAudioTransceiver> ArcasPeerConnection::add_audio_transce
 
     if (result.ok())
     {
-        return std::make_unique<ArcasRTPAudioTransceiver>(result.MoveValue());
+        return std::make_unique<ArcasRTPAudioTransceiver>(*api, result.MoveValue());
     }
 
     // TODO: Handle error cases.
@@ -148,6 +149,6 @@ std::unique_ptr<std::vector<ArcasRTPTransceiver>> ArcasPeerConnection::get_trans
 {
     auto transceivers = api->GetTransceivers();
     std::vector<ArcasRTPTransceiver> result;
-    for (auto txrx : transceivers) { result.push_back(ArcasRTPTransceiver(txrx)); }
+    for (auto txrx : transceivers) { result.emplace_back(*api, txrx); }
     return std::make_unique<std::vector<ArcasRTPTransceiver>>(std::move(result));
 }

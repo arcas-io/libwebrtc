@@ -1,3 +1,5 @@
+use crate::peer_connection::ArcasRustRTCStatsCollectorCallback;
+
 #[cxx::bridge]
 pub mod ffi {
     unsafe extern "C++" {

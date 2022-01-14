@@ -237,6 +237,7 @@ fn build_entrypoint(output_dir: String, target_os: String) {
         .compiler(clang)
         .flag("-std=c++14")
         .flag("-fno-rtti")
+        .flag("-w")
         .files(cc_files)
         .include(libwebrtc_header.to_owned())
         .define("UDEV", None)
@@ -256,6 +257,15 @@ fn build_entrypoint(output_dir: String, target_os: String) {
         .define("_DEBUG", None)
         .define("DYNAMIC_ANNOTATIONS_ENABLED", "1")
         .define("WEBRTC_NON_STATIC_TRACE_EVENT_HANDLERS", "1");
+
+    let profile = env::var("PROFILE");
+    if profile.is_ok() && profile.unwrap() == "debug" {
+        build_defines = build_defines
+            .flag("-g3")
+            .flag("-ggdb3")
+            .flag("-Og")
+            .flag("-fno-inline");
+    }
 
     match target_os.as_str() {
         "macos" => {
@@ -338,7 +348,7 @@ fn main() {
         let args = vec![url, name];
         println!("Downloading libwebrtc extension...");
 
-        run_script::run_script!(
+        run_script::run_script_or_exit!(
             r#"
                 set -ex
                 if [ ! -f $2 ]; then
@@ -353,8 +363,7 @@ fn main() {
             "#,
             &args,
             &options
-        )
-        .unwrap();
+        );
     }
 
     let mut output_dir = path::PathBuf::from("./webrtc/libwebrtc")

@@ -12,7 +12,7 @@ OUTDIR=${OUTDIR:-"$PWD/libwebrtc/out"}
 
 echo "Building libwebrtc debug=$IS_DEBUG"
 
-BASE_WEBRTC_ARGS='rtc_build_examples=false rtc_build_tools=false rtc_use_x11=false rtc_enable_protobuf=false rtc_include_tests=false use_glib=false'
+BASE_WEBRTC_ARGS='rtc_build_examples=false rtc_build_tools=false rtc_use_x11=false rtc_enable_protobuf=false rtc_include_tests=false use_glib=false treat_warnings_as_errors=false'
 BASE_WEBRTC_ARGS+=" is_debug=$IS_DEBUG"
 
 # little hack for David's mac
@@ -37,7 +37,7 @@ fi
 GN_ARGS="$BASE_WEBRTC_ARGS $WEBRTC_ARGS"
 
 pushd libwebrtc/src
-rm BUILD.gn
+rm BUILD.gn || true
 cp ../../BUILD.gn .
 mkdir -p $OUTDIR
 gn gen -C $OUTDIR "--args=${GN_ARGS}" --export-compile-commands

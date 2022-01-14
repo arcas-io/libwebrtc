@@ -9,10 +9,11 @@
 #include "libwebrtc-sys/include/rtp_transceiver.h"
 #include "libwebrtc-sys/include/rust_shared.h"
 
-class ArcasPeerConnectionObserver : public webrtc::PeerConnectionObserver,
-                                    public rtc::RefCountedBase
+class ArcasPeerConnectionObserver final : public webrtc::PeerConnectionObserver,
+                                          public rtc::RefCountedBase
 {
 private:
+    webrtc::PeerConnectionInterface* observed = nullptr;
     rust::Box<ArcasRustPeerConnectionObserver> observer;
 
 public:
@@ -21,18 +22,22 @@ public:
     {
     }
 
+    void observe(
+        webrtc::PeerConnectionInterface&
+            peer_connection);///< Call this shortly after construction, before events start happening
+
     ~ArcasPeerConnectionObserver()
     {
         RTC_LOG(LS_VERBOSE) << "~ArcasPeerConnectionObserver";
     }
 
-    void OnSignalingChange(webrtc::PeerConnectionInterface::SignalingState new_state);
+    void OnSignalingChange(webrtc::PeerConnectionInterface::SignalingState new_state) override;
 
-    void OnAddStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream);
+    void OnAddStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) override;
 
-    void OnRemoveStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream);
+    void OnRemoveStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) override;
 
-    void OnDataChannel(rtc::scoped_refptr<webrtc::DataChannelInterface> data_channel);
+    void OnDataChannel(rtc::scoped_refptr<webrtc::DataChannelInterface> data_channel) override;
 
     void OnRenegotiationNeeded();
 
@@ -63,16 +68,17 @@ public:
 
     void OnIceCandidatesRemoved(const std::vector<cricket::Candidate>& candidates);
 
-    void OnIceConnectionReceivingChange(bool receiving);
+    void OnIceConnectionReceivingChange(bool receiving) override;
 
-    void OnIceSelectedCandidatePairChanged(const cricket::CandidatePairChangeEvent& event);
+    void OnIceSelectedCandidatePairChanged(const cricket::CandidatePairChangeEvent& event) override;
 
-    void OnAddTrack(rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver,
-                    const std::vector<rtc::scoped_refptr<webrtc::MediaStreamInterface>>& streams);
+    void OnAddTrack(
+        rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver,
+        const std::vector<rtc::scoped_refptr<webrtc::MediaStreamInterface>>& streams) override;
 
-    void OnTrack(rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver);
-    void OnRemoveTrack(rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver);
-    void OnInterestingUsage(int usage_pattern);
+    void OnTrack(rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) override;
+    void OnRemoveTrack(rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) override;
+    void OnInterestingUsage(int usage_pattern) override;
 };
 
 std::unique_ptr<ArcasPeerConnectionObserver>

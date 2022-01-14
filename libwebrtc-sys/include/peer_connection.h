@@ -73,6 +73,14 @@ public:
     }
 
     void get_stats(rust::Box<ArcasRustRTCStatsCollectorCallback> cb) const;
+    void get_tranceiver_stats(rust::Box<ArcasRustRTCStatsCollectorCallback> cb,
+                              ArcasRTPTransceiver const& transceiver) const;
+    void get_video_tranceiver_stats(rust::Box<ArcasRustRTCStatsCollectorCallback> cb,
+                                    ArcasRTPVideoTransceiver const& transceiver) const;
+    void get_audio_tranceiver_stats(rust::Box<ArcasRustRTCStatsCollectorCallback> cb,
+                                    ArcasRTPAudioTransceiver const& transceiver) const;
+    void get_tranceiver_stats_impl(rust::Box<ArcasRustRTCStatsCollectorCallback> cb,
+                                   webrtc::RtpTransceiverInterface const& transceiver) const;
     void add_ice_candidate(std::unique_ptr<ArcasICECandidate> candidate) const;
 
     std::unique_ptr<std::vector<ArcasRTPTransceiver>> get_transceivers() const;

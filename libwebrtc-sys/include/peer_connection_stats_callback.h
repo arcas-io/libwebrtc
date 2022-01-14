@@ -7,11 +7,16 @@
 class ArcasRTCStatsCollectorCallback : public webrtc::RTCStatsCollectorCallback,
                                        public rtc::RefCountedBase
 {
-private:
-    rust::Box<ArcasRustRTCStatsCollectorCallback> cb;
-
 public:
-    ArcasRTCStatsCollectorCallback(rust::Box<ArcasRustRTCStatsCollectorCallback>);
+    using underlying_t = rust::Box<ArcasRustRTCStatsCollectorCallback>;
+    ArcasRTCStatsCollectorCallback(underlying_t cb, short expected_calls = 1)
+    : expected_calls_back{expected_calls}
+    , cb(std::move(cb))
+    {
+    }
+
+    virtual ~ArcasRTCStatsCollectorCallback() {}
+
     void OnStatsDelivered(const rtc::scoped_refptr<const webrtc::RTCStatsReport>&) override;
 
     void AddRef() const override
@@ -23,4 +28,11 @@ public:
     {
         return rtc::RefCountedBase::Release();
     }
+
+private:
+    short expected_calls_back = 1;
+    std::vector<rtc::scoped_refptr<const webrtc::RTCStatsReport>> stat_reports;
+    underlying_t cb;
+
+    void finish();
 };

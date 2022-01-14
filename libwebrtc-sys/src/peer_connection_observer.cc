@@ -139,14 +139,19 @@ void ArcasPeerConnectionObserver::OnAddTrack(
 void ArcasPeerConnectionObserver::OnTrack(
     rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver)
 {
-    if (transceiver->media_type() == cricket::MediaType::MEDIA_TYPE_AUDIO)
+    if (!observed)
     {
-        auto rust = std::make_unique<ArcasRTPAudioTransceiver>(transceiver);
+        RTC_LOG_ERR(LS_ERROR)
+            << "Receiving OnTrack event but the observer has no reference to a peer connection.";
+    }
+    else if (transceiver->media_type() == cricket::MediaType::MEDIA_TYPE_AUDIO)
+    {
+        auto rust = std::make_unique<ArcasRTPAudioTransceiver>(*observed, transceiver);
         observer->on_audio_track(std::move(rust));
     }
     else
     {
-        auto rust = std::make_unique<ArcasRTPVideoTransceiver>(transceiver);
+        auto rust = std::make_unique<ArcasRTPVideoTransceiver>(*observed, transceiver);
         observer->on_video_track(std::move(rust));
     }
 };
@@ -167,4 +172,9 @@ std::unique_ptr<ArcasPeerConnectionObserver>
 create_peer_connection_observer(rust::Box<ArcasRustPeerConnectionObserver> rust_box)
 {
     return std::make_unique<ArcasPeerConnectionObserver>(std::move(rust_box));
+}
+
+void ArcasPeerConnectionObserver::observe(webrtc::PeerConnectionInterface& peer_connection)
+{
+    observed = &peer_connection;
 }

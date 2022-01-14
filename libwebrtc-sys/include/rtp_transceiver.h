@@ -5,9 +5,11 @@
 #include "libwebrtc-sys/include/rtp_sender.h"
 #include "rust/cxx.h"
 
+class ArcasPeerConnection;
 class ArcasRTPTransceiver;
 class ArcasRTPVideoTransceiver;
 class ArcasRTPAudioTransceiver;
+struct ArcasRustRTCStatsCollectorCallback;
 
 std::unique_ptr<ArcasRTPVideoTransceiver> video_transceiver_from_base(const ArcasRTPTransceiver&);
 std::unique_ptr<ArcasRTPAudioTransceiver> audio_transceiver_from_base(const ArcasRTPTransceiver&);
@@ -19,10 +21,12 @@ class ArcasRTPTransceiver
     audio_transceiver_from_base(const ArcasRTPTransceiver&);
 
 protected:
+    webrtc::PeerConnectionInterface& connection;
     rtc::scoped_refptr<webrtc::RtpTransceiverInterface> api;
 
 public:
-    ArcasRTPTransceiver(rtc::scoped_refptr<webrtc::RtpTransceiverInterface> api);
+    ArcasRTPTransceiver(webrtc::PeerConnectionInterface& associated_connection,
+                        rtc::scoped_refptr<webrtc::RtpTransceiverInterface> api);
     ~ArcasRTPTransceiver()
     {
         RTC_LOG(LS_VERBOSE) << "~ArcasRTPTransceiver";
@@ -133,15 +137,14 @@ public:
 
         return std::make_unique<ArcasRTCError>(api->SetOfferedRtpHeaderExtensions(view));
     }
+
+    void get_stats(rust::Box<ArcasRustRTCStatsCollectorCallback> cb) const;
 };
 
 class ArcasRTPVideoTransceiver : public ArcasRTPTransceiver
 {
 public:
-    ArcasRTPVideoTransceiver(rtc::scoped_refptr<webrtc::RtpTransceiverInterface> api)
-    : ArcasRTPTransceiver(api)
-    {
-    }
+    using ArcasRTPTransceiver::ArcasRTPTransceiver;
 
     std::unique_ptr<ArcasRTPVideoSender> get_sender() const
     {
@@ -155,17 +158,15 @@ public:
 
     std::unique_ptr<ArcasRTPVideoTransceiver> clone() const
     {
-        return std::make_unique<ArcasRTPVideoTransceiver>(api);
+        return std::make_unique<ArcasRTPVideoTransceiver>(connection, api);
     }
 };
 
 class ArcasRTPAudioTransceiver : public ArcasRTPTransceiver
 {
 public:
-    ArcasRTPAudioTransceiver(rtc::scoped_refptr<webrtc::RtpTransceiverInterface> api)
-    : ArcasRTPTransceiver(api)
-    {
-    }
+    using ArcasRTPTransceiver::ArcasRTPTransceiver;
+
     std::unique_ptr<ArcasRTPAudioSender> get_sender() const
     {
         return std::make_unique<ArcasRTPAudioSender>(api->sender());
@@ -178,7 +179,7 @@ public:
 
     std::unique_ptr<ArcasRTPAudioTransceiver> clone() const
     {
-        return std::make_unique<ArcasRTPAudioTransceiver>(api);
+        return std::make_unique<ArcasRTPAudioTransceiver>(connection, api);
     }
 };
 

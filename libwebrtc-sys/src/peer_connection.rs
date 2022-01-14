@@ -4,7 +4,6 @@ use self::ffi::{ArcasRTCError, ArcasSessionDescription};
 
 #[cxx::bridge]
 pub mod ffi {
-
     struct ArcasTransceiverInit {
         stream_ids: Vec<String>,
         direction: ArcasCxxRtpTransceiverDirection,
@@ -42,7 +41,8 @@ pub mod ffi {
         pub nack_count: u32,
         pub fir_count: u32,
         pub pli_count: u32,
-        pub quality_limitation_reason: u32, // 0 - kNone, 1 - kCpu, 2 - kBandwidth, 3 - kOther
+        // 0 - kNone, 1 - kCpu, 2 - kBandwidth, 3 - kOther
+        pub quality_limitation_reason: u32,
         pub quality_limitation_resolution_changes: u32,
         pub remote_packets_lost: i32,
         pub remote_jitter: f64,
@@ -147,12 +147,20 @@ pub mod ffi {
         );
 
         fn get_stats(self: &ArcasPeerConnection, callback: Box<ArcasRustRTCStatsCollectorCallback>);
+        fn get_stats(self: &ArcasRTPTransceiver, callback: Box<ArcasRustRTCStatsCollectorCallback>);
+        fn get_stats(
+            self: &ArcasRTPVideoTransceiver,
+            callback: Box<ArcasRustRTCStatsCollectorCallback>,
+        );
+        fn get_stats(
+            self: &ArcasRTPAudioTransceiver,
+            callback: Box<ArcasRustRTCStatsCollectorCallback>,
+        );
         fn add_ice_candidate(self: &ArcasPeerConnection, candidate: UniquePtr<ArcasICECandidate>);
         fn close(self: &ArcasPeerConnection);
         fn get_transceivers(
             self: &ArcasPeerConnection,
         ) -> UniquePtr<CxxVector<ArcasRTPTransceiver>>;
-
     }
 
     extern "Rust" {
@@ -227,7 +235,7 @@ impl ArcasRustSetSessionDescriptionObserver {
     }
 }
 
-type StatsCallbackFn = dyn Fn(
+pub type StatsCallbackFn = dyn Fn(
     Vec<self::ffi::ArcasVideoReceiverStats>,
     Vec<self::ffi::ArcasAudioReceiverStats>,
     Vec<self::ffi::ArcasVideoSenderStats>,
