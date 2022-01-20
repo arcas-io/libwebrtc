@@ -8,6 +8,7 @@ use std::process::exit;
 use std::process::Command;
 use std::vec;
 
+use glob::glob;
 use run_script::IoOptions;
 use run_script::ScriptOptions;
 
@@ -37,36 +38,28 @@ fn get_mac_sysroot() -> String {
 
 fn get_cc_files() -> Vec<String> {
     let mut cc_files: Vec<String> = vec![];
-    let files = fs::read_dir("./src/").unwrap();
+    let files = glob("./src/**/*.cc").unwrap();
     for entry in files {
         let entry = entry.unwrap();
-        let filename = entry.file_name().to_str().unwrap().to_owned();
+        let filename = entry.display().to_string();
         cc_files.push(filename);
     }
 
-    cc_files = cc_files
-        .iter()
-        .filter(|value| value.ends_with(".cc"))
-        .map(|original| format!("src/{}", original.to_owned()))
-        .collect();
+    println!("{}", cc_files.join(" "));
 
     cc_files
 }
 
 fn get_header_files() -> Vec<String> {
     let mut header_files: Vec<String> = vec![];
-    let files = fs::read_dir("./include/").unwrap();
+    let files = glob("./src/**/*.h").unwrap();
     for entry in files {
         let entry = entry.unwrap();
-        let filename = entry.file_name().to_str().unwrap().to_owned();
+        let filename = entry.display().to_string();
         header_files.push(filename);
     }
 
-    header_files = header_files
-        .iter()
-        .filter(|value| value.ends_with(".h"))
-        .map(|original| format!("include/{}", original.to_owned()))
-        .collect();
+    println!("{}", header_files.join(" "));
 
     header_files
 }
@@ -170,15 +163,21 @@ fn build_entrypoint(output_dir: String, target_os: String) {
     );
     // let mut builder = autocxx_build::Builder::new(&"src/lib.rs", &include_path_list);
     let mut builder = cxx_build::bridges(&[
+        &"src/p2p/ice_transport_internal.rs",
+        &"src/async_dns_resolver_factory.rs",
+        &"src/pc/session_description.rs",
+        &"src/pc/jsep_api.rs",
+        &"src/rtc_base/base.rs",
+        &"src/rtc_base/certificates.rs",
         &"src/shared_bridge.rs",
         &"src/logging.rs",
+        &"src/candidate.rs",
         &"src/rtp_parameters.rs",
         &"src/sdp_video_format.rs",
         &"src/video_frame_buffer_encoded.rs",
         &"src/video_frame.rs",
         &"src/ice_candidate.rs",
         &"src/session_description.rs",
-        &"src/p2p/lib.rs",
         &"src/codec_specific_info.rs",
         &"src/spatial_layer.rs",
         &"src/video_frame_buffer.rs",

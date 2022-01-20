@@ -1,6 +1,7 @@
 #pragma once
 #include "api/jsep.h"
 #include "api/jsep_ice_candidate.h"
+#include "libwebrtc-sys/include/candidate.h"
 #include "libwebrtc-sys/include/rust_shared.h"
 #include "rust/cxx.h"
 
@@ -41,6 +42,11 @@ public:
     std::unique_ptr<webrtc::IceCandidateInterface> take()
     {
         return std::move(api);
+    }
+
+    std::unique_ptr<ArcasCandidate> get_candidate() const
+    {
+        return std::make_unique<ArcasCandidate>(api->candidate());
     }
 };
 

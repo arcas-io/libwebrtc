@@ -1,4 +1,5 @@
 #pragma once
+#include "api/peer_connection_interface.h"
 #include "libwebrtc-sys/include/api_internal.h"
 #include "libwebrtc-sys/include/audio_device_module.h"
 #include "libwebrtc-sys/include/audio_track.h"
@@ -9,6 +10,9 @@
 #include "libwebrtc-sys/include/video_encoder_factory.h"
 #include "libwebrtc-sys/include/video_track.h"
 #include "libwebrtc-sys/include/video_track_source.h"
+
+using ArcasCxxBundlePolicy = webrtc::PeerConnectionInterface::BundlePolicy;
+using ArcasCxxRtcpMuxPolicy = webrtc::PeerConnectionInterface::RtcpMuxPolicy;
 
 class ArcasAPIInternal;
 

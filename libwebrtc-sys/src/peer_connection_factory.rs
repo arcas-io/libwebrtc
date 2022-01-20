@@ -13,6 +13,21 @@ pub mod ffi {
         sdp_semantics: ArcasSDPSemantics,
     }
 
+    #[derive(Debug)]
+    #[repr(u32)]
+    enum ArcasCxxBundlePolicy {
+        kBundlePolicyBalanced,
+        kBundlePolicyMaxBundle,
+        kBundlePolicyMaxCompat,
+    }
+
+    #[derive(Debug)]
+    #[repr(u32)]
+    enum ArcasCxxRtcpMuxPolicy {
+        kRtcpMuxPolicyNegotiate,
+        kRtcpMuxPolicyRequire,
+    }
+
     unsafe extern "C++" {
         include!("include/alias.h");
         include!("include/peer_connection_factory.h");
@@ -24,6 +39,8 @@ pub mod ffi {
         type ArcasVideoTrackSource = crate::video_track_source::ffi::ArcasVideoTrackSource;
         type ArcasVideoTrack = crate::video_track::ffi::ArcasVideoTrack;
         type ArcasSDPSemantics = crate::shared_bridge::ffi::ArcasSDPSemantics;
+        type ArcasCxxBundlePolicy;
+        type ArcasCxxRtcpMuxPolicy;
 
         type ArcasAudioTrackSource = crate::audio_track_source::ffi::ArcasAudioTrackSource;
         type ArcasAudioTrack = crate::audio_track::ffi::ArcasAudioTrack;

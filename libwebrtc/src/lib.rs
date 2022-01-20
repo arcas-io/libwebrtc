@@ -29,5 +29,7 @@ pub mod audio_encoder_pool;
 pub mod audio_track;
 pub mod audio_track_source;
 pub mod encoded_audio_frame_producer;
+pub mod jsep;
+pub mod rtc_base;
 pub mod shared_audio_encoder;
 pub mod shared_audio_encoder_factory;

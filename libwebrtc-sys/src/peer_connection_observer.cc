@@ -125,7 +125,7 @@ void ArcasPeerConnectionObserver::OnIceSelectedCandidatePairChanged(
     rust.last_data_received_ms = event.last_data_received_ms;
     rust.reason = rust::String(event.reason.c_str());
     rust.estimated_disconnected_time_ms = event.estimated_disconnected_time_ms;
-    observer->on_ice_selected_candidate_pair_change(rust);
+    observer->on_ice_selected_candidate_pair_change(std::move(rust));
 };
 
 void ArcasPeerConnectionObserver::OnAddTrack(

@@ -1,3 +1,4 @@
+#[allow(unreachable_patterns)]
 #[cxx::bridge]
 pub mod ffi {
     #[derive(Debug)]
