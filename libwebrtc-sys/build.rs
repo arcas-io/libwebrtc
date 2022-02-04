@@ -163,6 +163,7 @@ fn build_entrypoint(output_dir: String, target_os: String) {
     );
     // let mut builder = autocxx_build::Builder::new(&"src/lib.rs", &include_path_list);
     let mut builder = cxx_build::bridges(&[
+        &"src/sctp/socket.rs",
         &"src/p2p/ice_transport_internal.rs",
         &"src/async_dns_resolver_factory.rs",
         &"src/pc/session_description.rs",
