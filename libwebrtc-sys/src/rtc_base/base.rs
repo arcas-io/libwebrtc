@@ -1,3 +1,5 @@
+use std::os::raw::c_char;
+
 #[cxx::bridge]
 pub mod ffi {
     #[derive(Debug)]
@@ -40,6 +42,10 @@ pub mod ffi {
         type NetworkManager;
         #[namespace = "rtc"]
         type AdapterType;
+        #[namespace = "rtc"]
+        type ByteBufferReader;
+        #[namespace = "rtc"]
+        type ByteBufferWriter;
 
         type ArcasCxxSSLHandshakeError;
 
@@ -63,10 +69,39 @@ pub mod ffi {
         // Network Manager
         fn create_arcas_cxx_network_manager() -> UniquePtr<NetworkManager>;
 
+        // ByteBufferWriter
+
+        // ByteBufferReader
+
+        /// # Safety
+        ///
+        /// Memory must be managed outside of the pointer passed here.
+        /// It must live as long as the pointer is valid.
+        unsafe fn create_arcas_cxx_byte_buffer_writer(
+            ptr: *mut c_char,
+            size: usize,
+        ) -> UniquePtr<ByteBufferWriter>;
+
+        /// # Safety
+        ///
+        /// The pointer must be valid for the lifetime of the object.
+        unsafe fn create_arcas_cxx_byte_buffer_reader(
+            ptr: *mut c_char,
+            size: usize,
+        ) -> UniquePtr<ByteBufferReader>;
+
+        #[cxx_name = "Data"]
+        fn data(self: &ByteBufferReader) -> *const c_char;
+        #[cxx_name = "Length"]
+        fn len(self: &ByteBufferReader) -> usize;
+        #[cxx_name = "ReadUInt8"]
+        unsafe fn read_uint8(self: Pin<&mut ByteBufferReader>, out_val: *mut u8) -> bool;
+
         /// # Safety
         ///
         /// Must be passed valid Thread object. This will not take ownership.
         unsafe fn arcas_cxx_thread_post_task(thread: *mut Thread, task: Box<QueuedTask>);
+
     }
 
     extern "Rust" {
@@ -93,7 +128,16 @@ impl QueuedTask {
 #[cfg(test)]
 mod tests {
     #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
+    fn it_creates_byte_buffer() {
+        let mut slice = [10i8, 1i8, 2i8, 3i8];
+        let mut reader = unsafe {
+            super::ffi::create_arcas_cxx_byte_buffer_reader(slice.as_mut_ptr(), slice.len())
+        };
+
+        let mut output = [0u8; 10];
+        unsafe {
+            assert!(reader.pin_mut().read_uint8(output.as_mut_ptr()));
+        }
+        assert_eq!(10u8, output[0]);
     }
 }

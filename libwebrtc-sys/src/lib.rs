@@ -57,6 +57,7 @@ pub mod sdp_video_format;
 pub mod session_description;
 pub mod shared_bridge;
 pub mod spatial_layer;
+mod stun;
 pub mod video_codec;
 pub mod video_decoding;
 pub mod video_encoder_factory_wrapper;
