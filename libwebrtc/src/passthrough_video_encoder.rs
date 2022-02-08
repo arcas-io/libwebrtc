@@ -203,6 +203,7 @@ mod tests {
         },
         factory::Factory,
         peer_connection::PeerConnectionConfig,
+        peer_connection_observer::ObserverSenders,
         raw_video_frame_producer::{GStreamerRawFrameProducer, RawFrameProducer},
         video_codec::VideoCodec,
         video_encoder::VideoEncoderSettings,
@@ -216,12 +217,21 @@ mod tests {
         let config = PeerConnectionConfig::default();
         let config2 = PeerConnectionConfig::default();
 
+        let (ice_tx, mut ice_rx) = channel(100);
+        let (ice_tx2, mut ice_rx2) = channel(100);
+
         let pc_factory_passthrough = api_factory
             .create_peer_connection_factory_passthrough()
             .unwrap();
 
         let mut pc = pc_factory_passthrough
-            .create_peer_connection(config)
+            .create_peer_connection(
+                config,
+                ObserverSenders {
+                    ice_candidate: Some(ice_tx),
+                    ..Default::default()
+                },
+            )
             .unwrap();
         let (source, source_writer) = VideoTrackSource::create();
         let track = pc_factory_passthrough
@@ -237,7 +247,15 @@ mod tests {
             .unwrap();
 
         let pc_factory2 = api_factory2.create_peer_connection_factory().unwrap();
-        let mut pc2 = pc_factory2.create_peer_connection(config2).unwrap();
+        let mut pc2 = pc_factory2
+            .create_peer_connection(
+                config2,
+                ObserverSenders {
+                    ice_candidate: Some(ice_tx2),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
         pc2.set_remote_description(sdp.copy_to_remote().unwrap())
             .await
             .unwrap();
@@ -247,9 +265,6 @@ mod tests {
 
         pc2.set_local_description(answer).await.unwrap();
         pc.set_remote_description(answer_for_remote).await.unwrap();
-
-        let mut ice_rx = pc.take_ice_candidate_rx().unwrap();
-        let mut ice_rx2 = pc2.take_ice_candidate_rx().unwrap();
 
         let pc1_ice = ice_rx.recv().await.expect("Can get ice");
         let pc2_ice = ice_rx2.recv().await.expect("Can get ice");

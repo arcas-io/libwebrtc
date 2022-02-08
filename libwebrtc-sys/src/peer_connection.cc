@@ -1,6 +1,7 @@
 #include "libwebrtc-sys/include/peer_connection.h"
 #include "libwebrtc-sys/include/peer_connection_observer.h"
 #include "libwebrtc-sys/include/peer_connection_stats_callback.h"
+#include "libwebrtc-sys/src/data_channel.rs.h"
 #include "libwebrtc-sys/src/peer_connection.rs.h"
 #include "libwebrtc-sys/src/shared_bridge.rs.h"
 #include "rust/cxx.h"
@@ -151,4 +152,39 @@ std::unique_ptr<std::vector<ArcasRTPTransceiver>> ArcasPeerConnection::get_trans
     std::vector<ArcasRTPTransceiver> result;
     for (auto txrx : transceivers) { result.emplace_back(*api, txrx); }
     return std::make_unique<std::vector<ArcasRTPTransceiver>>(std::move(result));
+}
+
+std::unique_ptr<ArcasDataChannel>
+ArcasPeerConnection::create_data_channel(rust::String label,
+                                         const ArcasDataChannelInit& init_rust) const
+{
+    webrtc::DataChannelInit init;
+    const std::string& cxx_label = label.c_str();
+
+    init.reliable = init_rust.reliable;
+    init.ordered = init_rust.ordered;
+
+    if (init_rust.max_retransmit_time.size() > 0)
+    {
+        init.maxRetransmitTime = init_rust.max_retransmit_time[0];
+    }
+
+    if (init_rust.max_retransmits.size() > 0)
+    {
+        init.maxRetransmits = init_rust.max_retransmits[0];
+    }
+
+    init.protocol.assign(init_rust.protocol.data(), init_rust.protocol.size());
+
+    if (init_rust.id.size() > 0)
+    {
+        init.id = init_rust.id[0];
+    }
+
+    if (init_rust.priority.size() > 0)
+    {
+        init.priority = init_rust.priority[0];
+    }
+
+    return std::make_unique<ArcasDataChannel>(api->CreateDataChannel(cxx_label, &init));
 }

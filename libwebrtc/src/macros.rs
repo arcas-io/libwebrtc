@@ -67,3 +67,14 @@ macro_rules! rx_recv_async_or_err {
         }
     };
 }
+
+/// Helper for the optional senders blocking send.
+#[macro_export]
+macro_rules! send_event {
+    ($sender:expr, $val:expr) => {
+        match &$sender {
+            Some(sender) => crate::ok_or_return!(sender.blocking_send($val)),
+            None => {}
+        }
+    };
+}

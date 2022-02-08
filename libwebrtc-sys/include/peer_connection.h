@@ -1,6 +1,7 @@
 #pragma once
 #include "api/create_peerconnection_factory.h"
 #include "libwebrtc-sys/include/audio_track.h"
+#include "libwebrtc-sys/include/data_channel.h"
 #include "libwebrtc-sys/include/ice_candidate.h"
 #include "libwebrtc-sys/include/peer_connection_observer.h"
 #include "libwebrtc-sys/include/peer_connection_session_observers.h"
@@ -12,6 +13,7 @@
 #include "libwebrtc-sys/include/video_track.h"
 #include "rust/cxx.h"
 
+class ArcasDataChannelInit;
 class ArcasPeerConnection
 {
 private:
@@ -82,6 +84,9 @@ public:
     void get_tranceiver_stats_impl(rust::Box<ArcasRustRTCStatsCollectorCallback> cb,
                                    webrtc::RtpTransceiverInterface const& transceiver) const;
     void add_ice_candidate(std::unique_ptr<ArcasICECandidate> candidate) const;
+
+    std::unique_ptr<ArcasDataChannel> create_data_channel(rust::String label,
+                                                          const ArcasDataChannelInit& init) const;
 
     std::unique_ptr<std::vector<ArcasRTPTransceiver>> get_transceivers() const;
 };

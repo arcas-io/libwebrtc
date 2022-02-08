@@ -120,12 +120,14 @@ mod tests {
         ffi::set_arcas_log_level,
         shared_bridge::ffi::LoggingSeverity,
     };
+    use tokio::sync::mpsc::channel;
 
     use crate::{
         audio_track_source::AudioTrackSource,
         encoded_audio_frame_producer::GStreamerOpusAudioFrameProducer,
         factory::{Factory, FactoryConfig},
         peer_connection::{PeerConnectionConfig, SDPSemantic},
+        peer_connection_observer::ObserverSenders,
         transceiver::{TransceiverDirection, TransceiverInit},
     };
 
@@ -186,11 +188,20 @@ mod tests {
             }
         });
 
+        let (ice_tx, mut pc_ice) = channel(100);
+        let (ice_tx2, mut recvr_ice) = channel(100);
+
         let mut pc = pc_factory
-            .create_peer_connection(PeerConnectionConfig {
-                sdp_semantics: SDPSemantic::UnifiedPlan,
-                ice_servers: vec![],
-            })
+            .create_peer_connection(
+                PeerConnectionConfig {
+                    sdp_semantics: SDPSemantic::UnifiedPlan,
+                    ice_servers: vec![],
+                },
+                ObserverSenders {
+                    ice_candidate: Some(ice_tx),
+                    ..Default::default()
+                },
+            )
             .unwrap();
         {
             let audio_track = pc_factory
@@ -205,10 +216,16 @@ mod tests {
         }
 
         let mut recvr = recvr_factory
-            .create_peer_connection(PeerConnectionConfig {
-                sdp_semantics: SDPSemantic::UnifiedPlan,
-                ice_servers: vec![],
-            })
+            .create_peer_connection(
+                PeerConnectionConfig {
+                    sdp_semantics: SDPSemantic::UnifiedPlan,
+                    ice_servers: vec![],
+                },
+                ObserverSenders {
+                    ice_candidate: Some(ice_tx2),
+                    ..Default::default()
+                },
+            )
             .unwrap();
 
         {
@@ -220,9 +237,6 @@ mod tests {
             let remote_answer = answer.copy_to_remote().unwrap();
             recvr.set_local_description(answer).await.unwrap();
             pc.set_remote_description(remote_answer).await.unwrap();
-
-            let mut pc_ice = pc.take_ice_candidate_rx().unwrap();
-            let mut recvr_ice = recvr.take_ice_candidate_rx().unwrap();
 
             let pc_cand = pc_ice.recv().await.unwrap();
             let recvr_cand = recvr_ice.recv().await.unwrap();

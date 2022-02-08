@@ -1,26 +1,20 @@
 use cxx::UniquePtr;
 use libwebrtc_sys::{
+    data_channel::ffi::ArcasDataChannel,
     ffi::{
-        create_peer_connection_observer, ArcasCandidatePairChangeEvent, ArcasDataChannel,
-        ArcasICECandidate, ArcasIceConnectionState, ArcasIceGatheringState, ArcasMediaStream,
+        create_peer_connection_observer, ArcasCandidatePairChangeEvent, ArcasICECandidate,
+        ArcasIceConnectionState, ArcasIceGatheringState, ArcasMediaStream,
         ArcasPeerConnectionObserver, ArcasPeerConnectionState, ArcasRTCSignalingState,
         ArcasRTPAudioTransceiver, ArcasRTPReceiver, ArcasRTPVideoTransceiver,
     },
     peer_connection_observer::{PeerConnectionObserverImpl, PeerConnectionObserverProxy},
 };
-use tokio::sync::mpsc::{channel, Receiver, Sender};
+use tokio::sync::mpsc::Sender;
 
 use crate::{
-    cxx_get_mut,
-    error::{Result, WebRTCError},
-    ice_candidate::ICECandidate,
-    ok_or_return, take_or_err,
+    cxx_get_mut, data_channel::DataChannel, error::Result, ice_candidate::ICECandidate, send_event,
     transceiver::VideoTransceiver,
 };
-
-const CONNECTION_STATE_BUFFERING: usize = 100;
-const ICE_CANDIDATE_BUFFERING: usize = 50;
-const VIDEO_TRACK_BUFFERING: usize = 50;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ConnectionState {
@@ -49,20 +43,24 @@ impl From<ArcasPeerConnectionState> for ConnectionState {
 /// Internal handler for the PeerConnectionObserver interface in C++.
 /// These methods are always called from a webrtc thread (signaling probably) and
 /// never are called directly from rust code.
-struct PeerConnectionObserverHandler {
-    connection_state_tx: Sender<ConnectionState>,
-    ice_candidate_tx: Sender<ICECandidate>,
-    video_track_tx: Sender<VideoTransceiver>,
+#[derive(Default)]
+pub struct ObserverSenders {
+    pub connection_state: Option<Sender<ConnectionState>>,
+    pub ice_candidate: Option<Sender<ICECandidate>>,
+    pub data_channel: Option<Sender<DataChannel>>,
+    pub video_track: Option<Sender<VideoTransceiver>>,
 }
 
-impl PeerConnectionObserverImpl for PeerConnectionObserverHandler {
+impl PeerConnectionObserverImpl for ObserverSenders {
     fn on_signaling_state_change(&self, _state: ArcasRTCSignalingState) {}
 
     fn on_add_stream(&self, _stream: UniquePtr<ArcasMediaStream>) {}
 
     fn on_remove_stream(&self, _stream: UniquePtr<ArcasMediaStream>) {}
 
-    fn on_datachannel(&self, _data_channel: UniquePtr<ArcasDataChannel>) {}
+    fn on_datachannel(&self, data_channel: UniquePtr<ArcasDataChannel>) {
+        send_event!(self.data_channel, DataChannel::new(data_channel));
+    }
 
     fn on_renegotiation_needed(&self) {}
 
@@ -71,15 +69,13 @@ impl PeerConnectionObserverImpl for PeerConnectionObserverHandler {
     fn on_ice_connection_change(&self, _state: ArcasIceConnectionState) {}
 
     fn on_connection_change(&self, state: ArcasPeerConnectionState) {
-        ok_or_return!(self.connection_state_tx.blocking_send(state.into()));
+        send_event!(self.connection_state, ConnectionState::from(state));
     }
 
     fn on_ice_gathering_change(&self, _state: ArcasIceGatheringState) {}
 
     fn on_ice_candidate(&self, candidate: UniquePtr<ArcasICECandidate>) {
-        ok_or_return!(self
-            .ice_candidate_tx
-            .blocking_send(ICECandidate::new(candidate)));
+        send_event!(self.ice_candidate, ICECandidate::new(candidate));
     }
 
     fn on_ice_candidate_error(
@@ -110,9 +106,7 @@ impl PeerConnectionObserverImpl for PeerConnectionObserverHandler {
     fn on_add_track(&self, _receiver: UniquePtr<ArcasRTPReceiver>) {}
 
     fn on_video_track(&self, transceiver: UniquePtr<ArcasRTPVideoTransceiver>) {
-        ok_or_return!(self
-            .video_track_tx
-            .blocking_send(VideoTransceiver::new(transceiver)));
+        send_event!(self.video_track, VideoTransceiver::new(transceiver));
     }
 
     fn on_audio_track(&self, _transceiver: UniquePtr<ArcasRTPAudioTransceiver>) {}
@@ -126,47 +120,18 @@ impl PeerConnectionObserverImpl for PeerConnectionObserverHandler {
 /// threads and forwarding them to an appropriate tokio channel.
 pub struct PeerConnectionObserver {
     cxx_observer: UniquePtr<ArcasPeerConnectionObserver>,
-    connection_state_rx: Option<Receiver<ConnectionState>>,
-    ice_candidate_rx: Option<Receiver<ICECandidate>>,
-    video_track_rx: Option<Receiver<VideoTransceiver>>,
 }
 
 impl PeerConnectionObserver {
-    pub fn new() -> Result<Self> {
-        let (connection_state_tx, connection_state_rx) = channel(CONNECTION_STATE_BUFFERING);
-        let (ice_candidate_tx, ice_candidate_rx) = channel(ICE_CANDIDATE_BUFFERING);
-        let (video_track_tx, video_track_rx) = channel(VIDEO_TRACK_BUFFERING);
+    pub fn new(handler: ObserverSenders) -> Result<Self> {
+        let cxx_observer = create_peer_connection_observer(Box::new(
+            PeerConnectionObserverProxy::new(Box::new(handler)),
+        ));
 
-        let handler = Box::new(PeerConnectionObserverHandler {
-            connection_state_tx,
-            ice_candidate_tx,
-            video_track_tx,
-        });
-
-        let cxx_observer =
-            create_peer_connection_observer(Box::new(PeerConnectionObserverProxy::new(handler)));
-
-        Ok(Self {
-            cxx_observer,
-            connection_state_rx: Some(connection_state_rx),
-            ice_candidate_rx: Some(ice_candidate_rx),
-            video_track_rx: Some(video_track_rx),
-        })
+        Ok(Self { cxx_observer })
     }
 
     pub(crate) fn cxx_mut_ptr(&mut self) -> Result<*mut ArcasPeerConnectionObserver> {
         unsafe { cxx_get_mut!(self.cxx_observer) }
-    }
-
-    pub fn take_connection_state_rx(&mut self) -> Result<Receiver<ConnectionState>> {
-        take_or_err!(self.connection_state_rx)
-    }
-
-    pub fn take_ice_candidate_rx(&mut self) -> Result<Receiver<ICECandidate>> {
-        take_or_err!(self.ice_candidate_rx)
-    }
-
-    pub fn take_video_track_rx(&mut self) -> Result<Receiver<VideoTransceiver>> {
-        take_or_err!(self.video_track_rx)
     }
 }

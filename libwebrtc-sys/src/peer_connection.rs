@@ -78,6 +78,8 @@ pub mod ffi {
         include!("include/peer_connection_stats_callback.h");
         include!("include/peer_connection.h");
         include!("libwebrtc-sys/src/video_track.rs.h");
+        type ArcasDataChannelInit = crate::data_channel::ffi::ArcasDataChannelInit;
+        type ArcasDataChannel = crate::data_channel::ffi::ArcasDataChannel;
         type ArcasPeerConnection;
         type ArcasSDPSemantics = crate::shared_bridge::ffi::ArcasSDPSemantics;
         type ArcasRTCConfiguration = crate::shared_bridge::ffi::ArcasRTCConfiguration;
@@ -156,6 +158,12 @@ pub mod ffi {
             self: &ArcasRTPAudioTransceiver,
             callback: Box<ArcasRustRTCStatsCollectorCallback>,
         );
+        fn create_data_channel(
+            self: &ArcasPeerConnection,
+            label: String,
+            init: &ArcasDataChannelInit,
+        ) -> UniquePtr<ArcasDataChannel>;
+
         fn add_ice_candidate(self: &ArcasPeerConnection, candidate: UniquePtr<ArcasICECandidate>);
         fn close(self: &ArcasPeerConnection);
         fn get_transceivers(

@@ -1,7 +1,8 @@
-use std::sync::Arc;
+use std::{cell::RefCell, sync::Arc};
 
 use cxx::{SharedPtr, UniquePtr};
 use libwebrtc_sys::{
+    data_channel::ffi::{ArcasDataChannelInit, Priority},
     ffi::{
         audio_transceiver_from_base, create_rtc_configuration, video_transceiver_from_base,
         ArcasAudioReceiverStats, ArcasAudioSenderStats, ArcasICEServer, ArcasMediaType,
@@ -48,10 +49,11 @@ impl PeerConnectionStats {
 use crate::{
     audio_track::AudioTrack,
     audio_track_source::AudioTrackSource,
+    data_channel::{DataChannel, DataChannelInit},
     error::{aracs_rtc_error_to_err, Result, WebRTCError},
     ice_candidate::ICECandidate,
     ok_or_return,
-    peer_connection_observer::{ConnectionState, PeerConnectionObserver},
+    peer_connection_observer::{ConnectionState, ObserverSenders, PeerConnectionObserver},
     rx_recv_async_or_err,
     sdp::SessionDescription,
     transceiver::{AudioTransceiver, TransceiverInit, VideoTransceiver},
@@ -145,8 +147,12 @@ impl PeerConnectionFactory {
         Ok(AudioTrack::new(track))
     }
 
-    pub fn create_peer_connection(&self, config: PeerConnectionConfig) -> Result<PeerConnection> {
-        let mut observer = PeerConnectionObserver::new()?;
+    pub fn create_peer_connection(
+        &self,
+        config: PeerConnectionConfig,
+        senders: ObserverSenders,
+    ) -> Result<PeerConnection> {
+        let mut observer = PeerConnectionObserver::new(senders)?;
         let cxx_pc = unsafe {
             self.cxx_factory
                 .create_peer_connection(config.into(), observer.cxx_mut_ptr()?)
@@ -163,7 +169,10 @@ impl PeerConnectionFactory {
 /// In C++ all calls are redirected to the right thread.  this means we can pass
 /// around and share peer connection objects.
 pub struct PeerConnection {
+    // Keep observer alive for c++
+    #[allow(unused)]
     observer: Arc<Mutex<PeerConnectionObserver>>,
+
     cxx_pc: SharedPtr<ArcasPeerConnection>,
 }
 
@@ -363,19 +372,11 @@ impl<'a> PeerConnection {
         (video, audio)
     }
 
-    pub fn take_connection_state_rx(&mut self) -> Result<Receiver<ConnectionState>> {
-        let mut lock = self.observer.lock();
-        lock.take_connection_state_rx()
-    }
+    pub fn create_data_channel(&self, label: String, init: DataChannelInit) -> Result<DataChannel> {
+        let cxx_init = init.into();
+        let channel = self.cxx_pc.create_data_channel(label, &cxx_init);
 
-    pub fn take_ice_candidate_rx(&mut self) -> Result<Receiver<ICECandidate>> {
-        let mut lock = self.observer.lock();
-        lock.take_ice_candidate_rx()
-    }
-
-    pub fn take_video_track_rx(&mut self) -> Result<Receiver<VideoTransceiver>> {
-        let mut lock = self.observer.lock();
-        lock.take_video_track_rx()
+        Ok(DataChannel::new(channel))
     }
 }
 
@@ -390,10 +391,12 @@ impl Drop for PeerConnection {
 mod tests {
     use std::time::Duration;
 
+    use libwebrtc_sys::data_channel::ffi::ArcasCxxDataState;
     use tokio::{test, time::sleep};
 
     use super::*;
     use crate::{
+        data_channel::DataChannelSenders,
         factory::{Factory, FactoryConfig},
         passthrough_video_decoder_factory::PassthroughVideoDecoderFactory,
         raw_video_frame_producer::{GStreamerRawFrameProducer, RawFrameProducer},
@@ -419,7 +422,7 @@ mod tests {
 
         {
             pc_factory1
-                .create_peer_connection(PeerConnectionConfig::default())
+                .create_peer_connection(PeerConnectionConfig::default(), ObserverSenders::default())
                 .unwrap();
         }
     }
@@ -446,12 +449,40 @@ mod tests {
         let pc_factory1 = factory1.create_peer_connection_factory().unwrap();
         let pc_factory2 = factory2.create_peer_connection_factory().unwrap();
 
-        let mut pc1 = pc_factory1
-            .create_peer_connection(PeerConnectionConfig::default())
+        let (ice_tx, mut pc1_ice) = channel(100);
+        let (ice_tx2, mut pc2_ice) = channel(100);
+        let (dc_tx, mut dc_rx) = channel(1);
+
+        let pc1 = pc_factory1
+            .create_peer_connection(
+                PeerConnectionConfig::default(),
+                ObserverSenders {
+                    ice_candidate: Some(ice_tx),
+                    ..ObserverSenders::default()
+                },
+            )
             .unwrap();
 
-        let mut pc2 = pc_factory2
-            .create_peer_connection(PeerConnectionConfig::default())
+        let _dc = pc1
+            .create_data_channel(
+                "test".into(),
+                DataChannelInit {
+                    reliable: Some(true),
+                    ordered: Some(true),
+                    ..DataChannelInit::default()
+                },
+            )
+            .unwrap();
+
+        let pc2 = pc_factory2
+            .create_peer_connection(
+                PeerConnectionConfig::default(),
+                ObserverSenders {
+                    ice_candidate: Some(ice_tx2),
+                    data_channel: Some(dc_tx),
+                    ..ObserverSenders::default()
+                },
+            )
             .unwrap();
 
         let (source, source_write) = VideoTrackSource::create();
@@ -481,9 +512,6 @@ mod tests {
         let codec = VideoCodec::vp9_default();
         let mut producer = GStreamerRawFrameProducer::default_pipeline(&codec).unwrap();
         let rx = producer.start().unwrap();
-
-        let mut pc1_ice = pc1.take_ice_candidate_rx().unwrap();
-        let mut pc2_ice = pc2.take_ice_candidate_rx().unwrap();
 
         let pc1_candidate = pc1_ice.recv().await.unwrap();
         let pc2_candidate = pc2_ice.recv().await.unwrap();
@@ -515,6 +543,94 @@ mod tests {
             }
         });
         done_rx.recv().await.unwrap();
+
+        let dc2 = dc_rx.recv().await.unwrap();
+        assert_eq!(dc2.label(), "test");
+    }
+
+    #[test]
+    async fn test_data_channels() {
+        // Create some threads to run the peer connections.
+        let factory1 = Factory::new();
+        let factory2 = Factory::new();
+
+        let pc_factory1 = factory1.create_peer_connection_factory().unwrap();
+        let pc_factory2 = factory2.create_peer_connection_factory().unwrap();
+
+        let (ice_tx, mut pc1_ice) = channel(100);
+        let (ice_tx2, mut pc2_ice) = channel(100);
+        let (dc_tx, mut dc_rx) = channel(1);
+        let (dc1_msg_tx, mut dc1_msg_rx) = channel(1);
+        let (dc1_state_tx, mut dc1_state_rx) = channel(100);
+
+        let pc1 = pc_factory1
+            .create_peer_connection(
+                PeerConnectionConfig::default(),
+                ObserverSenders {
+                    ice_candidate: Some(ice_tx),
+                    ..ObserverSenders::default()
+                },
+            )
+            .unwrap();
+
+        let mut dc = pc1
+            .create_data_channel(
+                "test".into(),
+                DataChannelInit {
+                    reliable: Some(true),
+                    ordered: Some(true),
+                    ..DataChannelInit::default()
+                },
+            )
+            .unwrap();
+
+        dc.observe(DataChannelSenders {
+            on_message: Some(Box::new(move |slice, _binary| {
+                dc1_msg_tx.blocking_send(slice.to_vec()).unwrap();
+            })),
+            on_state_change: Some(dc1_state_tx),
+            ..DataChannelSenders::default()
+        });
+
+        let pc2 = pc_factory2
+            .create_peer_connection(
+                PeerConnectionConfig::default(),
+                ObserverSenders {
+                    ice_candidate: Some(ice_tx2),
+                    data_channel: Some(dc_tx),
+                    ..ObserverSenders::default()
+                },
+            )
+            .unwrap();
+
+        let offer = pc1.create_offer().await.unwrap();
+        let remote_offer = offer.copy_to_remote().unwrap();
+        pc1.set_local_description(offer).await.unwrap();
+        pc2.set_remote_description(remote_offer).await.unwrap();
+        let answer = pc2.create_answer().await.unwrap();
+        let remote_answer = answer.copy_to_remote().unwrap();
+        pc2.set_local_description(answer).await.unwrap();
+        pc1.set_remote_description(remote_answer).await.unwrap();
+
+        let pc1_candidate = pc1_ice.recv().await.unwrap();
+        let pc2_candidate = pc2_ice.recv().await.unwrap();
+
+        pc1.add_ice_candidate(pc2_candidate).await.unwrap();
+        pc2.add_ice_candidate(pc1_candidate).await.unwrap();
+
+        dc1_state_rx.recv().await.unwrap();
+        assert_eq!(dc.state(), ArcasCxxDataState::kOpen);
+
+        let mut dc2 = dc_rx.recv().await.unwrap();
+
+        assert_eq!(dc2.label(), "test");
+        dc2.send(b"hello", true);
+        let msg = dc1_msg_rx.recv().await.unwrap();
+        assert_eq!(msg.as_slice(), b"hello");
+
+        dc2.close();
+        dc1_state_rx.recv().await.unwrap();
+        assert_eq!(dc.state(), ArcasCxxDataState::kClosing);
     }
 
     #[test]
@@ -535,7 +651,7 @@ mod tests {
         let api = Factory::new();
         let pc_factory = api.create_factory_with_config(config).unwrap();
         let _ = pc_factory
-            .create_peer_connection(PeerConnectionConfig::default())
+            .create_peer_connection(PeerConnectionConfig::default(), ObserverSenders::default())
             .unwrap();
     }
 }

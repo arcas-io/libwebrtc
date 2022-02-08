@@ -28,6 +28,7 @@ pub mod passthrough_video_decoder_factory;
 pub mod audio_encoder_pool;
 pub mod audio_track;
 pub mod audio_track_source;
+pub mod data_channel;
 pub mod encoded_audio_frame_producer;
 pub mod jsep;
 pub mod rtc_base;
