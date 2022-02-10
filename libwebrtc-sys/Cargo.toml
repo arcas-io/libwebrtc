@@ -9,7 +9,9 @@ authors = ["Little Bear Labs, Inc"]
 [dependencies]
 cxx = "1.0.56"
 lazy_static = "1.4.0"
+log = "0.4.14"
 parking_lot = "0.11.2"
+thiserror = "1.0.30"
 
 [build-dependencies]
 cxx-build = { version = "1.0.56", features = ["parallel"] }

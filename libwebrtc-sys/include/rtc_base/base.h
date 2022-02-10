@@ -33,5 +33,5 @@ public:
 std::unique_ptr<rtc::Thread> create_arcas_cxx_thread();
 void arcas_cxx_thread_post_task(rtc::Thread* thread, rust::Box<ArcasRustQueuedTask> task);
 std::unique_ptr<rtc::NetworkManager> create_arcas_cxx_network_manager();
-std::unique_ptr<rtc::ByteBufferReader> create_arcas_cxx_byte_buffer_reader(char* bytes, size_t len);
+std::unique_ptr<rtc::ByteBufferReader> create_arcas_cxx_byte_buffer_reader(const char* bytes, size_t len);
 std::unique_ptr<rtc::ByteBufferWriter> create_arcas_cxx_byte_buffer_writer(char* bytes, size_t len);

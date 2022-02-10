@@ -1,7 +1,16 @@
+use log::error;
+
+use crate::primitive_to_cxx_enum;
+
+use self::ffi::{
+    IceAttributeType, StunAddressFamily, StunAttributeType, StunAttributeValueType, StunErrorCode,
+    StunMessageType,
+};
+
 #[cxx::bridge]
 pub mod ffi {
 
-    #[derive(Debug)]
+    #[derive(Debug, PartialEq)]
     #[namespace = "cricket"]
     #[repr(i32)]
     enum StunMessageType {
@@ -18,7 +27,7 @@ pub mod ffi {
         GOOG_PING_ERROR_RESPONSE = 0x310,
     }
 
-    #[derive(Debug)]
+    #[derive(Debug, PartialEq)]
     #[namespace = "cricket"]
     #[repr(u32)]
     enum StunAttributeType {
@@ -37,7 +46,7 @@ pub mod ffi {
         STUN_ATTR_RETRANSMIT_COUNT = 0xFF00,   // UInt32
     }
 
-    #[derive(Debug)]
+    #[derive(Debug, PartialEq)]
     #[namespace = "cricket"]
     #[repr(u32)]
     enum StunAttributeValueType {
@@ -51,7 +60,7 @@ pub mod ffi {
         STUN_VALUE_UINT16_LIST = 7,
     }
 
-    #[derive(Debug)]
+    #[derive(Debug, PartialEq)]
     #[namespace = "cricket"]
     #[repr(u32)]
     enum StunErrorCode {
@@ -64,7 +73,7 @@ pub mod ffi {
         STUN_ERROR_GLOBAL_FAILURE = 600,
     }
 
-    #[derive(Debug)]
+    #[derive(Debug, PartialEq)]
     #[namespace = "cricket"]
     #[repr(u32)]
     enum StunAddressFamily {
@@ -74,7 +83,7 @@ pub mod ffi {
         STUN_ADDRESS_IPV6 = 2,
     }
 
-    #[derive(Debug)]
+    #[derive(Debug, PartialEq)]
     #[namespace = "cricket"]
     #[repr(u32)]
     enum IceAttributeType {
@@ -218,6 +227,87 @@ pub mod ffi {
     }
 }
 
+primitive_to_cxx_enum!(
+    StunMessageType,
+    i32,
+    STUN_BINDING_REQUEST,
+    STUN_BINDING_INDICATION,
+    STUN_BINDING_RESPONSE,
+    STUN_BINDING_ERROR_RESPONSE,
+    GOOG_PING_REQUEST,
+    GOOG_PING_RESPONSE,
+    GOOG_PING_ERROR_RESPONSE
+);
+
+primitive_to_cxx_enum!(
+    StunAttributeType,
+    u32,
+    STUN_ATTR_MAPPED_ADDRESS,
+    STUN_ATTR_USERNAME,
+    STUN_ATTR_MESSAGE_INTEGRITY,
+    STUN_ATTR_ERROR_CODE,
+    STUN_ATTR_UNKNOWN_ATTRIBUTES,
+    STUN_ATTR_REALM,
+    STUN_ATTR_NONCE,
+    STUN_ATTR_XOR_MAPPED_ADDRESS,
+    STUN_ATTR_SOFTWARE,
+    STUN_ATTR_ALTERNATE_SERVER,
+    STUN_ATTR_FINGERPRINT,
+    STUN_ATTR_ORIGIN,
+    STUN_ATTR_RETRANSMIT_COUNT
+);
+
+primitive_to_cxx_enum!(
+    StunAttributeValueType,
+    u32,
+    STUN_VALUE_UNKNOWN,
+    STUN_VALUE_ADDRESS,
+    STUN_VALUE_XOR_ADDRESS,
+    STUN_VALUE_UINT32,
+    STUN_VALUE_UINT64,
+    STUN_VALUE_BYTE_STRING,
+    STUN_VALUE_ERROR_CODE,
+    STUN_VALUE_UINT16_LIST
+);
+
+primitive_to_cxx_enum!(
+    StunErrorCode,
+    u32,
+    STUN_ERROR_TRY_ALTERNATE,
+    STUN_ERROR_BAD_REQUEST,
+    STUN_ERROR_UNAUTHORIZED,
+    STUN_ERROR_UNKNOWN_ATTRIBUTE,
+    STUN_ERROR_STALE_NONCE,
+    STUN_ERROR_SERVER_ERROR,
+    STUN_ERROR_GLOBAL_FAILURE
+);
+
+primitive_to_cxx_enum!(
+    StunAddressFamily,
+    u32,
+    STUN_ADDRESS_IPV4,
+    STUN_ADDRESS_IPV6,
+    STUN_ADDRESS_UNDEF
+);
+
+primitive_to_cxx_enum!(
+    IceAttributeType,
+    u32,
+    STUN_ATTR_PRIORITY,
+    STUN_ATTR_USE_CANDIDATE,
+    STUN_ATTR_ICE_CONTROLLED,
+    STUN_ATTR_ICE_CONTROLLING,
+    STUN_ATTR_NOMINATION,
+    STUN_ATTR_GOOG_NETWORK_INFO,
+    STUN_ATTR_GOOG_LAST_ICE_CHECK_RECEIVED,
+    STUN_ATTR_GOOG_MISC_INFO,
+    STUN_ATTR_GOOG_OBSOLETE_1,
+    STUN_ATTR_GOOG_CONNECTION_ID,
+    STUN_ATTR_GOOG_DELTA,
+    STUN_ATTR_GOOG_DELTA_ACK,
+    STUN_ATTR_GOOG_MESSAGE_INTEGRITY_32
+);
+
 #[cfg(test)]
 pub mod tests {
     use std::os::raw::c_char;
@@ -239,8 +329,8 @@ pub mod tests {
 
         // base64 encoded message... taken from the pion test browser examples.
         let test_stun_messsage = "AAEAGCESpEJQVkdXVHBjbjhBWlWALwARaHR0cHM6Ly9jeWRldi5ydS8AAAA=";
-        let mut decoded = base64::decode(test_stun_messsage).unwrap();
-        let decoded_ptr = decoded.as_mut_ptr() as *mut c_char;
+        let decoded = base64::decode(test_stun_messsage).unwrap();
+        let decoded_ptr = decoded.as_ptr() as *const i8;
         let mut reader = unsafe { create_arcas_cxx_byte_buffer_reader(decoded_ptr, decoded.len()) };
         assert_eq!(reader.len(), decoded.len());
 

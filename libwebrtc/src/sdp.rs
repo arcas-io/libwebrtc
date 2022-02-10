@@ -75,8 +75,8 @@ impl SessionDescription {
         self.cxx_sdp.get_type().into()
     }
 
-    pub(crate) fn take_cxx(self) -> UniquePtr<ArcasSessionDescription> {
-        self.cxx_sdp
+    pub(crate) fn clone_cxx(self) -> UniquePtr<ArcasSessionDescription> {
+        self.cxx_sdp.clone_cxx()
     }
 
     /// Copies the current SDP and forces it to be a remote copy
@@ -84,10 +84,21 @@ impl SessionDescription {
     pub fn copy_to_remote(&self) -> Result<Self> {
         Self::new(self.cxx_sdp.get_type().into(), self.cxx_sdp.cxx_to_string())
     }
+
+    pub fn take_cxx(self) -> UniquePtr<ArcasSessionDescription> {
+        self.cxx_sdp
+    }
 }
 
 impl ToString for SessionDescription {
     fn to_string(&self) -> String {
         self.cxx_sdp.cxx_to_string()
+    }
+}
+impl Clone for SessionDescription {
+    fn clone(&self) -> Self {
+        Self {
+            cxx_sdp: self.cxx_sdp.clone_cxx(),
+        }
     }
 }

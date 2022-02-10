@@ -86,7 +86,7 @@ pub mod ffi {
         ///
         /// The pointer must be valid for the lifetime of the object.
         unsafe fn create_arcas_cxx_byte_buffer_reader(
-            ptr: *mut c_char,
+            ptr: *const c_char,
             size: usize,
         ) -> UniquePtr<ByteBufferReader>;
 
@@ -130,9 +130,8 @@ mod tests {
     #[test]
     fn it_creates_byte_buffer() {
         let mut slice = [10i8, 1i8, 2i8, 3i8];
-        let mut reader = unsafe {
-            super::ffi::create_arcas_cxx_byte_buffer_reader(slice.as_mut_ptr(), slice.len())
-        };
+        let mut reader =
+            unsafe { super::ffi::create_arcas_cxx_byte_buffer_reader(slice.as_ptr(), slice.len()) };
 
         let mut output = [0u8; 10];
         unsafe {

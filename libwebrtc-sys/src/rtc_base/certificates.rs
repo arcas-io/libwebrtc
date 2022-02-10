@@ -72,6 +72,7 @@ pub mod ffi {
 
         // ArcasSSLCertificate
         fn to_pem(self: &ArcasSSLCertificate) -> ArcasRTCCertificatePEM;
+        fn get_fingerprint_data(self: &ArcasSSLCertificate) -> Vec<u8>;
     }
 }
 

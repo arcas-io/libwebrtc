@@ -33,7 +33,7 @@ std::unique_ptr<rtc::NetworkManager> create_arcas_cxx_network_manager()
     return std::make_unique<rtc::BasicNetworkManager>();
 }
 
-std::unique_ptr<rtc::ByteBufferReader> create_arcas_cxx_byte_buffer_reader(char* bytes, size_t len)
+std::unique_ptr<rtc::ByteBufferReader> create_arcas_cxx_byte_buffer_reader(const char* bytes, size_t len)
 {
     return std::make_unique<rtc::ByteBufferReader>(bytes, len);
 }

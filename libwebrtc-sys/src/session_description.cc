@@ -35,7 +35,7 @@ ArcasCreateSessionDescriptionResult create_arcas_session_description(webrtc::Sdp
     ArcasCreateSessionDescriptionResult result;
 
     auto api = webrtc::CreateSessionDescription(type, sdp.c_str(), &error);
-    if (error.line.size() > 0)
+    if (error.description.size() > 0 || error.line.size() > 0)
     {
         result.ok = false;
         result.error.line = rust::String(error.line.c_str());
