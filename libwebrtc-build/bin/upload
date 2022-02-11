@@ -3,7 +3,7 @@
 
 bucket=libwebrtc-dev
 os=$(uname | tr '[:upper:]' '[:lower:]')
-arch_str=$(arch)
+arch_str=$1
 
 if [[ $os == "darwin" && $arch_str == "i386" ]];
 then
