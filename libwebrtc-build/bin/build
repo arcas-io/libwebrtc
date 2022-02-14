@@ -1,5 +1,6 @@
 #! /bin/bash -ex
 
+
 . bin/setup.sh
 
 # Debug build flag must be a string like "true" or "false"
