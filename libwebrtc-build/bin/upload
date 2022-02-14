@@ -1,6 +1,5 @@
 #! /bin/bash -ex
 
-
 bucket=libwebrtc-dev
 os=$(uname | tr '[:upper:]' '[:lower:]')
 arch_str=$1
