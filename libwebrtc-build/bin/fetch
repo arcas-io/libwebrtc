@@ -3,7 +3,7 @@
 . bin/setup.sh
 
 default_revision=$(cat REVISION)
-revision="${1:-$default_revision}"
+revision="${2:-$default_revision}"
 
 pushd libwebrtc
 if [ ! -d src ]; then
@@ -16,6 +16,6 @@ echo "Checkout out libwebrtc rev: $revision"
 pushd src
 git checkout $revision
 gclient sync
-./build/linux/sysroot_scripts/install-sysroot.py --arch=arm64
+./build/linux/sysroot_scripts/install-sysroot.py --arch=$1
 popd
 popd
