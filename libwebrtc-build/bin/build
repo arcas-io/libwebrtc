@@ -40,6 +40,7 @@ rm BUILD.gn || true
 cp ../../BUILD.gn .
 mkdir -p $OUTDIR
 gn gen -C $OUTDIR "--args=${GN_ARGS}" --export-compile-commands
+vpython src/build/linux/sysroot_scripts/install-sysroot.py --arch=arm64
 popd
 # target is always webrtc which builds libwebrtc.a
 ninja -C $OUTDIR webrtc
