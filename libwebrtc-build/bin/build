@@ -26,8 +26,12 @@ if [[ $OS == 'Darwin'* ]]; then
     echo "OS target: Darwin"
 	BASE_WEBRTC_ARGS+=' target_os="mac" use_custom_libcxx=false'
 elif [[ $OS == 'Linux'* ]]; then
-    echo "OS target: Linux"
-	BASE_WEBRTC_ARGS+=' target_os="linux" target_cpu="'$1'"'
+    echo "OS target: Linux"   
+  if [[ "$1" == "arm64" ]]; then
+	  BASE_WEBRTC_ARGS+=' target_os="linux" target_cpu="arm64"'
+  else
+    BASE_WEBRTC_ARGS+=' target_os="linux"'
+  fi
 else
  echo "Unknown operating system: ${OS}"
  exit 1

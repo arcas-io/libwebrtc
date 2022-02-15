@@ -16,6 +16,8 @@ echo "Checkout out libwebrtc rev: $revision"
 pushd src
 git checkout $revision
 gclient sync
-./build/linux/sysroot_scripts/install-sysroot.py --arch=$1
+if [[ "$1" == "arm64" ]]; then
+    ./build/linux/sysroot_scripts/install-sysroot.py --arch=arm64
+fi
 popd
 popd
