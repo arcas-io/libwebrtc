@@ -630,7 +630,9 @@ mod tests {
 
         dc2.close();
         dc1_state_rx.recv().await.unwrap();
-        assert_eq!(dc.state(), ArcasCxxDataState::kClosing);
+        assert!(
+            dc.state() == ArcasCxxDataState::kClosing || dc.state() == ArcasCxxDataState::kClosed
+        );
     }
 
     #[test]
