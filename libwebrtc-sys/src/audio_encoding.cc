@@ -1,8 +1,8 @@
-#include "libwebrtc-sys/include/audio_encoding.h"
-#include "libwebrtc-sys/include/audio_encoder_factory.h"
-#include "libwebrtc-sys/include/rtc_buffer.h"
+#include "audio_encoding.h"
+#include "audio_encoder_factory.h"
 #include "libwebrtc-sys/src/audio_encoding.rs.h"
 #include "rtc_base/ref_counted_object.h"
+#include "rtc_buffer.h"
 #include "rust/cxx.h"
 
 ArcasAudioEncoder::ArcasAudioEncoder(rust::Box<ArcasRustAudioEncoder> api)
@@ -31,32 +31,23 @@ int ArcasAudioEncoder::GetTargetBitrate() const
     return api->get_target_bitrate();
 }
 
-absl::optional<std::pair<webrtc::TimeDelta, webrtc::TimeDelta>>
-ArcasAudioEncoder::GetFrameLengthRange() const
+absl::optional<std::pair<webrtc::TimeDelta, webrtc::TimeDelta>> ArcasAudioEncoder::GetFrameLengthRange() const
 {
     return absl::optional<std::pair<webrtc::TimeDelta, webrtc::TimeDelta>>(
-        std::make_pair<webrtc::TimeDelta, webrtc::TimeDelta>(webrtc::TimeDelta::Millis(5),
-                                                             webrtc::TimeDelta::Millis(60)));
+        std::make_pair<webrtc::TimeDelta, webrtc::TimeDelta>(webrtc::TimeDelta::Millis(5), webrtc::TimeDelta::Millis(60)));
 }
 
 void ArcasAudioEncoder::Reset() {}
 
-EncodedInfo ArcasAudioEncoder::Encode(uint32_t rtp_timestamp,
-                                      rtc::ArrayView<const int16_t> audio_data,
-                                      rtc::Buffer* encoded)
+EncodedInfo ArcasAudioEncoder::Encode(uint32_t rtp_timestamp, rtc::ArrayView<const int16_t> audio_data, rtc::Buffer* encoded)
 {
     return EncodeImpl(rtp_timestamp, audio_data, encoded);
 }
 
-EncodedInfo ArcasAudioEncoder::EncodeImpl(uint32_t rtp_timestamp,
-                                          rtc::ArrayView<const int16_t> audio_data,
-                                          rtc::Buffer* encoded)
+EncodedInfo ArcasAudioEncoder::EncodeImpl(uint32_t rtp_timestamp, rtc::ArrayView<const int16_t> audio_data, rtc::Buffer* encoded)
 {
     auto encode_buffer = std::make_unique<BufferUint8>(encoded);
-    auto ffi_result = api->encode_impl(rtp_timestamp,
-                                       audio_data.data(),
-                                       audio_data.size(),
-                                       std::move(encode_buffer));
+    auto ffi_result = api->encode_impl(rtp_timestamp, audio_data.data(), audio_data.size(), std::move(encode_buffer));
     auto result = EncodedInfo();
 
     {
@@ -72,7 +63,7 @@ EncodedInfo ArcasAudioEncoder::EncodeImpl(uint32_t rtp_timestamp,
 }
 
 // AudioEncoderFactory
-const webrtc::SdpAudioFormat from_arcas_sdp_audio_format(ArcasSdpAudioFormat& format)
+webrtc::SdpAudioFormat from_arcas_sdp_audio_format(ArcasSdpAudioFormat const& format)
 {
     std::map<std::string, std::string> parameters;
     auto size = format.parameters.size();
@@ -82,14 +73,14 @@ const webrtc::SdpAudioFormat from_arcas_sdp_audio_format(ArcasSdpAudioFormat& fo
         {
             break;
         }
-        parameters.insert({std::string(format.parameters[idx].c_str()),
-                           std::string(format.parameters[idx + 1].c_str())});
+        auto& l = format.parameters[idx];
+        auto& r = format.parameters[idx + 1];
+        std::string key{l.data(), l.size()};
+        std::string val{r.data(), r.size()};
+        parameters.emplace(key, val);
     }
-    auto name = std::string(format.name.c_str());
-    return webrtc::SdpAudioFormat(name,
-                                  format.clockrate_hz,
-                                  format.num_channels,
-                                  std::move(parameters));
+    std::string name{format.name.data(), format.name.size()};
+    return webrtc::SdpAudioFormat(name, format.clockrate_hz, format.num_channels, std::move(parameters));
 }
 
 ArcasSdpAudioFormat from_webrtc_sdp_audio_format(const webrtc::SdpAudioFormat& format)
@@ -108,11 +99,7 @@ ArcasSdpAudioFormat from_webrtc_sdp_audio_format(const webrtc::SdpAudioFormat& f
 
 webrtc::AudioCodecInfo from_arcas_audio_codec_info(const ArcasAudioCodecInfo& info)
 {
-    return webrtc::AudioCodecInfo(info.sample_rate,
-                                  info.num_channels,
-                                  info.default_bitrate_bps,
-                                  info.min_bitrate_bps,
-                                  info.max_bitrate_bps);
+    return webrtc::AudioCodecInfo(info.sample_rate, info.num_channels, info.default_bitrate_bps, info.min_bitrate_bps, info.max_bitrate_bps);
 }
 
 ArcasAudioCodecInfo from_webrtc_audio_codec_info(const webrtc::AudioCodecInfo& info)
@@ -126,52 +113,9 @@ ArcasAudioCodecInfo from_webrtc_audio_codec_info(const webrtc::AudioCodecInfo& i
                                .supports_network_adaptation = info.supports_network_adaption};
 }
 
-std::vector<webrtc::AudioCodecSpec> ArcasAudioEncoderFactory::GetSupportedEncoders()
-{
-    std::vector<webrtc::AudioCodecSpec> result;
-    auto ffi_result = api->get_supported_formats();
-    for (auto spec : ffi_result)
-    {
-        result.push_back(webrtc::AudioCodecSpec{.format = from_arcas_sdp_audio_format(spec.format),
-                                                .info = from_arcas_audio_codec_info(spec.info)});
-    }
-    return result;
-}
-
-absl::optional<webrtc::AudioCodecInfo>
-ArcasAudioEncoderFactory::QueryAudioEncoder(const webrtc::SdpAudioFormat& format)
-{
-    auto fmt = from_webrtc_sdp_audio_format(format);
-    auto result = api->query_audio_encoder(fmt);
-    if (result.sample_rate == 0 && result.num_channels == 0)
-    {
-        return absl::optional<webrtc::AudioCodecInfo>();
-    }
-    return absl::optional<webrtc::AudioCodecInfo>(from_arcas_audio_codec_info(result));
-}
-
-std::unique_ptr<WebRTCAudioEncoder>
-ArcasAudioEncoderFactory::MakeAudioEncoder(int payload_type,
-                                           const webrtc::SdpAudioFormat& format,
-                                           absl::optional<webrtc::AudioCodecPairId> codec_pair_id)
-{
-    auto fmt = from_webrtc_sdp_audio_format(format);
-    return api->make_audio_encoder(payload_type, fmt);
-}
-
-ArcasAudioEncoderFactory::ArcasAudioEncoderFactory(rust::Box<ArcasRustAudioEncoderFactory> api)
-: api(std::move(api))
-{
-}
 
 std::unique_ptr<ArcasAudioEncoder> create_audio_encoder(rust::Box<ArcasRustAudioEncoder> api)
 {
     auto result = std::make_unique<ArcasAudioEncoder>(std::move(api));
     return result;
-}
-
-rtc::scoped_refptr<ArcasAudioEncoderFactory>
-create_audio_encoder_factory(rust::Box<ArcasRustAudioEncoderFactory> api)
-{
-    return rtc::make_ref_counted<ArcasAudioEncoderFactory>(std::move(api));
 }

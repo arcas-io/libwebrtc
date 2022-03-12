@@ -1,6 +1,6 @@
 #pragma once
+#include "alias.h"
 #include "api/video_codecs/video_encoder.h"
-#include "libwebrtc-sys/include/alias.h"
 
 class ArcasVideoEncoderRateControlParameters
 {
@@ -12,8 +12,7 @@ public:
     : api(api)
     {
     }
-    ArcasVideoEncoderRateControlParameters(const ArcasCxxVideoBitrateAllocation& bitrate,
-                                           double framerate_fps)
+    ArcasVideoEncoderRateControlParameters(const ArcasCxxVideoBitrateAllocation& bitrate, double framerate_fps)
     : api(webrtc::VideoEncoder::RateControlParameters(bitrate, framerate_fps))
     {
     }

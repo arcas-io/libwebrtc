@@ -1,17 +1,15 @@
 
 // #include "cxxgen.h"
-#include "libwebrtc-sys/include/peer_connection_session_observers.h"
+#include "peer_connection_session_observers.h"
 #include "libwebrtc-sys/src/peer_connection.rs.h"
 #include "libwebrtc-sys/src/shared_bridge.rs.h"
 
-ArcasCreateSessionDescriptionObserver::ArcasCreateSessionDescriptionObserver(
-    rust::Box<ArcasRustCreateSessionDescriptionObserver> observer)
+ArcasCreateSessionDescriptionObserver::ArcasCreateSessionDescriptionObserver(rust::Box<ArcasRustCreateSessionDescriptionObserver> observer)
 : observer(std::move(observer))
 {
 }
 
-ArcasSetDescriptionObserver::ArcasSetDescriptionObserver(
-    rust::Box<ArcasRustSetSessionDescriptionObserver> observer)
+ArcasSetDescriptionObserver::ArcasSetDescriptionObserver(rust::Box<ArcasRustSetSessionDescriptionObserver> observer)
 : observer(std::move(observer))
 {
 }
@@ -54,8 +52,7 @@ create_session_description_observer(rust::Box<ArcasRustCreateSessionDescriptionO
     return std::make_shared<ArcasCreateSessionDescriptionObserver>(std::move(observer));
 }
 
-std::shared_ptr<ArcasSetDescriptionObserver>
-set_session_description_observer(rust::Box<ArcasRustSetSessionDescriptionObserver> observer)
+std::shared_ptr<ArcasSetDescriptionObserver> set_session_description_observer(rust::Box<ArcasRustSetSessionDescriptionObserver> observer)
 {
     return std::make_shared<ArcasSetDescriptionObserver>(std::move(observer));
 }

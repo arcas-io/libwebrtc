@@ -1,4 +1,4 @@
-#include "libwebrtc-sys/include/audio_device_module.h"
+#include "audio_device_module.h"
 #include "rtc_base/logging.h"
 
 /* ArcasAudioDeviceModule::ArcasAudioDeviceModule(webrtc::TaskQueueFactory* factory): audio_buffer_(factory) {} */
@@ -71,14 +71,7 @@ int32_t ArcasAudioDeviceModule::PlayoutThread()
         int64_t elapsed_time_ms = -1;
         int64_t ntp_time_ms = -1;
         size_t samples_out = 0;
-        audioCallback->NeedMorePlayData(samples_per_channel,
-                                        2,
-                                        1,
-                                        8000,
-                                        sample_buf,
-                                        samples_out,
-                                        &elapsed_time_ms,
-                                        &ntp_time_ms);
+        audioCallback->NeedMorePlayData(samples_per_channel, 2, 1, 8000, sample_buf, samples_out, &elapsed_time_ms, &ntp_time_ms);
     }
     return true;
 }

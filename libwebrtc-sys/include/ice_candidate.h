@@ -1,9 +1,9 @@
 #pragma once
 #include "api/jsep.h"
 #include "api/jsep_ice_candidate.h"
-#include "libwebrtc-sys/include/candidate.h"
-#include "libwebrtc-sys/include/rust_shared.h"
+#include "candidate.h"
 #include "rust/cxx.h"
+#include "rust_shared.h"
 
 class ArcasICECandidate
 {
@@ -50,5 +50,4 @@ public:
     }
 };
 
-ArcasCreateICECandidateResult
-create_arcas_ice_candidate(rust::String sdp_mid, uint32_t sdp_mline_index, rust::String sdp);
+ArcasCreateICECandidateResult create_arcas_ice_candidate(rust::String sdp_mid, uint32_t sdp_mline_index, rust::String sdp);

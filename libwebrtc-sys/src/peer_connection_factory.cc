@@ -1,22 +1,20 @@
-#include "libwebrtc-sys/include/peer_connection_factory.h"
+#include "peer_connection_factory.h"
+#include "api_internal.h"
 #include "iostream"
-#include "libwebrtc-sys/include/api_internal.h"
-#include "libwebrtc-sys/include/peer_connection_observer.h"
 #include "libwebrtc-sys/src/peer_connection_factory.rs.h"
 #include "libwebrtc-sys/src/shared_bridge.rs.h"
+#include "peer_connection_observer.h"
 #include "rust/cxx.h"
 
-ArcasPeerConnectionFactory::ArcasPeerConnectionFactory(
-    rtc::scoped_refptr<ArcasAPIInternal> internal_api,
-    rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> api)
+ArcasPeerConnectionFactory::ArcasPeerConnectionFactory(rtc::scoped_refptr<ArcasAPIInternal> internal_api,
+                                                       rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> api)
 : internal_api(internal_api)
 , api(api)
 {
     internal_api->AddRef();
 };
 
-std::unique_ptr<webrtc::PeerConnectionInterface::RTCConfiguration>
-create_rtc_configuration(ArcasPeerConnectionConfig config)
+std::unique_ptr<webrtc::PeerConnectionInterface::RTCConfiguration> create_rtc_configuration(ArcasPeerConnectionConfig config)
 {
     auto rtc = std::make_unique<webrtc::PeerConnectionInterface::RTCConfiguration>();
     webrtc::PeerConnectionInterface::IceServers servers;

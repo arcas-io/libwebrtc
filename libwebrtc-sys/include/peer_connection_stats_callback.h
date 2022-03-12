@@ -1,11 +1,10 @@
 #pragma once
 #include "api/ref_counted_base.h"
 #include "api/stats/rtc_stats_collector_callback.h"
-#include "libwebrtc-sys/include/rust_shared.h"
 #include "rust/cxx.h"
+#include "rust_shared.h"
 
-class ArcasRTCStatsCollectorCallback : public webrtc::RTCStatsCollectorCallback,
-                                       public rtc::RefCountedBase
+class ArcasRTCStatsCollectorCallback : public webrtc::RTCStatsCollectorCallback, public rtc::RefCountedBase
 {
 public:
     using underlying_t = rust::Box<ArcasRustRTCStatsCollectorCallback>;

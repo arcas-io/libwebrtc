@@ -1,5 +1,12 @@
-#include "libwebrtc-sys/include/video_encoder.h"
-#include "libwebrtc-sys/src/video_encoding.rs.h"
+#include "video_encoder_factory.h"
+
+#include <libwebrtc-sys/src/video_encoding.rs.h>
+#include <video_encoder.h>
+
+ArcasVideoEncoderFactory::ArcasVideoEncoderFactory(rust::Box<ArcasRustVideoEncoderFactory> api_p)
+: api{std::move(api_p)}
+{
+}
 
 std::vector<webrtc::SdpVideoFormat> ArcasVideoEncoderFactory::GetSupportedFormats() const
 {
@@ -13,16 +20,8 @@ std::vector<webrtc::SdpVideoFormat> ArcasVideoEncoderFactory::GetImplementations
     return *result;
 }
 
-webrtc::VideoEncoderFactory::CodecInfo
-ArcasVideoEncoderFactory::QueryVideoEncoder(const webrtc::SdpVideoFormat& format) const
-{
-    auto out = api->query_video_encoder(format);
-    return webrtc::VideoEncoderFactory::CodecInfo{.has_internal_source = out.has_internal_source};
-}
-
-webrtc::VideoEncoderFactory::CodecSupport
-ArcasVideoEncoderFactory::QueryCodecSupport(const webrtc::SdpVideoFormat& format,
-                                            absl::optional<std::string> scalability_mode) const
+webrtc::VideoEncoderFactory::CodecSupport ArcasVideoEncoderFactory::QueryCodecSupport(const webrtc::SdpVideoFormat& format,
+                                                                                      absl::optional<std::string> scalability_mode) const
 {
     rust::Vec<rust::String> rust_mode;
 
@@ -39,15 +38,13 @@ ArcasVideoEncoderFactory::QueryCodecSupport(const webrtc::SdpVideoFormat& format
 }
 
 // Creates a VideoEncoder for the specified format.
-std::unique_ptr<webrtc::VideoEncoder>
-ArcasVideoEncoderFactory::CreateVideoEncoder(const webrtc::SdpVideoFormat& format)
+std::unique_ptr<webrtc::VideoEncoder> ArcasVideoEncoderFactory::CreateVideoEncoder(const webrtc::SdpVideoFormat& format)
 {
     auto proxy = api->create_video_encoder(format);
     return std::make_unique<ArcasVideoEncoder>(std::move(proxy));
 }
 
-std::unique_ptr<webrtc::VideoEncoderFactory::EncoderSelectorInterface>
-ArcasVideoEncoderFactory::GetEncoderSelector() const
+std::unique_ptr<webrtc::VideoEncoderFactory::EncoderSelectorInterface> ArcasVideoEncoderFactory::GetEncoderSelector() const
 {
     auto proxy = api->get_encoder_selector();
 
@@ -71,8 +68,7 @@ void ArcasVideoEncoderSelector::OnCurrentEncoder(const webrtc::SdpVideoFormat& f
     api[0].on_current_encoder(format);
 };
 
-absl::optional<webrtc::SdpVideoFormat>
-ArcasVideoEncoderSelector::OnAvailableBitrate(const webrtc::DataRate& rate)
+absl::optional<webrtc::SdpVideoFormat> ArcasVideoEncoderSelector::OnAvailableBitrate(const webrtc::DataRate& rate)
 {
     absl::optional<webrtc::SdpVideoFormat> result;
     auto rust_result = api[0].on_available_bitrate(rate);
@@ -97,13 +93,10 @@ absl::optional<webrtc::SdpVideoFormat> ArcasVideoEncoderSelector::OnEncoderBroke
 
     return result;
 };
-
-std::unique_ptr<ArcasVideoEncoderFactory>
-create_arcas_video_encoder_factory(rust::Box<ArcasRustVideoEncoderFactory> api)
+std::unique_ptr<ArcasVideoEncoderFactory> create_arcas_video_encoder_factory(rust::Box<ArcasRustVideoEncoderFactory> api)
 {
     return std::make_unique<ArcasVideoEncoderFactory>(std::move(api));
 }
-
 ArcasVideoEncodingErrCode get_arcas_video_encoding_err_codes()
 {
     return ArcasVideoEncodingErrCode{
@@ -116,8 +109,7 @@ ArcasVideoEncodingErrCode get_arcas_video_encoding_err_codes()
         .VIDEO_CODEC_UNINITIALIZED = WEBRTC_VIDEO_CODEC_UNINITIALIZED,
         .VIDEO_CODEC_FALLBACK_SOFTWARE = WEBRTC_VIDEO_CODEC_FALLBACK_SOFTWARE,
         .VIDEO_CODEC_TARGET_BITRATE_OVERSHOOT = WEBRTC_VIDEO_CODEC_TARGET_BITRATE_OVERSHOOT,
-        .VIDEO_CODEC_ERR_SIMULCAST_PARAMETERS_NOT_SUPPORTED =
-            WEBRTC_VIDEO_CODEC_ERR_SIMULCAST_PARAMETERS_NOT_SUPPORTED,
+        .VIDEO_CODEC_ERR_SIMULCAST_PARAMETERS_NOT_SUPPORTED = WEBRTC_VIDEO_CODEC_ERR_SIMULCAST_PARAMETERS_NOT_SUPPORTED,
         .VIDEO_CODEC_ENCODER_FAILURE = WEBRTC_VIDEO_CODEC_ENCODER_FAILURE,
     };
 }

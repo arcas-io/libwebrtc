@@ -1,9 +1,9 @@
 #pragma once
-#include "libwebrtc-sys/include/encoded_image_callback.h"
-#include "libwebrtc-sys/include/rust_shared.h"
-#include "libwebrtc-sys/include/video_codec.h"
-#include "libwebrtc-sys/include/video_encoder_rate_control_parameters.h"
-#include "libwebrtc-sys/include/video_frame.h"
+#include "encoded_image_callback.h"
+#include "rust_shared.h"
+#include "video_codec.h"
+#include "video_encoder_rate_control_parameters.h"
+#include "video_frame.h"
 
 class ArcasReactiveVideoEncoderWrapper
 {
@@ -19,13 +19,9 @@ public:
         return video_encoder_->RegisterEncodeCompleteCallback(callback->get());
     }
 
-    int init_encode(const ArcasCxxVideoCodec* codec,
-                    int32_t number_of_cores,
-                    size_t max_payload_size) const
+    int init_encode(const ArcasCxxVideoCodec* codec, int32_t number_of_cores, size_t max_payload_size) const
     {
-        webrtc::VideoEncoder::Settings settings(webrtc::VideoEncoder::Capabilities(true),
-                                                number_of_cores,
-                                                max_payload_size);
+        webrtc::VideoEncoder::Settings settings(webrtc::VideoEncoder::Capabilities(true), number_of_cores, max_payload_size);
         return video_encoder_->InitEncode(codec, settings);
     }
 
@@ -34,8 +30,7 @@ public:
         return video_encoder_->Release();
     }
 
-    int32_t encode(const webrtc::VideoFrame& frame,
-                   const std::vector<webrtc::VideoFrameType>* frame_types) const
+    int32_t encode(const webrtc::VideoFrame& frame, const std::vector<webrtc::VideoFrameType>* frame_types) const
     {
         return video_encoder_->Encode(frame, frame_types);
     }

@@ -1,13 +1,14 @@
 use std::{cell::RefCell, sync::Arc};
 
 use cxx::{SharedPtr, UniquePtr};
+use libwebrtc_sys::ffi::ArcasAudioSenderStats;
 use libwebrtc_sys::{
     data_channel::ffi::{ArcasDataChannelInit, Priority},
     ffi::{
         audio_transceiver_from_base, create_rtc_configuration, video_transceiver_from_base,
-        ArcasAudioReceiverStats, ArcasAudioSenderStats, ArcasICEServer, ArcasMediaType,
-        ArcasPeerConnection, ArcasPeerConnectionConfig, ArcasPeerConnectionFactory,
-        ArcasRTCConfiguration, ArcasSDPSemantics, ArcasVideoReceiverStats, ArcasVideoSenderStats,
+        ArcasAudioReceiverStats, ArcasICEServer, ArcasMediaType, ArcasPeerConnection,
+        ArcasPeerConnectionConfig, ArcasPeerConnectionFactory, ArcasRTCConfiguration,
+        ArcasSDPSemantics, ArcasVideoReceiverStats, ArcasVideoSenderStats,
     },
     ArcasRustCreateSessionDescriptionObserver, ArcasRustRTCStatsCollectorCallback,
     ArcasRustSetSessionDescriptionObserver,
@@ -404,6 +405,7 @@ mod tests {
         video_codec::VideoCodec,
         video_encoder_pool,
     };
+    use libwebrtc_sys::logging::ffi::{set_arcas_log_level, LoggingSeverity};
 
     #[test]
     async fn test_drops() {
@@ -442,6 +444,7 @@ mod tests {
 
     #[test]
     async fn test_peer_connection_connect() {
+        set_arcas_log_level(LoggingSeverity::LS_VERBOSE);
         // Create some threads to run the peer connections.
         let factory1 = Factory::new();
         let factory2 = Factory::new();

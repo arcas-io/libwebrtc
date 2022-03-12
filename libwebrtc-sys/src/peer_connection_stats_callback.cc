@@ -1,11 +1,10 @@
-#include "libwebrtc-sys/include/peer_connection_stats_callback.h"
+#include "peer_connection_stats_callback.h"
 #include "api/stats/rtcstats_objects.h"
 #include "libwebrtc-sys/src/peer_connection.rs.h"
 #include "libwebrtc-sys/src/shared_bridge.rs.h"
 #include "rust/cxx.h"
 
-void ArcasRTCStatsCollectorCallback::OnStatsDelivered(
-    const rtc::scoped_refptr<const webrtc::RTCStatsReport>& report)
+void ArcasRTCStatsCollectorCallback::OnStatsDelivered(const rtc::scoped_refptr<const webrtc::RTCStatsReport>& report)
 {
     stat_reports.push_back(report);
     if (--expected_calls_back == 0)
@@ -58,17 +57,13 @@ void ArcasRTCStatsCollectorCallback::finish()
 
                 if (stat->track_id.is_defined())
                 {
-                    auto track_stat =
-                        report->GetAs<webrtc::RTCMediaStreamTrackStats>(*stat->track_id);
+                    auto track_stat = report->GetAs<webrtc::RTCMediaStreamTrackStats>(*stat->track_id);
                     if (track_stat)
                     {
-                        receiver.total_samples_received =
-                            track_stat->total_samples_received.ValueOrDefault(0);
-                        receiver.total_samples_duration =
-                            track_stat->total_samples_duration.ValueOrDefault(0.0);
+                        receiver.total_samples_received = track_stat->total_samples_received.ValueOrDefault(0);
+                        receiver.total_samples_duration = track_stat->total_samples_duration.ValueOrDefault(0.0);
                         receiver.audio_level = track_stat->audio_level.ValueOrDefault(0.0);
-                        receiver.total_audio_energy =
-                            track_stat->total_audio_energy.ValueOrDefault(0.0);
+                        receiver.total_audio_energy = track_stat->total_audio_energy.ValueOrDefault(0.0);
                     }
                 }
 
@@ -91,8 +86,7 @@ void ArcasRTCStatsCollectorCallback::finish()
                 send.total_encode_time = stat->total_encode_time.ValueOrDefault(0.0);
                 send.frame_width = stat->frame_width.ValueOrDefault(0);
                 send.frame_height = stat->frame_height.ValueOrDefault(0);
-                send.retransmitted_packets_sent =
-                    stat->retransmitted_packets_sent.ValueOrDefault(0);
+                send.retransmitted_packets_sent = stat->retransmitted_packets_sent.ValueOrDefault(0);
                 send.retransmitted_bytes_sent = stat->retransmitted_bytes_sent.ValueOrDefault(0);
                 send.total_packet_send_delay = stat->total_packet_send_delay.ValueOrDefault(0.0);
                 send.nack_count = stat->nack_count.ValueOrDefault(0);
@@ -115,19 +109,16 @@ void ArcasRTCStatsCollectorCallback::finish()
                         send.quality_limitation_reason = 3;
                     }
                 }
-                send.quality_limitation_resolution_changes =
-                    stat->quality_limitation_resolution_changes.ValueOrDefault(0);
+                send.quality_limitation_resolution_changes = stat->quality_limitation_resolution_changes.ValueOrDefault(0);
 
                 if (stat->remote_id.is_defined())
                 {
-                    auto remote_stat =
-                        report->GetAs<webrtc::RTCRemoteInboundRtpStreamStats>(*stat->remote_id);
+                    auto remote_stat = report->GetAs<webrtc::RTCRemoteInboundRtpStreamStats>(*stat->remote_id);
                     if (remote_stat)
                     {
                         send.remote_packets_lost = remote_stat->packets_lost.ValueOrDefault(0);
                         send.remote_jitter = remote_stat->jitter.ValueOrDefault(0.0);
-                        send.remote_round_trip_time =
-                            remote_stat->round_trip_time.ValueOrDefault(0.0);
+                        send.remote_round_trip_time = remote_stat->round_trip_time.ValueOrDefault(0.0);
                     }
                 }
 
@@ -142,26 +133,22 @@ void ArcasRTCStatsCollectorCallback::finish()
 
                 if (stat->remote_id.is_defined())
                 {
-                    auto remote_stat =
-                        report->GetAs<webrtc::RTCRemoteInboundRtpStreamStats>(*stat->remote_id);
+                    auto remote_stat = report->GetAs<webrtc::RTCRemoteInboundRtpStreamStats>(*stat->remote_id);
                     if (remote_stat)
                     {
                         send.remote_packets_lost = remote_stat->packets_lost.ValueOrDefault(0);
                         send.remote_jitter = remote_stat->jitter.ValueOrDefault(0.0);
-                        send.remote_round_trip_time =
-                            remote_stat->round_trip_time.ValueOrDefault(0.0);
+                        send.remote_round_trip_time = remote_stat->round_trip_time.ValueOrDefault(0.0);
                     }
                 }
 
                 if (stat->media_source_id.is_defined())
                 {
-                    auto audio_source_stat =
-                        report->GetAs<webrtc::RTCAudioSourceStats>(*stat->media_source_id);
+                    auto audio_source_stat = report->GetAs<webrtc::RTCAudioSourceStats>(*stat->media_source_id);
                     if (audio_source_stat)
                     {
                         send.audio_level = audio_source_stat->audio_level.ValueOrDefault(0.0);
-                        send.total_audio_energy =
-                            audio_source_stat->total_audio_energy.ValueOrDefault(0.0);
+                        send.total_audio_energy = audio_source_stat->total_audio_energy.ValueOrDefault(0.0);
                     }
                 }
 

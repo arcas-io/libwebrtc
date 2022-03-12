@@ -1,5 +1,11 @@
 #[cxx::bridge]
 pub mod ffi {
+    enum CandidateComponent {
+        Default,
+        Rtp,
+        Rtcp,
+    }
+
     unsafe extern "C++" {
         include!("include/candidate.h");
 
@@ -10,9 +16,12 @@ pub mod ffi {
         // ArcasCandidate
         fn id(self: &ArcasCandidate) -> String;
         fn component(self: &ArcasCandidate) -> i32;
+        fn set_component(self: Pin<&mut ArcasCandidate>, val: CandidateComponent);
         fn protocol(self: &ArcasCandidate) -> String;
+        fn set_protocol(self: Pin<&mut ArcasCandidate>, proto: String);
         fn relay_protocol(self: &ArcasCandidate) -> String;
         fn address(self: &ArcasCandidate) -> String;
+        fn set_address(self: Pin<&mut ArcasCandidate>, host_colon_port: String);
         fn priority(self: &ArcasCandidate) -> u32;
         fn preference(self: &ArcasCandidate) -> f32;
         fn username(self: &ArcasCandidate) -> String;
@@ -31,7 +40,6 @@ pub mod ffi {
         fn cxx_to_string(self: &ArcasCandidate) -> String;
         fn to_sensitive_string(self: &ArcasCandidate) -> String;
 
-        // to create the unique ptr target trait. Do not call this as the implementation is missing.
-        fn gen_arcas_candidate() -> UniquePtr<ArcasCandidate>;
+        fn create_arcas_candidate() -> UniquePtr<ArcasCandidate>;
     }
 }

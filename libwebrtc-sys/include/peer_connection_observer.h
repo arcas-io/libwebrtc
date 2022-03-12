@@ -3,14 +3,13 @@
 #include "rust/cxx.h"
 // #include "libwebrtc-sys/src/shared_bridge.rs.h"
 #include "api/peer_connection_interface.h"
-#include "libwebrtc-sys/include/data_channel.h"
-#include "libwebrtc-sys/include/media_stream.h"
-#include "libwebrtc-sys/include/rtp_receiver.h"
-#include "libwebrtc-sys/include/rtp_transceiver.h"
-#include "libwebrtc-sys/include/rust_shared.h"
+#include "data_channel.h"
+#include "media_stream.h"
+#include "rtp_receiver.h"
+#include "rtp_transceiver.h"
+#include "rust_shared.h"
 
-class ArcasPeerConnectionObserver final : public webrtc::PeerConnectionObserver,
-                                          public rtc::RefCountedBase
+class ArcasPeerConnectionObserver final : public webrtc::PeerConnectionObserver, public rtc::RefCountedBase
 {
 private:
     webrtc::PeerConnectionInterface* observed = nullptr;
@@ -22,9 +21,7 @@ public:
     {
     }
 
-    void observe(
-        webrtc::PeerConnectionInterface&
-            peer_connection);///< Call this shortly after construction, before events start happening
+    void observe(webrtc::PeerConnectionInterface& peer_connection);///< Call this shortly after construction, before events start happening
 
     ~ArcasPeerConnectionObserver()
     {
@@ -45,8 +42,7 @@ public:
 
     void OnIceConnectionChange(webrtc::PeerConnectionInterface::IceConnectionState new_state);
 
-    void OnStandardizedIceConnectionChange(
-        webrtc::PeerConnectionInterface::IceConnectionState new_state);
+    void OnStandardizedIceConnectionChange(webrtc::PeerConnectionInterface::IceConnectionState new_state);
 
     void OnConnectionChange(webrtc::PeerConnectionInterface::PeerConnectionState new_state);
 
@@ -54,17 +50,10 @@ public:
 
     void OnIceCandidate(const webrtc::IceCandidateInterface* candidate);
 
-    void OnIceCandidateError(const std::string& host_candidate,
-                             const std::string& url,
-                             int error_code,
-                             const std::string& error_text);
+    void OnIceCandidateError(const std::string& host_candidate, const std::string& url, int error_code, const std::string& error_text);
 
     // See https://w2c.github.io/webrtc-pc/#event-icecandidateerror
-    void OnIceCandidateError(const std::string& address,
-                             int port,
-                             const std::string& url,
-                             int error_code,
-                             const std::string& error_text);
+    void OnIceCandidateError(const std::string& address, int port, const std::string& url, int error_code, const std::string& error_text);
 
     void OnIceCandidatesRemoved(const std::vector<cricket::Candidate>& candidates);
 
@@ -72,14 +61,12 @@ public:
 
     void OnIceSelectedCandidatePairChanged(const cricket::CandidatePairChangeEvent& event) override;
 
-    void OnAddTrack(
-        rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver,
-        const std::vector<rtc::scoped_refptr<webrtc::MediaStreamInterface>>& streams) override;
+    void OnAddTrack(rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver,
+                    const std::vector<rtc::scoped_refptr<webrtc::MediaStreamInterface>>& streams) override;
 
     void OnTrack(rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) override;
     void OnRemoveTrack(rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) override;
     void OnInterestingUsage(int usage_pattern) override;
 };
 
-std::unique_ptr<ArcasPeerConnectionObserver>
-    create_peer_connection_observer(rust::Box<ArcasRustPeerConnectionObserver>);
+std::unique_ptr<ArcasPeerConnectionObserver> create_peer_connection_observer(rust::Box<ArcasRustPeerConnectionObserver>);

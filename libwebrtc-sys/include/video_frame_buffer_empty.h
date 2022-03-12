@@ -34,7 +34,7 @@ public:
         return 360;
     }
 
-    const uint32_t size() const
+    uint32_t size() const
     {
         return 100;
     }
@@ -73,12 +73,8 @@ public:
     // especially for kNative.
     // First, the image is cropped to `crop_width` and `crop_height` and then
     // scaled to `scaled_width` and `scaled_height`.
-    rtc::scoped_refptr<VideoFrameBuffer> CropAndScale(int offset_x,
-                                                      int offset_y,
-                                                      int crop_width,
-                                                      int crop_height,
-                                                      int scaled_width,
-                                                      int scaled_height) override
+    rtc::scoped_refptr<VideoFrameBuffer>
+    CropAndScale(int offset_x, int offset_y, int crop_width, int crop_height, int scaled_width, int scaled_height) override
     {
         RTC_LOG(LS_ERROR) << "Not implemented Crop & Scale \n";
         return nullptr;

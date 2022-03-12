@@ -65,6 +65,7 @@ pub mod ffi {
 
         // ArcasThread
         fn create_arcas_cxx_thread() -> UniquePtr<Thread>;
+        fn create_arcas_cxx_thread_with_socketserver() -> UniquePtr<Thread>;
 
         // Network Manager
         fn create_arcas_cxx_network_manager() -> UniquePtr<NetworkManager>;
@@ -102,6 +103,7 @@ pub mod ffi {
         /// Must be passed valid Thread object. This will not take ownership.
         unsafe fn arcas_cxx_thread_post_task(thread: *mut Thread, task: Box<QueuedTask>);
 
+        fn set_thread_name(thr: Pin<&mut Thread>, new_name: String);
     }
 
     extern "Rust" {

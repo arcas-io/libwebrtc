@@ -1,8 +1,8 @@
 #pragma once
-#include "libwebrtc-sys/include/color_space.h"
-#include "libwebrtc-sys/include/encoded_image_factory.h"
-#include "libwebrtc-sys/include/video_frame_buffer_empty.h"
-#include "libwebrtc-sys/include/video_track_source.h"
+#include "color_space.h"
+#include "encoded_image_factory.h"
+#include "video_frame_buffer_empty.h"
+#include "video_track_source.h"
 
 class ArcasVideoFrameTypesCollection
 {
@@ -101,6 +101,5 @@ public:
 };
 
 std::unique_ptr<ArcasVideoFrameFactory> create_arcas_video_frame_factory();
-std::shared_ptr<ArcasVideoFrameTypesCollection>
-create_arcas_video_frame_types_collection(rust::Vec<webrtc::VideoFrameType> types);
+std::shared_ptr<ArcasVideoFrameTypesCollection> create_arcas_video_frame_types_collection(rust::Vec<webrtc::VideoFrameType> types);
 std::unique_ptr<webrtc::VideoFrame> gen_unique_cxx_video_frame();

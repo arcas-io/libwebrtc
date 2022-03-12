@@ -48,6 +48,7 @@ pub mod ffi {
     struct ArcasVideoEncoderFactoryCodecInfo {
         has_internal_source: bool,
     }
+
     #[derive(Debug)]
     struct ArcasVideoEncoderFactoryCodecSupport {
         is_supported: bool,
@@ -100,7 +101,7 @@ pub mod ffi {
     }
 
     #[derive(Debug, Clone)]
-    struct ArcasVideoEncoderInfoFPSAllocation {
+    pub struct ArcasVideoEncoderInfoFPSAllocation {
         allocation: Vec<u8>,
     }
 
@@ -322,7 +323,6 @@ pub mod ffi {
         ) -> Box<VideoEncoderProxy>;
 
         fn get_encoder_selector(self: &VideoEncoderFactoryProxy) -> Vec<VideoEncoderSelectorProxy>;
-
     }
 
     extern "Rust" {
@@ -365,7 +365,6 @@ pub mod ffi {
         );
 
         fn get_encoder_info(self: &VideoEncoderProxy) -> ArcasVideoEncoderInfo;
-
     }
 
     unsafe extern "C++" {
@@ -570,6 +569,7 @@ pub trait VideoEncoderFactoryImpl {
     /// Return an optional encoder selector (see `VideoEncoderSelectorImpl`) empty Vec is none.
     fn get_encoder_selector(&self) -> Option<VideoEncoderSelectorProxy>;
 }
+
 pub struct VideoEncoderFactoryProxy {
     api: Box<dyn VideoEncoderFactoryImpl>,
 }

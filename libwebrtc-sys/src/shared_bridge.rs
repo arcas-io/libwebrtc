@@ -259,8 +259,10 @@ pub mod ffi {
     #[derive(Debug)]
     #[repr(u32)]
     enum ArcasCxxInterLayerPredMode {
-        kOff = 0,      // Inter-layer prediction is disabled.
-        kOn = 1,       // Inter-layer prediction is enabled.
+        kOff = 0,
+        // Inter-layer prediction is disabled.
+        kOn = 1,
+        // Inter-layer prediction is enabled.
         kOnKeyPic = 2, // Inter-layer prediction is enabled but limited to key frames.
     }
 

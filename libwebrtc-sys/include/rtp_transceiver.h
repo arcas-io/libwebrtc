@@ -1,8 +1,8 @@
 #pragma once
-#include "libwebrtc-sys/include/error.h"
-#include "libwebrtc-sys/include/rtp_parameters.h"
-#include "libwebrtc-sys/include/rtp_receiver.h"
-#include "libwebrtc-sys/include/rtp_sender.h"
+#include "error.h"
+#include "rtp_parameters.h"
+#include "rtp_receiver.h"
+#include "rtp_sender.h"
 #include "rust/cxx.h"
 
 class ArcasPeerConnection;
@@ -15,18 +15,15 @@ std::unique_ptr<ArcasRTPVideoTransceiver> video_transceiver_from_base(const Arca
 std::unique_ptr<ArcasRTPAudioTransceiver> audio_transceiver_from_base(const ArcasRTPTransceiver&);
 class ArcasRTPTransceiver
 {
-    friend std::unique_ptr<ArcasRTPVideoTransceiver>
-    video_transceiver_from_base(const ArcasRTPTransceiver&);
-    friend std::unique_ptr<ArcasRTPAudioTransceiver>
-    audio_transceiver_from_base(const ArcasRTPTransceiver&);
+    friend std::unique_ptr<ArcasRTPVideoTransceiver> video_transceiver_from_base(const ArcasRTPTransceiver&);
+    friend std::unique_ptr<ArcasRTPAudioTransceiver> audio_transceiver_from_base(const ArcasRTPTransceiver&);
 
 protected:
     webrtc::PeerConnectionInterface& connection;
     rtc::scoped_refptr<webrtc::RtpTransceiverInterface> api;
 
 public:
-    ArcasRTPTransceiver(webrtc::PeerConnectionInterface& associated_connection,
-                        rtc::scoped_refptr<webrtc::RtpTransceiverInterface> api);
+    ArcasRTPTransceiver(webrtc::PeerConnectionInterface& associated_connection, rtc::scoped_refptr<webrtc::RtpTransceiverInterface> api);
     ~ArcasRTPTransceiver()
     {
         RTC_LOG(LS_VERBOSE) << "~ArcasRTPTransceiver";
@@ -69,8 +66,7 @@ public:
         return std::make_unique<ArcasRTCError>(api->StopStandard());
     }
 
-    std::unique_ptr<std::vector<ArcasRTPHeaderExtensionCapability>>
-    header_extensions_to_offer() const
+    std::unique_ptr<std::vector<ArcasRTPHeaderExtensionCapability>> header_extensions_to_offer() const
     {
         auto list = api->HeaderExtensionsToOffer();
         auto out = std::make_unique<std::vector<ArcasRTPHeaderExtensionCapability>>();
@@ -83,8 +79,7 @@ public:
         return out;
     }
 
-    std::unique_ptr<std::vector<ArcasRTPHeaderExtensionCapability>>
-    header_extensions_to_negotiated() const
+    std::unique_ptr<std::vector<ArcasRTPHeaderExtensionCapability>> header_extensions_to_negotiated() const
     {
         auto list = api->HeaderExtensionsNegotiated();
         auto out = std::make_unique<std::vector<ArcasRTPHeaderExtensionCapability>>();
@@ -115,8 +110,7 @@ public:
         return std::make_unique<ArcasRTCError>(api->SetDirectionWithError(direction));
     }
 
-    std::unique_ptr<ArcasRTCError>
-    set_codec_preferences(std::unique_ptr<std::vector<ArcasRTPCodecCapability>> codecs) const
+    std::unique_ptr<ArcasRTCError> set_codec_preferences(std::unique_ptr<std::vector<ArcasRTPCodecCapability>> codecs) const
     {
         std::vector<webrtc::RtpCodecCapability> list;
 
@@ -126,8 +120,8 @@ public:
         return std::make_unique<ArcasRTCError>(api->SetCodecPreferences(view));
     }
 
-    std::unique_ptr<ArcasRTCError> set_offerred_rtp_header_extensions(
-        std::unique_ptr<std::vector<ArcasRTPHeaderExtensionCapability>> extensions) const
+    std::unique_ptr<ArcasRTCError>
+    set_offerred_rtp_header_extensions(std::unique_ptr<std::vector<ArcasRTPHeaderExtensionCapability>> extensions) const
     {
         std::vector<webrtc::RtpHeaderExtensionCapability> list;
 

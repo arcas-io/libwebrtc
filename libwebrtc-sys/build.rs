@@ -179,6 +179,7 @@ fn build_entrypoint(output_dir: String, target_os: String) {
         &"src/video_frame_buffer_encoded.rs",
         &"src/video_frame.rs",
         &"src/ice_candidate.rs",
+        &"src/ice_transport.rs",
         &"src/session_description.rs",
         &"src/codec_specific_info.rs",
         &"src/spatial_layer.rs",

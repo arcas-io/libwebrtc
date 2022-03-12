@@ -15,6 +15,8 @@
 #include "p2p/client/basic_port_allocator.h"
 #include "pc/jsep_transport_controller.h"
 #include "rust/cxx.h"
+#include <pc/srtp_transport.h>
+#include <rtti.h>
 
 struct ArcasRustJsepRTCPHandler;
 struct ArcasRustDTLSHandshakeErrorHandler;
@@ -27,8 +29,7 @@ private:
     rust::Box<ArcasRustJsepTransportControllerObserver> _observer;
 
 public:
-    ArcasJsepTransportControllerObserver(
-        rust::Box<ArcasRustJsepTransportControllerObserver> observer)
+    ArcasJsepTransportControllerObserver(rust::Box<ArcasRustJsepTransportControllerObserver> observer)
     : _observer(std::move(observer))
     {
     }
@@ -84,12 +85,6 @@ public:
         _config.rtcp_mux_policy = policy;
     }
 
-    void set_observer(std::unique_ptr<webrtc::JsepTransportController::Observer> observer)
-    {
-        _transport_observer = std::move(observer);
-        _config.transport_observer = _transport_observer.get();
-    }
-
     void set_ice_transport_factory(std::unique_ptr<webrtc::IceTransportFactory> factory)
     {
         _ice_transport_factory = std::move(factory);
@@ -105,23 +100,33 @@ public:
     void set_rtcp_handler(rust::Box<ArcasRustJsepRTCPHandler> handler)
     {
         _rtcp_handler = std::move(handler);
-        _config.rtcp_handler = [this](rtc::CopyOnWriteBuffer packet, int64_t packet_time_us)
-        { this->invoke_rtcp_handler(packet, packet_time_us); };
+        _config.rtcp_handler = [this](rtc::CopyOnWriteBuffer packet, int64_t packet_time_us) { this->invoke_rtcp_handler(packet, packet_time_us); };
+    }
+    void bypass_rtcp_handler(decltype(_config.rtcp_handler) handler)
+    {
+        _config.rtcp_handler = handler;
     }
 
     void set_dtls_handshake_error_handler(rust::Box<ArcasRustDTLSHandshakeErrorHandler> handler)
     {
         _dtls_handshake_error_handler = std::move(handler);
-        _config.on_dtls_handshake_error_ = [this](rtc::SSLHandshakeError error)
-        { this->invoke_dtls_handshake_error_handler(error); };
+        _config.on_dtls_handshake_error_ = [this](rtc::SSLHandshakeError error) { this->invoke_dtls_handshake_error_handler(error); };
+    }
+    void bypass_dtls_handshake_error_handler(decltype(_config.on_dtls_handshake_error_) handler)
+    {
+        _config.on_dtls_handshake_error_ = handler;
     }
 
-    void set_transport_observer(rust::Box<ArcasRustJsepTransportControllerObserver> handler)
+    void set_observer(std::unique_ptr<webrtc::JsepTransportController::Observer> observer)
     {
-        _transport_observer =
-            std::make_unique<ArcasJsepTransportControllerObserver>(std::move(handler));
+        _transport_observer = std::move(observer);
         _config.transport_observer = _transport_observer.get();
     }
+    void set_transport_observer(std::unique_ptr<ArcasJsepTransportControllerObserver> handler)
+    {
+        set_observer(std::move(handler));
+    }
+
 
     void invoke_rtcp_handler(rtc::CopyOnWriteBuffer packet, int64_t packet_time_us);
     void invoke_dtls_handshake_error_handler(rtc::SSLHandshakeError error);
@@ -139,6 +144,7 @@ public:
 
     webrtc::JsepTransportController::Config get_config()
     {
+        assert(this);
         return _config;
     }
 };
@@ -148,71 +154,96 @@ class ArcasJsepTransportController
 private:
     std::unique_ptr<webrtc::JsepTransportController> _transport_controller;
     std::unique_ptr<ArcasJsepTransportControllerConfig> _config;
-    rtc::Thread* _network_thread;
+    std::unique_ptr<cricket::PortAllocator> _port_allocator;
+    rtc::Thread* const _network_thread;
 
 public:
-    ArcasJsepTransportController(
-        rtc::Thread* network_thread,
-        cricket::PortAllocator* port_allocator,
-        webrtc::AsyncDnsResolverFactoryInterface* async_dns_resolver_factory,
-        std::unique_ptr<ArcasJsepTransportControllerConfig> config)
+    ArcasJsepTransportController(rtc::Thread* network_thread,
+                                 std::unique_ptr<cricket::PortAllocator> port_allocator,
+                                 webrtc::AsyncDnsResolverFactoryInterface* async_dns_resolver_factory,
+                                 std::unique_ptr<ArcasJsepTransportControllerConfig> config)
+    : _network_thread{network_thread}
     {
         _config = std::move(config);
-        _transport_controller =
-            std::make_unique<webrtc::JsepTransportController>(network_thread,
-                                                              port_allocator,
-                                                              async_dns_resolver_factory,
-                                                              config->get_config());
-        _network_thread = network_thread;
+        _transport_controller = std::make_unique<webrtc::JsepTransportController>(network_thread,
+                                                                                  port_allocator.get(),
+                                                                                  async_dns_resolver_factory,
+                                                                                  _config->get_config());
+        _port_allocator = std::move(port_allocator);
+        _network_thread->Invoke<void>(RTC_FROM_HERE, [this]() { _port_allocator->Initialize(); });
+    }
+
+    ~ArcasJsepTransportController()
+    {
+        RTC_DCHECK(_network_thread);
+        auto members_which_should_be_destructed_on_the_network_thread = [this]()
+        {
+            _transport_controller.reset();
+            _port_allocator.reset();
+        };
+        if (_network_thread)
+        {
+            RTC_DCHECK(!_network_thread->IsQuitting());
+            if (_network_thread->IsCurrent())
+            {
+                members_which_should_be_destructed_on_the_network_thread();
+            }
+            else
+            {
+                _network_thread->Invoke<void>(RTC_FROM_HERE, members_which_should_be_destructed_on_the_network_thread);
+            }
+        }
+        else
+        {
+            members_which_should_be_destructed_on_the_network_thread();
+        }
     }
 
     std::unique_ptr<ArcasRTCError>
-    set_local_description(webrtc::SdpType sdp_type,
-                          std::unique_ptr<ArcasSessionDescription> description)
+    //    set_local_description(webrtc::SdpType sdp_type,std::unique_ptr<ArcasSessionDescription> description)
+    set_local_description(webrtc::SdpType sdp_type, ArcasSessionDescription const& description)
     {
         // Ensure we always run this method on the correct thread..
         if (!_network_thread->IsCurrent())
         {
-            return _network_thread->Invoke<std::unique_ptr<ArcasRTCError>>(
-                RTC_FROM_HERE,
-                [&] { return this->set_local_description(sdp_type, std::move(description)); });
+            return _network_thread->Invoke<std::unique_ptr<ArcasRTCError>>(RTC_FROM_HERE,
+                                                                           [&]
+                                                                           { return this->set_local_description(sdp_type, std::move(description)); });
         }
-
-        auto err =
-            _transport_controller->SetLocalDescription(sdp_type,
-                                                       description->jsep_session_description());
+        auto lower_raw_ptr = description.jsep_session_description();
+        auto err = _transport_controller->SetLocalDescription(sdp_type, lower_raw_ptr);
         return std::make_unique<ArcasRTCError>(err);
     }
 
-    std::unique_ptr<ArcasRTCError>
-    set_remote_description(webrtc::SdpType sdp_type,
-                           std::unique_ptr<ArcasSessionDescription> description)
+    //    std::unique_ptr<ArcasRTCError>
+    //    set_remote_description(webrtc::SdpType sdp_type,
+    //                           std::unique_ptr<ArcasSessionDescription> description)
+    //    {
+    //        return this->set_remote_description(sdp_type, *description);
+    //    }
+    std::unique_ptr<ArcasRTCError> set_remote_description(webrtc::SdpType sdp_type, ArcasSessionDescription const& description)
     {
         // Ensure we always run this method on the correct thread..
         if (!_network_thread->IsCurrent())
         {
-            return _network_thread->Invoke<std::unique_ptr<ArcasRTCError>>(
-                RTC_FROM_HERE,
-                [&] { return this->set_remote_description(sdp_type, std::move(description)); });
+            return _network_thread->Invoke<std::unique_ptr<ArcasRTCError>>(RTC_FROM_HERE,
+                                                                           [this, sdp_type, &description]()
+                                                                           { return this->set_remote_description(sdp_type, description); });
         }
-
-        auto err =
-            _transport_controller->SetLocalDescription(sdp_type,
-                                                       description->jsep_session_description());
+        auto err = _transport_controller->SetRemoteDescription(sdp_type, description.jsep_session_description());
         return std::make_unique<ArcasRTCError>(err);
     }
 
-    webrtc::RtpTransportInternal* get_rtp_transport(rust::String mid) const
+    using srtp_t = webrtc::SrtpTransport;
+    srtp_t* get_srtp_transport(rust::String mid) const
     {
         // Ensure we always run this method on the correct thread..
         if (!_network_thread->IsCurrent())
         {
-            return _network_thread->Invoke<webrtc::RtpTransportInternal*>(
-                RTC_FROM_HERE,
-                [&] { return this->get_rtp_transport(mid); });
+            return _network_thread->Invoke<srtp_t*>(RTC_FROM_HERE, [&] { return this->get_srtp_transport(mid); });
         }
-
-        return _transport_controller->GetRtpTransport(mid.c_str());
+        auto base_ptr = _transport_controller->GetRtpTransport(mid.c_str());
+        return unsafe_downcast<srtp_t*>(base_ptr);
     }
 
     webrtc::DataChannelTransportInterface* get_data_channel_transport(rust::String mid) const
@@ -220,9 +251,8 @@ public:
         // Ensure we always run this method on the correct thread..
         if (!_network_thread->IsCurrent())
         {
-            return _network_thread->Invoke<webrtc::DataChannelTransportInterface*>(
-                RTC_FROM_HERE,
-                [&] { return this->get_data_channel_transport(mid); });
+            return _network_thread->Invoke<webrtc::DataChannelTransportInterface*>(RTC_FROM_HERE,
+                                                                                   [&] { return this->get_data_channel_transport(mid); });
         }
 
         return _transport_controller->GetDataChannelTransport(mid.c_str());
@@ -233,8 +263,7 @@ public:
         // Ensure we always run this method on the correct thread..
         if (!_network_thread->IsCurrent())
         {
-            return _network_thread->Invoke<void>(RTC_FROM_HERE,
-                                                 [&] { this->set_ice_config(std::move(config)); });
+            return _network_thread->Invoke<void>(RTC_FROM_HERE, [&] { this->set_ice_config(std::move(config)); });
         }
 
         _transport_controller->SetIceConfig(config->get_config());
@@ -266,22 +295,13 @@ public:
         return std::make_unique<ArcasSSLCertificate>(cert);
     }
 
-    std::unique_ptr<ArcasRTCError>
-    add_remote_candidates(rust::String mid, rust::Vec<ArcasCandidateWrapper> candidates);
-    std::unique_ptr<ArcasRTCError>
-    remove_remote_candidates(rust::Vec<ArcasCandidateWrapper> candidates);
+    std::unique_ptr<ArcasRTCError> add_remote_candidates(rust::String mid, rust::Vec<ArcasCandidateWrapper> candidates);
+    std::unique_ptr<ArcasRTCError> remove_remote_candidates(rust::Vec<ArcasCandidateWrapper> candidates);
+
+    std::unique_ptr<ArcasRTCError> add_remote_candidates(std::string mid, std::vector<cricket::Candidate> candidates);
 
     // We use a rust vector here to represent the optional type. No values is none.
-    rust::Vec<rtc::SSLRole> get_dtls_role(rust::String mid) const
-    {
-        auto role = _transport_controller->GetDtlsRole(mid.c_str());
-        rust::Vec<rtc::SSLRole> out;
-        if (role.has_value())
-        {
-            out.push_back(role.value());
-        }
-        return out;
-    }
+    rust::Vec<rtc::SSLRole> get_dtls_role(rust::String mid) const;
 
     void set_active_reset_srtp_params(bool reset_active)
     {
@@ -293,15 +313,72 @@ public:
         auto err = _transport_controller->RollbackTransports();
         return std::make_unique<ArcasRTCError>(err);
     }
+    void subsribe_ice_connection_state(std::function<void(cricket::IceConnectionState)> f)
+    {
+        auto on_net = [&] { _transport_controller->SubscribeIceConnectionState(f); };
+        if (_network_thread->IsCurrent())
+        {
+            on_net();
+        }
+        else
+        {
+            _network_thread->Invoke<void>(RTC_FROM_HERE, on_net);
+        }
+    }
 };
 
 std::unique_ptr<ArcasDTLSTransport> gen_arcas_cxx_dtls_transport();
 
 std::unique_ptr<ArcasJsepTransportControllerConfig> create_arcas_jsep_transport_controller_config();
-std::unique_ptr<cricket::PortAllocator>
-create_arcas_cxx_port_allocator(rtc::NetworkManager* network_manager);
-std::unique_ptr<ArcasJsepTransportController> create_arcas_jsep_transport_controller(
-    rtc::Thread* network_thread,
-    cricket::PortAllocator* port_allocator,
-    webrtc::AsyncDnsResolverFactoryInterface* async_dns_resolver_factory,
-    std::unique_ptr<ArcasJsepTransportControllerConfig> config);
+std::unique_ptr<cricket::PortAllocator> create_arcas_cxx_port_allocator(rtc::NetworkManager* network_manager);
+std::unique_ptr<ArcasJsepTransportController>
+create_arcas_jsep_transport_controller(rtc::Thread* network_thread,
+                                       std::unique_ptr<cricket::PortAllocator> port_allocator,
+                                       webrtc::AsyncDnsResolverFactoryInterface* async_dns_resolver_factory,
+                                       std::unique_ptr<ArcasJsepTransportControllerConfig> config);
+
+std::unique_ptr<ArcasJsepTransportControllerObserver> to_cxx(rust::Box<ArcasRustJsepTransportControllerObserver> r);
+inline bool send_rtp_packet(webrtc::SrtpTransport& transport, rtc::CopyOnWriteBuffer& packet, rtc::Thread& network_thread)
+{
+    return network_thread.Invoke<bool>(RTC_FROM_HERE, [&]() { return transport.SendRtpPacket(&packet, {}, {}); });
+}
+
+inline std::unique_ptr<rtc::CopyOnWriteBuffer> create_buffer(::std::uint64_t capacity)
+{
+    return std::make_unique<rtc::CopyOnWriteBuffer>(capacity);
+}
+inline std::unique_ptr<rtc::CopyOnWriteBuffer> create_buffer_with_data(rust::Slice<std::uint8_t const> bytes)
+{
+    return std::make_unique<rtc::CopyOnWriteBuffer>(bytes.data(), bytes.size());
+}
+
+inline void init_port_alloc(cricket::PortAllocator& port_alloc, rtc::Thread& network_thread)
+{
+    network_thread.Invoke<void>(RTC_FROM_HERE, [&port_alloc]() { port_alloc.Initialize(); });
+}
+inline rust::String get_transport_name(webrtc::SrtpTransport const& transport, rtc::Thread& net_thr)
+{
+    auto name = net_thr.Invoke<std::string>(RTC_FROM_HERE, [&]() { return transport.transport_name(); });
+    return {name.data(), name.size()};
+}
+inline bool is_writable(webrtc::SrtpTransport const& transport)
+{
+    return transport.IsWritable(true) || transport.IsWritable(false);
+}
+
+inline void set_rtp_params(webrtc::SrtpTransport& transport,
+                           std::int32_t send_cs,
+                           rust::String send_key,
+                           std::int32_t recv_cs,
+                           rust::String recv_key,
+                           rust::Vec<std::int32_t> recv_extension_ids,
+                           rtc::Thread& net_thr)
+{
+    auto on_net_thr = [&]()
+    {
+        auto sk = reinterpret_cast<std::uint8_t const*>(send_key.data());
+        auto rk = reinterpret_cast<std::uint8_t const*>(recv_key.data());
+        transport.SetRtpParams(1, sk, send_key.size(), {}, 1, rk, recv_key.size(), {});
+    };
+    net_thr.Invoke<void>(RTC_FROM_HERE, on_net_thr);
+}

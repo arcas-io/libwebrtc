@@ -1,9 +1,9 @@
+use crate::error::{Result, WebRTCError};
 use cxx::UniquePtr;
 use libwebrtc_sys::ffi::{create_arcas_session_description, ArcasSDPType, ArcasSessionDescription};
+use libwebrtc_sys::pc::jsep_api::ffi::SdpType;
 
-use crate::error::{Result, WebRTCError};
-
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum SDPType {
     Offer,
     PrAnswer,
@@ -37,8 +37,21 @@ impl From<SDPType> for ArcasSDPType {
     }
 }
 
+impl From<SDPType> for SdpType {
+    fn from(value: SDPType) -> SdpType {
+        match value {
+            SDPType::Offer => SdpType::kOffer,
+            SDPType::PrAnswer => SdpType::kPrAnswer,
+            SDPType::Answer => SdpType::kAnswer,
+            SDPType::Rollback => SdpType::kRollback,
+            #[allow(unreachable_patterns)]
+            _ => panic!("Unknown SDP type"),
+        }
+    }
+}
+
 pub struct SessionDescription {
-    cxx_sdp: UniquePtr<ArcasSessionDescription>,
+    pub(crate) cxx_sdp: UniquePtr<ArcasSessionDescription>,
 }
 
 impl std::fmt::Debug for SessionDescription {

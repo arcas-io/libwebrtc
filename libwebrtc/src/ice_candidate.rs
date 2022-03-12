@@ -1,8 +1,14 @@
 use cxx::UniquePtr;
 use libwebrtc_sys::ffi::ArcasICECandidate;
+use libwebrtc_sys::p2p::ice_transport_internal::ffi::{
+    create_arcas_p2p_ice_config, ArcasP2PIceConfig,
+};
 
 pub struct ICECandidate {
     cxx_ptr: UniquePtr<ArcasICECandidate>,
+}
+pub struct P2pIceConfig {
+    pub(crate) cxx_ptr: UniquePtr<ArcasP2PIceConfig>,
 }
 
 impl ICECandidate {
@@ -30,5 +36,21 @@ impl ICECandidate {
 impl ToString for ICECandidate {
     fn to_string(&self) -> String {
         self.cxx_ptr.to_string()
+    }
+}
+
+impl P2pIceConfig {
+    pub fn set_presume_writable_when_fully_relayed(&mut self, val: bool) {
+        self.cxx_ptr
+            .pin_mut()
+            .set_presume_writable_when_fully_relayed(val);
+    }
+}
+
+impl Default for P2pIceConfig {
+    fn default() -> Self {
+        Self {
+            cxx_ptr: create_arcas_p2p_ice_config(),
+        }
     }
 }

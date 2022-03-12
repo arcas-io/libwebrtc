@@ -16,8 +16,7 @@ namespace
         }
 
         virtual cricket::MediaType media_type() const UNIMP
-            virtual absl::optional<std::string> mid()
-                const UNIMP rtc::scoped_refptr<RtpSenderInterface> sender_;
+            virtual absl::optional<std::string> mid() const UNIMP rtc::scoped_refptr<RtpSenderInterface> sender_;
         rtc::scoped_refptr<RtpReceiverInterface> receiver_;
         virtual rtc::scoped_refptr<RtpSenderInterface> sender() const
         {
@@ -27,11 +26,15 @@ namespace
         {
             return receiver_;
         }
-        virtual bool stopped() const UNIMP virtual bool stopping() const UNIMP
-            virtual RtpTransceiverDirection direction() const UNIMP
+        virtual bool stopped() const UNIMP virtual bool stopping() const UNIMP virtual RtpTransceiverDirection direction() const UNIMP
             virtual void SetDirection(RtpTransceiverDirection new_direction) UNIMP virtual RTCError
             SetDirectionWithError(RtpTransceiverDirection new_direction) UNIMP
-            virtual absl::optional<RtpTransceiverDirection> current_direction() const UNIMP
+            virtual absl::optional<RtpTransceiverDirection> current_direction() const UNIMP RTCError
+            SetCodecPreferences(rtc::ArrayView<RtpCodecCapability> codecs) UNIMP
+            virtual std::vector<RtpCodecCapability> codec_preferences() const UNIMP
+            virtual std::vector<RtpHeaderExtensionCapability> HeaderExtensionsToOffer() const UNIMP
+            virtual std::vector<RtpHeaderExtensionCapability> HeaderExtensionsNegotiated() const UNIMP webrtc::RTCError
+            SetOfferedRtpHeaderExtensions(rtc::ArrayView<const RtpHeaderExtensionCapability> exts) UNIMP
     };
 }//namespace
 }//namespace webrtc

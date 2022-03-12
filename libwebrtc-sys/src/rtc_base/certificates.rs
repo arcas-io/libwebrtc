@@ -70,6 +70,8 @@ pub mod ffi {
             certificate: String,
         ) -> UniquePtr<ArcasSSLCertificate>;
 
+        fn get_fingerprint(self: &ArcasSSLCertificate) -> String;
+
         // ArcasSSLCertificate
         fn to_pem(self: &ArcasSSLCertificate) -> ArcasRTCCertificatePEM;
         fn get_fingerprint_data(self: &ArcasSSLCertificate) -> Vec<u8>;

@@ -47,7 +47,7 @@ pub mod ffi {
         fn set_spatial_layer_at(self: &ArcasVideoCodec, index: u8, layer: &ArcasSpatialLayer);
         fn set_mode(self: &ArcasVideoCodec, mode: ArcasCxxVideoCodecMode);
         fn set_expect_encode_from_texture(self: &ArcasVideoCodec, expect_encode_from_texture: bool);
-        fn set_buffer_pool_size(self: &ArcasVideoCodec, buffer_pool_size: i32);
+        // fn set_buffer_pool_size(self: &ArcasVideoCodec, buffer_pool_size: i32);
         fn set_timing_frame_trigger_thresholds(
             self: &ArcasVideoCodec,
             delay_ms: i64,

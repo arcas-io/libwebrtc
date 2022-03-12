@@ -1,19 +1,17 @@
 #pragma once
 #include "api/video/video_frame_buffer.h"
-#include "libwebrtc-sys/include/codec_specific_info.h"
-#include "libwebrtc-sys/include/video_codec.h"
+#include "codec_specific_info.h"
 #include "rtc_base/ref_counted_object.h"
+#include "video_codec.h"
 
-class ArcasVideoFrameEncodedImageDataInternal : public rtc::RefCountedBase,
-                                                public webrtc::VideoFrameBuffer
+class ArcasVideoFrameEncodedImageDataInternal : public rtc::RefCountedBase, public webrtc::VideoFrameBuffer
 {
 private:
     webrtc::EncodedImage _encodedImage;
     webrtc::CodecSpecificInfo _codecSpecificInfo;
 
 public:
-    ArcasVideoFrameEncodedImageDataInternal(const webrtc::EncodedImage& encodedImage,
-                                            const webrtc::CodecSpecificInfo& codecSpecificInfo)
+    ArcasVideoFrameEncodedImageDataInternal(const webrtc::EncodedImage& encodedImage, const webrtc::CodecSpecificInfo& codecSpecificInfo)
     : _encodedImage(encodedImage)
     , _codecSpecificInfo(codecSpecificInfo)
     {
@@ -74,7 +72,7 @@ public:
         return _encodedImage._encodedHeight;
     }
 
-    const uint32_t size() const
+    uint32_t size() const
     {
         return _encodedImage.size();
     }
@@ -113,12 +111,8 @@ public:
     // especially for kNative.
     // First, the image is cropped to `crop_width` and `crop_height` and then
     // scaled to `scaled_width` and `scaled_height`.
-    rtc::scoped_refptr<VideoFrameBuffer> CropAndScale(int offset_x,
-                                                      int offset_y,
-                                                      int crop_width,
-                                                      int crop_height,
-                                                      int scaled_width,
-                                                      int scaled_height) override
+    rtc::scoped_refptr<VideoFrameBuffer>
+    CropAndScale(int offset_x, int offset_y, int crop_width, int crop_height, int scaled_width, int scaled_height) override
     {
         RTC_LOG(LS_ERROR) << "Not implemented Crop & Scale \n";
         return nullptr;
@@ -206,8 +200,7 @@ public:
 
     std::unique_ptr<ArcasVideoFrameEncodedImageData> clone() const
     {
-        return std::unique_ptr<ArcasVideoFrameEncodedImageData>(
-            new ArcasVideoFrameEncodedImageData(api_));
+        return std::unique_ptr<ArcasVideoFrameEncodedImageData>(new ArcasVideoFrameEncodedImageData(api_));
     }
 };
 
@@ -246,8 +239,6 @@ public:
     }
 };
 
-std::unique_ptr<ArcasVideoFrameEncodedImageData>
-create_arcas_video_frame_buffer_from_encoded_image(const webrtc::EncodedImage& encodedImage,
-                                                   const ArcasCodecSpecificInfo& codec_info);
-std::unique_ptr<ArcasVideoFrameRawImageData>
-create_arcas_video_frame_buffer_from_I420(int32_t width, int32_t height, const uint8_t* data);
+std::unique_ptr<ArcasVideoFrameEncodedImageData> create_arcas_video_frame_buffer_from_encoded_image(const webrtc::EncodedImage& encodedImage,
+                                                                                                    const ArcasCodecSpecificInfo& codec_info);
+std::unique_ptr<ArcasVideoFrameRawImageData> create_arcas_video_frame_buffer_from_I420(int32_t width, int32_t height, const uint8_t* data);

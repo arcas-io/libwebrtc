@@ -9,12 +9,12 @@
 #include "api/video_codecs/builtin_video_encoder_factory.h"
 #include "api/video_codecs/video_decoder_factory.h"
 #include "api/video_codecs/video_encoder_factory.h"
-#include "libwebrtc-sys/include/audio_device_module.h"
-#include "libwebrtc-sys/include/peer_connection_factory.h"
-#include "libwebrtc-sys/include/peerconnection_factory_config.h"
+#include "audio_device_module.h"
 #include "media/base/media_engine.h"
 #include "media/engine/webrtc_media_engine.h"
 #include "modules/audio_mixer/audio_mixer_impl.h"
+#include "peer_connection_factory.h"
+#include "peerconnection_factory_config.h"
 
 class ArcasFieldTrial : public webrtc::WebRtcKeyValueConfig
 {
@@ -76,12 +76,10 @@ public:
         dependencies.worker_thread = worker_thread.get();
         dependencies.call_factory = webrtc::CreateCallFactory();
         dependencies.task_queue_factory = webrtc::CreateDefaultTaskQueueFactory();
-        dependencies.event_log_factory =
-            std::make_unique<webrtc::RtcEventLogFactory>(dependencies.task_queue_factory.get());
+        dependencies.event_log_factory = std::make_unique<webrtc::RtcEventLogFactory>(dependencies.task_queue_factory.get());
         dependencies.trials = std::make_unique<ArcasFieldTrial>();
 
-        auto adm =
-            rtc::make_ref_counted<ArcasAudioDeviceModule>(dependencies.task_queue_factory.get());
+        auto adm = rtc::make_ref_counted<ArcasAudioDeviceModule>(dependencies.task_queue_factory.get());
 
         cricket::MediaEngineDependencies media_deps;
         media_deps.task_queue_factory = dependencies.task_queue_factory.get();
@@ -101,8 +99,7 @@ public:
     }
 
     rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>
-    create_factory_with_arcas_video_encoder_factory(
-        std::unique_ptr<ArcasVideoEncoderFactory> video_encoder_factory) const
+    create_factory_with_arcas_video_encoder_factory(std::unique_ptr<ArcasVideoEncoderFactory> video_encoder_factory) const
     {
         webrtc::PeerConnectionFactoryDependencies dependencies;
         dependencies.network_thread = network_thread.get();
@@ -110,12 +107,10 @@ public:
         dependencies.worker_thread = worker_thread.get();
         dependencies.call_factory = webrtc::CreateCallFactory();
         dependencies.task_queue_factory = webrtc::CreateDefaultTaskQueueFactory();
-        dependencies.event_log_factory =
-            std::make_unique<webrtc::RtcEventLogFactory>(dependencies.task_queue_factory.get());
+        dependencies.event_log_factory = std::make_unique<webrtc::RtcEventLogFactory>(dependencies.task_queue_factory.get());
         dependencies.trials = std::make_unique<ArcasFieldTrial>();
 
-        auto adm =
-            rtc::make_ref_counted<ArcasAudioDeviceModule>(dependencies.task_queue_factory.get());
+        auto adm = rtc::make_ref_counted<ArcasAudioDeviceModule>(dependencies.task_queue_factory.get());
 
         cricket::MediaEngineDependencies media_deps;
         media_deps.task_queue_factory = dependencies.task_queue_factory.get();
@@ -133,8 +128,7 @@ public:
         return webrtc::CreateModularPeerConnectionFactory(std::move(dependencies));
     }
 
-    rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>
-    create_factory_with_config(std::unique_ptr<ArcasPeerConnectionFactoryConfig> config)
+    rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> create_factory_with_config(std::unique_ptr<ArcasPeerConnectionFactoryConfig> config)
     {
         webrtc::PeerConnectionFactoryDependencies dependencies;
         dependencies.network_thread = network_thread.get();
@@ -142,12 +136,10 @@ public:
         dependencies.worker_thread = worker_thread.get();
         dependencies.call_factory = webrtc::CreateCallFactory();
         dependencies.task_queue_factory = webrtc::CreateDefaultTaskQueueFactory();
-        dependencies.event_log_factory =
-            std::make_unique<webrtc::RtcEventLogFactory>(dependencies.task_queue_factory.get());
+        dependencies.event_log_factory = std::make_unique<webrtc::RtcEventLogFactory>(dependencies.task_queue_factory.get());
         dependencies.trials = std::make_unique<ArcasFieldTrial>();
 
-        auto adm =
-            rtc::make_ref_counted<ArcasAudioDeviceModule>(dependencies.task_queue_factory.get());
+        auto adm = rtc::make_ref_counted<ArcasAudioDeviceModule>(dependencies.task_queue_factory.get());
         /* auto adm = dependencies.worker_thread->Invoke<rtc::scoped_refptr<webrtc::AudioDeviceModule>>(RTC_FROM_HERE, [&]() { */
         /*     return webrtc::AudioDeviceModule::Create(webrtc::AudioDeviceModule::kPlatformDefaultAudio, dependencies.task_queue_factory.get()); */
         /* }); */

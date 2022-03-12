@@ -1,8 +1,8 @@
 #pragma once
+#include "alias.h"
 #include "api/video_codecs/video_encoder_factory.h"
-#include "libwebrtc-sys/include/alias.h"
-#include "libwebrtc-sys/include/rust_shared.h"
 #include "rust/cxx.h"
+#include "rust_shared.h"
 
 class ArcasVideoEncoderSelector : public webrtc::VideoEncoderFactory::EncoderSelectorInterface
 {
@@ -18,8 +18,7 @@ public:
 
     // Called every time the available bitrate is updated. Should return a
     // non-empty if an encoder switch should be performed.
-    absl::optional<webrtc::SdpVideoFormat>
-    OnAvailableBitrate(const webrtc::DataRate& rate) override;
+    absl::optional<webrtc::SdpVideoFormat> OnAvailableBitrate(const webrtc::DataRate& rate) override;
 
     // Called if the currently used encoder reports itself as broken. Should
     // return a non-empty if an encoder switch should be performed.
@@ -32,8 +31,7 @@ private:
     rust::Box<ArcasRustVideoEncoderFactory> api;
 
 public:
-    ArcasVideoEncoderFactory(rust::Box<ArcasRustVideoEncoderFactory> api)
-    : api(std::move(api)){};
+    ArcasVideoEncoderFactory(rust::Box<ArcasRustVideoEncoderFactory> api);
 
     // Returns a list of supported video formats in order of preference, to use
     // for signaling etc.
@@ -48,11 +46,6 @@ public:
     // Returns information about how this format will be encoded. The specified
     // format must be one of the supported formats by this factory.
 
-    // TODO(magjed): Try to get rid of this method. Since is_hardware_accelerated
-    // is unused, only factories producing internal source encoders (in itself a
-    // deprecated feature) needs to override this method.
-    CodecInfo QueryVideoEncoder(const webrtc::SdpVideoFormat& format) const override;
-
     // Query whether the specifed format is supported or not and if it will be
     // power efficient, which is currently interpreted as if there is support for
     // hardware acceleration.
@@ -60,19 +53,16 @@ public:
     // of valid values for `scalability_mode`.
     // NOTE: QueryCodecSupport is currently an experimental feature that is
     // subject to change without notice.
-    webrtc::VideoEncoderFactory::CodecSupport
-    QueryCodecSupport(const webrtc::SdpVideoFormat& format,
-                      absl::optional<std::string> scalability_mode) const override;
+    webrtc::VideoEncoderFactory::CodecSupport QueryCodecSupport(const webrtc::SdpVideoFormat& format,
+                                                                absl::optional<std::string> scalability_mode) const override;
 
     // Creates a VideoEncoder for the specified format.
-    std::unique_ptr<webrtc::VideoEncoder>
-    CreateVideoEncoder(const webrtc::SdpVideoFormat& format) override;
+    std::unique_ptr<webrtc::VideoEncoder> CreateVideoEncoder(const webrtc::SdpVideoFormat& format) override;
 
     std::unique_ptr<EncoderSelectorInterface> GetEncoderSelector() const override;
 };
 
-std::unique_ptr<ArcasVideoEncoderFactory>
-create_arcas_video_encoder_factory(rust::Box<ArcasRustVideoEncoderFactory> api);
+std::unique_ptr<ArcasVideoEncoderFactory> create_arcas_video_encoder_factory(rust::Box<ArcasRustVideoEncoderFactory> api);
 
 ArcasVideoEncodingErrCode get_arcas_video_encoding_err_codes();
 

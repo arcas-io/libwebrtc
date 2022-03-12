@@ -1,19 +1,35 @@
 use cxx::UniquePtr;
 use libwebrtc_sys::rtc_base::base::{
-    ffi::{arcas_cxx_thread_post_task, create_arcas_cxx_thread, Thread},
+    ffi::{
+        arcas_cxx_thread_post_task, create_arcas_cxx_network_manager, create_arcas_cxx_thread,
+        create_arcas_cxx_thread_with_socketserver, set_thread_name, NetworkManager, Thread,
+    },
     QueuedTask,
 };
 
 pub struct RTCThread {
     // Holds reference into C++
     #[allow(unused)]
-    inner: UniquePtr<Thread>,
+    pub(crate) inner: UniquePtr<Thread>,
 }
 
 impl RTCThread {
     pub fn new() -> Self {
         Self {
             inner: create_arcas_cxx_thread(),
+        }
+    }
+
+    /* There are objects inside libwebrtc that expect to have a SocketServer either:
+       A) Explicitly handed to them in their constructors/setters
+       B) Available via a thread-local
+       Our bindings don't make A available, and it would be quite non-trivial to do so.
+       This function populates the thread-local in (B) for the returned thread
+       And thus this function should *ALWAYS* be used for creating a network thread.
+    */
+    pub fn with_socket_server() -> Self {
+        Self {
+            inner: create_arcas_cxx_thread_with_socketserver(),
         }
     }
 
@@ -47,6 +63,10 @@ impl RTCThread {
             arcas_cxx_thread_post_task(self.inner.pin_mut().get_unchecked_mut(), task);
         }
     }
+
+    pub fn set_name(&mut self, new_name: String) {
+        set_thread_name(self.inner.pin_mut(), new_name);
+    }
 }
 
 impl Default for RTCThread {
@@ -58,6 +78,24 @@ impl Default for RTCThread {
 impl Drop for RTCThread {
     fn drop(&mut self) {
         self.quit();
+    }
+}
+
+pub struct RTCNetworkManager {
+    pub(crate) inner: UniquePtr<NetworkManager>,
+}
+
+impl RTCNetworkManager {
+    pub fn new() -> Self {
+        Self {
+            inner: create_arcas_cxx_network_manager(),
+        }
+    }
+}
+
+impl Default for RTCNetworkManager {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

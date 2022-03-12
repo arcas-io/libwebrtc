@@ -6,7 +6,6 @@ use self::ffi::{ArcasAudioCodecInfo, ArcasSdpAudioFormat};
 
 #[cxx::bridge]
 pub mod ffi {
-
     // include!("include/rtc_buffer.h");
     // type BufferUint8 = crate::rtc_buffer::ffi::BufferUint8;
     #[derive(Debug, Clone)]
@@ -91,7 +90,6 @@ pub mod ffi {
         unsafe fn get_target_bitrate(self: &AudioEncoderProxy) -> i32;
 
         unsafe fn reset(self: &mut AudioEncoderProxy);
-
     }
 
     extern "Rust" {
@@ -110,7 +108,6 @@ pub mod ffi {
             payload_type: i32,
             format: &ArcasSdpAudioFormat,
         ) -> UniquePtr<ArcasAudioEncoder>;
-
     }
 
     unsafe extern "C++" {
@@ -123,6 +120,8 @@ pub mod ffi {
             factory: Box<AudioEncoderFactoryProxy>,
         );
     }
+
+    impl Vec<ArcasAudioCodecSpec> {}
 }
 
 pub trait AudioEncoderImpl {
@@ -145,6 +144,7 @@ pub trait AudioEncoderImpl {
 
     unsafe fn reset(&self);
 }
+
 pub struct AudioEncoderProxy {
     encoder: Box<dyn AudioEncoderImpl>,
 }

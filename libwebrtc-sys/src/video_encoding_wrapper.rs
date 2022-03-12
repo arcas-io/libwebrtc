@@ -24,6 +24,8 @@ pub mod ffi {
         type ArcasSDPVideoFormatWrapper;
         type ArcasCxxSdpVideoFormat = crate::shared_bridge::ffi::ArcasCxxSdpVideoFormat;
         type ArcasRustDict = crate::shared_bridge::ffi::ArcasRustDict;
+        type ArcasVideoEncoderInfoFPSAllocation =
+            crate::video_encoding::ffi::ArcasVideoEncoderInfoFPSAllocation;
 
         fn gen_unique_sdp_video_format_wrapper() -> UniquePtr<ArcasSDPVideoFormatWrapper>;
         fn gen_unique_vector_sdp_video_format_wrapper(

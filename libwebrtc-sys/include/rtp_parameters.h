@@ -1,6 +1,6 @@
 #pragma once
+#include "alias.h"
 #include "api/rtp_parameters.h"
-#include "libwebrtc-sys/include/alias.h"
 #include "rust/cxx.h"
 
 class ArcasRTPCodecCapability
@@ -54,6 +54,5 @@ public:
     }
 };
 
-std::unique_ptr<std::vector<ArcasRTPHeaderExtensionCapability>>
-gen_unique_vector_rtp_header_extension_capabilities();
+std::unique_ptr<std::vector<ArcasRTPHeaderExtensionCapability>> gen_unique_vector_rtp_header_extension_capabilities();
 std::unique_ptr<std::vector<ArcasRTPCodecCapability>> gen_unique_vector_rtp_codec_capabilities();

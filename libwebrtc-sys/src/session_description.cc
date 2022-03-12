@@ -1,15 +1,21 @@
-#include "libwebrtc-sys/include/session_description.h"
+#include "session_description.h"
 #include "libwebrtc-sys/src/session_description.rs.h"
 
-ArcasSessionDescription::ArcasSessionDescription(
-    std::unique_ptr<webrtc::SessionDescriptionInterface> api)
+ArcasSessionDescription::ArcasSessionDescription(std::unique_ptr<webrtc::SessionDescriptionInterface> api)
 : api(std::move(api)){};
 
 rust::String ArcasSessionDescription::to_string() const
 {
-    std::string out;
-    api->ToString(&out);
-    return rust::String(out.c_str());
+    if (api)
+    {
+        std::string out;
+        api->ToString(&out);
+        return rust::String(out.c_str());
+    }
+    else
+    {
+        return "null";
+    }
 }
 
 webrtc::SdpType ArcasSessionDescription::get_type() const
@@ -28,8 +34,7 @@ std::unique_ptr<webrtc::SessionDescriptionInterface> ArcasSessionDescription::cl
     return api->Clone();
 }
 
-ArcasCreateSessionDescriptionResult create_arcas_session_description(webrtc::SdpType type,
-                                                                     rust::String sdp)
+ArcasCreateSessionDescriptionResult create_arcas_session_description(webrtc::SdpType type, rust::String sdp)
 {
     webrtc::SdpParseError error;
     ArcasCreateSessionDescriptionResult result;

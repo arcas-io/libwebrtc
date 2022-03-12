@@ -1,6 +1,7 @@
 use crossbeam_channel::{RecvError, SendError};
 use cxx::UniquePtr;
 use libwebrtc_sys::ffi::ArcasRTCError;
+use libwebrtc_sys::session_description::ffi::ArcasSessionDescriptionError;
 use media_pipeline::error::MediaPipelineError;
 use thiserror::Error;
 
@@ -118,6 +119,12 @@ impl From<UniquePtr<ArcasRTCError>> for WebRTCError {
             value.ok(),
             value.message()
         ))
+    }
+}
+
+impl From<ArcasSessionDescriptionError> for WebRTCError {
+    fn from(sde: ArcasSessionDescriptionError) -> Self {
+        WebRTCError::SdpParseError(sde.description, sde.line)
     }
 }
 

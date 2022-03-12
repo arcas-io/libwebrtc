@@ -199,6 +199,7 @@ pub mod ffi {
             failure: UniquePtr<ArcasRTCError>,
         );
     }
+    impl Vec<ArcasVideoReceiverStats> {}
 }
 
 pub struct ArcasRustCreateSessionDescriptionObserver {

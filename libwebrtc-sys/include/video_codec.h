@@ -1,11 +1,12 @@
 #pragma once
+
 #include "api/video_codecs/spatial_layer.h"
 #include "api/video_codecs/video_codec.h"
-#include "libwebrtc-sys/include/codec_specific_info.h"
-#include "libwebrtc-sys/include/video_frame_buffer_encoded.h"
+#include "codec_specific_info.h"
 #include "modules/video_coding/include/video_codec_interface.h"
 #include "rtc_base/logging.h"
 #include "rust/cxx.h"
+#include "video_frame_buffer_encoded.h"
 
 class ArcasSpatialLayerInternal
 {
@@ -320,12 +321,12 @@ public:
     {
         codec_->codec.expect_encode_from_texture = expect_encode_from_texture;
     }
-
+    /*
     void set_buffer_pool_size(int buffer_pool_size) const
     {
         codec_->codec.buffer_pool_size = absl::optional<int>(buffer_pool_size);
     }
-
+    */
     void set_timing_frame_trigger_thresholds(int64_t delay_ms, uint16_t outlier_ratio_percent) const
     {
         codec_->codec.timing_frame_thresholds = {delay_ms, outlier_ratio_percent};
@@ -476,8 +477,7 @@ public:
         auto start_bitrate = codec_->codec.startBitrate;
         auto max_framerate = codec_->codec.maxFramerate;
         auto simulcast_streams = codec_->codec.numberOfSimulcastStreams;
-        auto mode =
-            codec_->codec.mode == webrtc::VideoCodecMode::kRealtimeVideo ? "realtime" : "screen";
+        auto mode = codec_->codec.mode == webrtc::VideoCodecMode::kRealtimeVideo ? "realtime" : "screen";
         auto keyframe_interval = 0;
         auto number_of_temporal_layers = 0;
 
@@ -500,11 +500,9 @@ public:
             break;
         }
 
-        output << "type=" << type_output << "&width=" << width << "&height=" << height
-               << "&max_bitrate=" << max_bitrate << "&min_bitrate=" << min_bitrate
-               << "&start_bitrate=" << start_bitrate << "&max_framerate=" << max_framerate
-               << "&simulcast_streams=" << simulcast_streams << "&mode=" << mode
-               << "&keyframe_interval=" << keyframe_interval
+        output << "type=" << type_output << "&width=" << width << "&height=" << height << "&max_bitrate=" << max_bitrate
+               << "&min_bitrate=" << min_bitrate << "&start_bitrate=" << start_bitrate << "&max_framerate=" << max_framerate
+               << "&simulcast_streams=" << simulcast_streams << "&mode=" << mode << "&keyframe_interval=" << keyframe_interval
                << "&number_of_temporal_layers=" << number_of_temporal_layers;
 
         return rust::String(output.str().c_str());

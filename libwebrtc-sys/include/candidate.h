@@ -1,7 +1,13 @@
 #pragma once
-#include "api/candidate.h"
-#include "rtc_base/network_constants.h"
+
+#include <api/candidate.h>
+#include <p2p/base/p2p_constants.h>
+#include <rtc_base/network_constants.h>
+
 #include "rust/cxx.h"
+#include <memory>
+
+enum class CandidateComponent : std::uint8_t;
 
 // Wrapper around cricket::Candidate not to be confused with webrtc::IceCandidate*
 class ArcasCandidate
@@ -10,6 +16,11 @@ private:
     cricket::Candidate _candidate;
 
 public:
+    explicit ArcasCandidate()
+    : _candidate{}
+    {
+    }
+
     ArcasCandidate(cricket::Candidate candidate)
     : _candidate(candidate)
     {
@@ -29,10 +40,15 @@ public:
     {
         return _candidate.component();
     }
+    void set_component(CandidateComponent val);
 
     rust::String protocol() const
     {
         return rust::String(_candidate.protocol().c_str());
+    }
+    void set_protocol(rust::String proto)
+    {
+        _candidate.set_protocol({proto.data(), proto.size()});
     }
 
     rust::String relay_protocol() const
@@ -43,6 +59,18 @@ public:
     rust::String address() const
     {
         return rust::String(_candidate.address().ToString().c_str());
+    }
+
+    // Parses hostname:port and [hostname]:port.
+    void set_address(rust::String s)
+    {
+        set_address(std::string{s.data(), s.size()});
+    }
+    void set_address(std::string s)
+    {
+        rtc::SocketAddress addr;
+        addr.FromString(s);
+        _candidate.set_address(addr);
     }
 
     uint32_t priority() const
@@ -131,4 +159,7 @@ public:
     }
 };
 
-std::unique_ptr<ArcasCandidate> gen_arcas_candidate();
+inline std::unique_ptr<ArcasCandidate> create_arcas_candidate()
+{
+    return std::make_unique<ArcasCandidate>();
+}

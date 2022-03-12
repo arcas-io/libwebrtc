@@ -1,8 +1,8 @@
 #[cxx::bridge]
 pub mod ffi {
     struct ArcasSessionDescriptionError {
-        line: String,
-        description: String,
+        pub line: String,
+        pub description: String,
     }
 
     struct ArcasCreateSessionDescriptionResult {

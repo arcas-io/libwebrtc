@@ -1,16 +1,19 @@
+use crate::candidate::ffi::{create_arcas_candidate, CandidateComponent};
 use cxx::UniquePtr;
 
 #[cxx::bridge]
 pub mod ffi {
-
     #[derive(Debug)]
     #[repr(u32)]
     #[namespace = "webrtc"]
     enum SdpType {
-        kOffer,    // Description must be treated as an SDP offer.
-        kPrAnswer, // Description must be treated as an SDP answer, but not a final
+        kOffer,
+        // Description must be treated as an SDP offer.
+        kPrAnswer,
+        // Description must be treated as an SDP answer, but not a final
         // answer.
-        kAnswer, // Description must be treated as an SDP final answer, and the
+        kAnswer,
+        // Description must be treated as an SDP final answer, and the
         // offer-answer exchange must be considered complete after
         // receiving this.
         kRollback, // Resets any pending offers and sets signaling state back to
@@ -18,7 +21,7 @@ pub mod ffi {
     }
 
     struct ArcasCandidateWrapper {
-        ptr: UniquePtr<ArcasCandidate>,
+        pub(crate) ptr: UniquePtr<ArcasCandidate>,
     }
 
     struct ArcasCandidatePairChangeEventJSEP {
@@ -47,6 +50,8 @@ pub mod ffi {
         type CopyOnWriteBuffer;
         #[namespace = "webrtc"]
         type RtpTransportInternal;
+        #[namespace = "webrtc"]
+        type SrtpTransport;
         #[namespace = "webrtc"]
         type DataChannelTransportInterface;
         #[namespace = "cricket"]
@@ -99,6 +104,43 @@ pub mod ffi {
             ice_transport_factory: UniquePtr<IceTransportFactory>,
         );
 
+        fn set_transport_observer(
+            self: Pin<&mut ArcasJsepTransportControllerConfig>,
+            obs: UniquePtr<ArcasJsepTransportControllerObserver>,
+        );
+
+        fn set_rtcp_handler(
+            self: Pin<&mut ArcasJsepTransportControllerConfig>,
+            handler: Box<ArcasRustJsepRTCPHandler>,
+        );
+
+        fn set_dtls_handshake_error_handler(
+            self: Pin<&mut ArcasJsepTransportControllerConfig>,
+            callback: Box<ArcasRustDTLSHandshakeErrorHandler>,
+        );
+
+        fn create_buffer(capacity: u64) -> UniquePtr<CopyOnWriteBuffer>;
+        fn create_buffer_with_data(bytes: &[u8]) -> UniquePtr<CopyOnWriteBuffer>;
+
+        fn send_rtp_packet(
+            transport: Pin<&mut SrtpTransport>,
+            packet: Pin<&mut CopyOnWriteBuffer>,
+            on_net_thr: Pin<&mut Thread>,
+        ) -> bool;
+
+        fn set_rtp_params(
+            transport: Pin<&mut SrtpTransport>,
+            send_cs: i32,
+            send_key: String,
+            recv_cs: i32,
+            recv_key: String,
+            recv_extension_ids: Vec<i32>,
+            on_net_thr: Pin<&mut Thread>,
+        );
+
+        fn get_transport_name(transport: &SrtpTransport, on_net_thr: Pin<&mut Thread>) -> String;
+        fn is_writable(transport: &SrtpTransport) -> bool;
+
         // port allocator
 
         /// # Safety
@@ -109,6 +151,14 @@ pub mod ffi {
             network_manager_ptr: *mut NetworkManager,
         ) -> UniquePtr<PortAllocator>;
 
+        #[cxx_name = "SetPortRange"]
+        pub fn set_port_range(self: Pin<&mut PortAllocator>, min_port: i32, max_port: i32) -> bool;
+
+        pub fn init_port_alloc(
+            port_alloc: Pin<&mut PortAllocator>,
+            network_thread: Pin<&mut Thread>,
+        );
+
         // transport controller
 
         /// # Safety
@@ -117,7 +167,7 @@ pub mod ffi {
         /// while the transport controller is using them.
         unsafe fn create_arcas_jsep_transport_controller(
             network_thread: *mut Thread,
-            port_allocator: *mut PortAllocator,
+            port_allocator: UniquePtr<PortAllocator>,
             async_dns_resolver_factory: *mut AsyncDnsResolverFactoryInterface,
             config: UniquePtr<ArcasJsepTransportControllerConfig>,
         ) -> UniquePtr<ArcasJsepTransportController>;
@@ -125,19 +175,19 @@ pub mod ffi {
         fn set_remote_description(
             self: Pin<&mut ArcasJsepTransportController>,
             sdp_type: SdpType,
-            sdp: UniquePtr<ArcasSessionDescription>,
+            sdp: &ArcasSessionDescription,
         ) -> UniquePtr<ArcasRTCError>;
 
         fn set_local_description(
             self: Pin<&mut ArcasJsepTransportController>,
             sdp_type: SdpType,
-            sdp: UniquePtr<ArcasSessionDescription>,
+            sdp: &ArcasSessionDescription,
         ) -> UniquePtr<ArcasRTCError>;
 
-        fn get_rtp_transport(
+        fn get_srtp_transport(
             self: &ArcasJsepTransportController,
             mid: String,
-        ) -> *mut RtpTransportInternal;
+        ) -> *mut SrtpTransport;
 
         fn get_data_channel_transport(
             self: &ArcasJsepTransportController,
@@ -179,6 +229,10 @@ pub mod ffi {
 
         // gen unique ptr wrappers... Do not call these.
         fn gen_arcas_cxx_dtls_transport() -> UniquePtr<ArcasDTLSTransport>;
+
+        fn to_cxx(
+            r: Box<ArcasRustJsepTransportControllerObserver>,
+        ) -> UniquePtr<ArcasJsepTransportControllerObserver>;
     }
 
     extern "Rust" {
@@ -240,6 +294,30 @@ pub mod ffi {
             self: &ArcasRustJsepTransportControllerObserverWrapper,
             event: ArcasCandidatePairChangeEventJSEP,
         );
+    }
+
+    impl Box<ArcasRustJsepRTCPHandler> {}
+
+    impl Box<ArcasRustDTLSHandshakeErrorHandler> {}
+}
+
+impl Default for ffi::ArcasCandidateWrapper {
+    fn default() -> Self {
+        Self {
+            ptr: create_arcas_candidate(),
+        }
+    }
+}
+
+impl ffi::ArcasCandidateWrapper {
+    pub fn set_address(&mut self, host_colon_port: String) {
+        self.ptr.pin_mut().set_address(host_colon_port);
+    }
+    pub fn set_component(&mut self, val: CandidateComponent) {
+        self.ptr.pin_mut().set_component(val);
+    }
+    pub fn set_protocol(&mut self, val: String) {
+        self.ptr.pin_mut().set_protocol(val);
     }
 }
 
@@ -341,7 +419,7 @@ impl ArcasRustDTLSHandshakeErrorHandler {
     }
 }
 
-type OnTransportChanged = dyn Fn(
+pub type OnTransportChanged = dyn Fn(
     String,
     *mut ffi::RtpTransportInternal,
     UniquePtr<ffi::ArcasDTLSTransport>,

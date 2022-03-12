@@ -1,18 +1,16 @@
 #pragma once
 #include "api/peer_connection_interface.h"
-#include "libwebrtc-sys/include/rust_shared.h"
-#include "libwebrtc-sys/include/session_description.h"
 #include "rust/cxx.h"
+#include "rust_shared.h"
+#include "session_description.h"
 
-class ArcasCreateSessionDescriptionObserver : public webrtc::CreateSessionDescriptionObserver,
-                                              public rtc::RefCountedBase
+class ArcasCreateSessionDescriptionObserver : public webrtc::CreateSessionDescriptionObserver, public rtc::RefCountedBase
 {
 private:
     rust::Box<ArcasRustCreateSessionDescriptionObserver> observer;
 
 public:
-    ArcasCreateSessionDescriptionObserver(
-        rust::Box<ArcasRustCreateSessionDescriptionObserver> observer);
+    ArcasCreateSessionDescriptionObserver(rust::Box<ArcasRustCreateSessionDescriptionObserver> observer);
 
     ~ArcasCreateSessionDescriptionObserver()
     {

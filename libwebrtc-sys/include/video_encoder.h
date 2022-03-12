@@ -1,10 +1,10 @@
 #pragma once
-#include "libwebrtc-sys/include/alias.h"
-#include "libwebrtc-sys/include/encoded_image_factory.h"
-#include "libwebrtc-sys/include/rust_shared.h"
-#include "libwebrtc-sys/include/video_codec.h"
-#include "libwebrtc-sys/include/video_encoder_rate_control_parameters.h"
+#include "alias.h"
+#include "encoded_image_factory.h"
 #include "rust/cxx.h"
+#include "rust_shared.h"
+#include "video_codec.h"
+#include "video_encoder_rate_control_parameters.h"
 
 using WebRTCVideoEncoder = webrtc::VideoEncoder;
 
@@ -26,12 +26,8 @@ private:
     rust::Box<ArcasRustVideoEncoder> api;
 
 public:
-    ArcasVideoEncoder(rust::Box<ArcasRustVideoEncoder> api)
-    : api(std::move(api))
-    {
-    }
-
-    ~ArcasVideoEncoder() {}
+    ArcasVideoEncoder(rust::Box<ArcasRustVideoEncoder> api);
+    ~ArcasVideoEncoder();
 
     void SetFecControllerOverride(webrtc::FecControllerOverride* fec_controller_override) override
     {
@@ -56,9 +52,7 @@ public:
     // TODO(bugs.webrtc.org/10720): After updating downstream projects and posting
     // an announcement to discuss-webrtc, remove the three-parameters variant
     // and make the two-parameters variant pure-virtual.
-    int InitEncode(const webrtc::VideoCodec* codec_settings,
-                   int number_of_cores,
-                   size_t max_payload_size) override;
+    int InitEncode(const webrtc::VideoCodec* codec_settings, int number_of_cores, size_t max_payload_size) override;
     // Register an encode complete callback object.
     //
     // Input:
@@ -83,8 +77,7 @@ public:
     //                                  WEBRTC_VIDEO_CODEC_ERR_PARAMETER
     //                                  WEBRTC_VIDEO_CODEC_MEMORY
     //                                  WEBRTC_VIDEO_CODEC_ERROR
-    int32_t Encode(const webrtc::VideoFrame& frame,
-                   const std::vector<webrtc::VideoFrameType>* frame_types) override;
+    int32_t Encode(const webrtc::VideoFrame& frame, const std::vector<webrtc::VideoFrameType>* frame_types) override;
 
     // Sets rate control parameters: bitrate, framerate, etc. These settings are
     // instantaneous (i.e. not moving averages) and should apply from now until
@@ -113,5 +106,4 @@ public:
 
 std::unique_ptr<ArcasCxxVideoBitrateAllocation> create_video_bitrate_allocation();
 std::shared_ptr<ArcasVideoEncoderRateControlParameters>
-create_arcas_video_encoder_rate_control_parameters(const ArcasCxxVideoBitrateAllocation& bitrate,
-                                                   double framerate_fps);
+create_arcas_video_encoder_rate_control_parameters(const ArcasCxxVideoBitrateAllocation& bitrate, double framerate_fps);

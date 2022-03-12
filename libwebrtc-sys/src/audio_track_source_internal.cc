@@ -1,4 +1,4 @@
-#include "libwebrtc-sys/include/audio_track_source_internal.h"
+#include "audio_track_source_internal.h"
 
 void ArcasAudioTrackSourceInternal::SetVolume(double d) {}
 
@@ -22,18 +22,8 @@ void ArcasAudioTrackSourceInternal::RemoveSink(webrtc::AudioTrackSinkInterface* 
     sinks_.erase(sink);
 }
 
-void ArcasAudioTrackSourceInternal::PushData(const void* audio_data,
-                                             int bits_per_sample,
-                                             int sample_rate,
-                                             size_t number_of_channels,
-                                             size_t number_of_frames)
+void ArcasAudioTrackSourceInternal::PushData(
+    const void* audio_data, int bits_per_sample, int sample_rate, size_t number_of_channels, size_t number_of_frames)
 {
-    for (auto sink : sinks_)
-    {
-        sink->OnData(audio_data,
-                     bits_per_sample,
-                     sample_rate,
-                     number_of_channels,
-                     number_of_frames);
-    }
+    for (auto sink : sinks_) { sink->OnData(audio_data, bits_per_sample, sample_rate, number_of_channels, number_of_frames); }
 }

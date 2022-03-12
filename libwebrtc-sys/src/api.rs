@@ -1,6 +1,5 @@
 #[cxx::bridge]
 pub mod ffi {
-
     unsafe extern "C++" {
         include!("include/api.h");
         type ArcasAPI;
