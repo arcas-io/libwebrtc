@@ -3,24 +3,22 @@ name = "libwebrtc"
 version = "0.1.2"
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-tokio = { version = "1.9.0", features = ["full"] }
-libwebrtc-sys = { path = "../libwebrtc-sys" }
-media_pipeline = { git = "https://github.com/arcas-io/media-pipeline", branch = "main" }
 bytes = "1.1.0"
-cxx = "1.0.56"
-thiserror = "1.0.30"
-log = "0.4.14"
-lazy_static = "1.4.0"
-parking_lot = "0.11.2"
 crossbeam-channel = "0.5.1"
+cxx = "1.0.56"
 dashmap = "4.0.2"
+glob = "0.3.0"
+lazy_static = "1.4.0"
+libwebrtc-sys = { path = "../libwebrtc-sys" }
+log = "0.4.14"
+media_pipeline = { git = "https://github.com/arcas-io/media-pipeline", branch = "main" }
+nanoid = "0.4.0"
+thiserror = "1.0.30"
+parking_lot = "0.11.2"
 pretty_env_logger = "0.4.0"
 rayon = "1.5.1"
-nanoid = "0.4.0"
-glob = "0.3.0"
+tokio = { version = "1.9.0", features = ["full"] }
 
 [dev-dependencies]
 local-ip-address = "0.4.4"
