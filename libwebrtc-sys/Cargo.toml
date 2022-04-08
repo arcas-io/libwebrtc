@@ -22,4 +22,4 @@ glob = "^0.3.0"
 [dev-dependencies]
 base64 = "0.13.0"
 bytes = "1.1.0"
-media_pipeline = { path = "../media_pipeline"}
+media_pipeline = { git = "https://github.com/arcas-io/media-pipeline", branch = "main" }
