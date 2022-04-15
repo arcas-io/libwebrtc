@@ -8,6 +8,7 @@ on:
 jobs:
   linux-x64-test:
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 15
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -27,4 +28,25 @@ jobs:
         working-directory: libwebrtc
         run: |
           cargo test
+
+  mac-x64-test:
+    runs-on: macos-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+        with:
+          clean: false
+
+      - name: Install toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+
+      # - name: Install gstreamer
+      #   run: |
+      #     brew install gstreamer gst-plugins-base gst-plugins-good
+      - name: Test Code
+        working-directory: libwebrtc
+        run: cargo test
 
